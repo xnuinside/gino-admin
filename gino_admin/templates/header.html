@@ -1,0 +1,29 @@
+<div class="ui fixed inverted menu">
+      <div class="ui container">
+        <a href="/" class="header item">
+          Sanic-Gino Admin Panel
+        </a>
+        {% for key, value in objects.items() %}
+      <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
+   {% endfor %}
+
+        <div class="ui simple dropdown item">
+          Dropdown <i class="dropdown icon"></i>
+          <div class="menu">
+            <a class="item" href="#">Link Item</a>
+            <a class="item" href="#">Link Item</a>
+            <div class="divider"></div>
+            <div class="header">Header Item</div>
+            <div class="item">
+              <i class="dropdown icon"></i>
+              Sub Menu
+              <div class="menu">
+                <a class="item" href="#">Link Item</a>
+                <a class="item" href="#">Link Item</a>
+              </div>
+            </div>
+            <a class="item" href="#">Link Item</a>
+          </div>
+        </div>
+      </div>
+    </div>

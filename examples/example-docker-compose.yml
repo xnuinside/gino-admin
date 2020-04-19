@@ -1,0 +1,13 @@
+version: "3"
+services:
+  postgres:
+    image: "postgres:9.6"
+    container_name: "postgres"
+    environment:
+      - POSTGRES_USER=gino
+      - POSTGRES_PASSWORD=gino
+      - POSTGRES_DB=gino
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data

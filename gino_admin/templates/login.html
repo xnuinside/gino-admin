@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Index Page{% endblock %}
+
+{% block body %}
+<h2>Please sign in, you can try:</h2>
+
+<form action="" method="POST">
+  <input class="username" id="name" name="username"
+    placeholder="username" type="text" value=""><br>
+  <input class="password" id="password" name="password"
+    placeholder="password" type="password" value=""><br>
+  <input id="submit" name="submit" type="submit" value="Sign In">
+</form>
+{% endblock %}

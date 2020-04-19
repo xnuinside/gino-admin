@@ -1,0 +1,17 @@
+First of all run instance of PostgreSQL - use for this example-docker-compose.yml:
+
+    docker-compose -f example-docker-compose.yml up --build postgres
+
+Do:
+
+    pip install gino_admin
+
+After in new window run example/src/app.py:
+
+    python example/src/app.py
+
+
+Use password and login to enter admin panel:
+
+    login: admin
+    password: 1234
