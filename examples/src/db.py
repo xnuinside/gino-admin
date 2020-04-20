@@ -1,4 +1,5 @@
 from gino.ext.sanic import Gino
+from sqlalchemy.orm import validates
 
 db = Gino()
 
@@ -8,7 +9,7 @@ class User(db.Model):
     __tablename__ = "users"
 
     user_id = db.Column(db.String(24), unique=True, primary_key=True)
-    password = db.Column(db.String())
+    password_hash = db.Column(db.String(), nullable=False)
     email = db.Column(db.String(24))
     name = db.Column(db.String())
     phone = db.Column(db.String())

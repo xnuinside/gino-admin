@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 import os
 import asyncpg
 
@@ -7,7 +7,11 @@ from sanic import Blueprint, Sanic, response
 
 from gino.ext.sanic import Gino
 from gino_admin.auth import auth, validate_login
+
+from passlib.hash import pbkdf2_sha256
+
 from jinja2 import FileSystemLoader
+
 loader = FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
 
 jinja = SanicJinja2(loader=loader)
@@ -22,6 +26,24 @@ admin = Blueprint("admin", url_prefix=url_prefix)
 
 
 session = {}
+
+hash_method = pbkdf2_sha256.hash
+
+
+def extract_column_names(model: Gino.Model):
+
+    _hash = '_hash'
+
+    column_names = []
+    hashed_indexes = []
+    for num, column in enumerate(app_db.tables[model].columns):
+        if _hash in column.name:
+            column_names.append(column.name.split(_hash)[0])
+            hashed_indexes.append(num)
+        else:
+            column_names.append(column.name)
+    return column_names, hashed_indexes
+
 
 
 @admin.middleware("request")
@@ -45,10 +67,11 @@ async def bp_root(request):
 @admin.route("/<model>", methods=["GET"])
 @auth.login_required
 async def admin_model(request, model):
-    columns_names = [x.name for x in app_db.tables[model].columns]
+    columns_names, hashed_indexes = extract_column_names(model)
     model = app_db.tables[model]
     query = app_db.select([model])
     rows = await query.gino.all()
+
     response = jinja.render(
         "model_view.html",
         request,
@@ -64,8 +87,7 @@ async def admin_model(request, model):
 @admin.route("/<model>/add", methods=["GET"])
 @auth.login_required
 async def admin_model_add(request, model):
-    columns_names = [x.name for x in app_db.tables[model].columns]
-    print(columns_names)
+    columns_names, hashed_indexes = extract_column_names(model)
     response = jinja.render(
         "add_form.html",
         request,
@@ -80,8 +102,13 @@ async def admin_model_add(request, model):
 @admin.route("/<model>/add", methods=["POST"])
 @auth.login_required
 async def admin_model_add_submit(request, model):
-    columns_names = [x.name for x in app_db.tables[model].columns]
+    columns_names, hashed_indexes = extract_column_names(model)
     request_params = {key: request.form[key][0] for key in request.form}
+    if hashed_indexes:
+        for hashed_index in hashed_indexes:
+            request_params[columns_names[hashed_index]+'_hash'] = hash_method(
+                request_params[columns_names[hashed_index]])
+            del request_params[columns_names[hashed_index]]
     try:
         await models[model].create(**request_params)
         request["flash"]("Object was added", "success")
@@ -129,7 +156,7 @@ async def admin_model_edit(request, model):
 @auth.login_required
 async def logout(request):
     auth.logout_user(request)
-    return response.redirect("/login")
+    return response.redirect("login")
 
 
 def handle_no_auth(request):
@@ -197,15 +224,17 @@ async def login(request):
 @admin.middleware("response")
 async def halt_response(request, response):
     # catch response and send data for menu
-    print(request['session'])
     return response
 
 
-def add_admin_panel(app: Sanic, db: Gino, gino_models: List):
-    global app_db, models, config
+def add_admin_panel(app: Sanic, db: Gino, gino_models: List, custom_hash_method: Callable = None):
+    # todo need to change this to object params
+    global app_db, models, config, hash_method
     models = {model.__tablename__: model for model in gino_models}
     app_db = db
     app.blueprint(admin)
+    if custom_hash_method:
+        hash_method = custom_hash_method
     try:
         app.config.AUTH_LOGIN_ENDPOINT = "admin.login"
         auth.setup(app)

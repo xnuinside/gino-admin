@@ -2,6 +2,9 @@ from sanic import Sanic, response
 from db import db, User, Place, City
 from gino_admin import add_admin_panel
 
+from passlib.hash import pbkdf2_sha256
+
+
 app = Sanic()
 
 app.config['DB_HOST'] = 'localhost'
@@ -18,7 +21,14 @@ async def index(request):
 app.config['ADMIN_USER'] = 'admin'
 app.config['ADMIN_PASSWORD'] = '1234'
 
-add_admin_panel(app, db, [User, Place, City])
+
+# custom_hash_method you can define your own hash method to use it in backend and Admin
+def custom_hash_method(*args, **kwargs):
+    print('My custom hash method! Must return python callable object')
+    return pbkdf2_sha256.hash(*args, **kwargs)
+
+
+add_admin_panel(app, db, [User, Place, City], custom_hash_method=custom_hash_method)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

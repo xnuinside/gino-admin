@@ -8,6 +8,9 @@ Do:
 
 After in new window run example/src/app.py:
 
+    python example/src/db.py  # to init DB
+
+And finally:
     python example/src/app.py
 
 
