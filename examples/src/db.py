@@ -32,3 +32,11 @@ class City(db.Model):
     country = db.Column(db.DateTime())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
+
+
+if __name__ == '__main__':
+    # to init db
+    import sqlalchemy as sa
+    db_engine = sa.create_engine('postgresql://gino:gino@localhost:5432/gino')
+    db.create_all(bind=db_engine)
+    db_engine.dispose()

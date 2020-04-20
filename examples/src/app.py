@@ -21,4 +21,4 @@ app.config['ADMIN_PASSWORD'] = '1234'
 add_admin_panel(app, db, [User, Place, City])
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

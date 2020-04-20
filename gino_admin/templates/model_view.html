@@ -4,10 +4,13 @@
 {% block body %}
 <h1>{{model}}</h1>
 <p>
-<div class="ui right floated small primary labeled icon button">
-<i class="file alternate icon"></i>
-<a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/upload">Upload from CSV</a>
-</div></br></br>
+<form action="{{url_prefix}}/{{model.lower()}}/upload/" method="post">
+<input id='fileid' accept=".csv" type='file' hidden/>
+
+<button id='buttonid' class="ui right floated small primary labeled icon button"
+        type='submit'><i class="file alternate icon"></i>Upload CSV</button>
+
+</form></br></br>
 </p>
 
 
@@ -23,6 +26,11 @@ $(function(){
 		closable: true
 	});
 });
+document.getElementById('buttonid').addEventListener('click', openDialog);
+
+function openDialog() {
+  document.getElementById('fileid').click();
+}
 
 </script>
 <table id="table_id" class="display ui compact sortable celled definition table">
