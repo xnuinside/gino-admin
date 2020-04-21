@@ -27,7 +27,7 @@ admin = Blueprint("admin", url_prefix=url_prefix)
 
 session = {}
 
-hash_method = pbkdf2_sha256.hash
+hash_method = pbkdf2_sha256.encrypt
 
 
 def extract_column_names(model: Gino.Model):
