@@ -4,6 +4,26 @@ Admin Panel for DB with Gino ORM and Sanic (inspired by Flask-Admin)
 
 Work in progress
 
+If you have time and want to fix:
+Please open issues with that you want to add
+or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
+
+Limitations
+-----------
+
+For correct work of Admin Panel all models MUST contain unique 'id' field.
+'id' used to identify row (one element) for Edit & Delete operations.
+
+so if you define model, for example, User:
+
+.. code-block:: python
+
+    class User(db.Model):
+
+        __tablename__ = "users"
+
+        id = db.Column(db.String(), unique=True, primary_key=True)
+
 
 Supported operations
 --------------------
@@ -43,3 +63,16 @@ Contributions
 
 Contributions and feature requests are very welcome!
 
+
+Developer guide
+_______________
+
+Project use pre-commit hooks, so you need setup them
+
+Just run:
+
+.. code-block:: python
+
+    pre-commit install
+
+to install git hooks in your .git/ directory.

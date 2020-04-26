@@ -13,65 +13,35 @@
 </form></br></br>
 </p>
 
+{% include 'data_table.html' %}
 
-<table id="table_id" class="display ui compact sortable celled definition table">
-    <thead class="full-width">
-        <tr>{% for column_name  in columns %}
-            <th>{{column_name}}</th>
-            {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-
-{% for row in model_data %}
-        <tr>
-            {% for field in row %}
-            <td>{{field}}</td>
-        {% endfor %}
-
-        <td><form action="{{url_prefix}}/{{model.lower()}}/delete/" method="post">
-            {% for field in row %}
-
-  <input type="hidden" name="{{columns[loop.index-1]}}" value="{{field}}"\>
-        {% endfor %}
-            <button type=submit> <i class="trash icon"></i></button>
-</form></td>
-        </tr>
-{% endfor %}
-    </tbody>
-</table>
 <!-- delete modal -->
 <div class="ui basic modal">
   <div class="ui icon header">
-    <i class="trash icon"></i>
-   Delete all {{model}}
+    <i class="trash icon"></i> Delete all {{model}}
   </div>
   <div class="content">
     <p>Are you sure, that you want to delete all {{model}}?</p>
   </div>
   <div class="actions">
     <div class="ui red basic cancel inverted button">
-      <i class="remove icon"></i>
-      No
+      <i class="remove icon"></i>No
     </div><br>
         <form action="{{url_prefix}}/{{model.lower()}}/delete_all/" method="post">
-
         <button id='delete' class="ui red ok inverted button" type='submit'>
             <i class="checkmark icon"></i> Yes</button>
-
         </form>
   </div>
 </div>
+<!-- end of modal -->
 
-
-    <button id="delete_all" class="ui right floated small yellow labeled icon button" type="button">
+    <button id="delete_all" class="ui right floated small grey labeled icon button" type="button">
     <i class="trash icon"></i>Delete all {{model}}</button>
 
- <div class="ui right floated small primary labeled icon button">
-            <i class="user icon"></i>
-            <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
-        </div>
-<a href=class="item"></a>
+    <button id="add" class="ui right floated small primary labeled icon button" type="button">
+        <i class="user icon"></i>
+        <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
+    </button>
 
 
 <script>
@@ -91,6 +61,6 @@ document.getElementById('buttonid').addEventListener('click', openDialog);
 function openDialog() {
   document.getElementById('fileid').click();
 }
-
 </script>
+
 {% endblock %}

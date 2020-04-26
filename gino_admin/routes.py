@@ -1,20 +1,19 @@
-from typing import List, Callable
-
-from datetime import datetime
 import os
+from datetime import datetime
+from typing import Callable, List
+
 import asyncpg
-
-from sanic_jinja2 import SanicJinja2
-from sanic import Blueprint, Sanic, response
-
 from gino.ext.sanic import Gino
+from jinja2 import FileSystemLoader
+from passlib.hash import pbkdf2_sha256
+from sanic import Blueprint, Sanic, response
+from sanic_jinja2 import SanicJinja2
+
 from gino_admin.auth import auth, validate_login
 
-from passlib.hash import pbkdf2_sha256
-
-from jinja2 import FileSystemLoader
-
-loader = FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
+loader = FileSystemLoader(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+)
 
 jinja = SanicJinja2(loader=loader)
 
@@ -34,42 +33,45 @@ hash_method = pbkdf2_sha256.encrypt
 
 def exatract_date(date_str):
 
-    date_object = datetime.strptime(date_str, '%m-%d-%y')
+    date_object = datetime.strptime(date_str, "%m-%d-%y")
     return date_object
 
 
 def exatract_time(datetime_str):
 
-    datetime_object = datetime.strptime(datetime_str, '%m-%d-%y %H:%M:%S')
+    datetime_object = datetime.strptime(datetime_str, "%m-%d-%y %H:%M:%S")
     return datetime_object
 
 
 def extract_columns_data(model: Gino.Model):
 
-    _hash = '_hash'
+    _hash = "_hash"
     types_map = {
-        'INTEGER': int,
-        'BIGINT': int,
-        'VARCHAR': str,
-        'FLOAT': float,
-        'DECIMAL': float,
-        'NUMERIC': float,
-        'DATETIME': datetime,
-        'DATE':  datetime,
-        'BOOLEAN': bool
-
+        "INTEGER": int,
+        "BIGINT": int,
+        "VARCHAR": str,
+        "FLOAT": float,
+        "DECIMAL": float,
+        "NUMERIC": float,
+        "DATETIME": datetime,
+        "DATE": datetime,
+        "BOOLEAN": bool,
     }
     column_names = {}
     hashed_indexes = []
     for num, column in enumerate(app_db.tables[model].columns):
         if _hash in column.name:
-            column_names[column.name.split(_hash)[0]] = {'type': 'HASH',
-                                                         'nullable': column.nullable}
+            column_names[column.name.split(_hash)[0]] = {
+                "type": "HASH",
+                "nullable": column.nullable,
+            }
             hashed_indexes.append(num)
         else:
-            db_type = str(column.type).split('(')[0]
-            column_names[column.name] = {'type': types_map.get(db_type, str),
-                                         'nullable': column.nullable}
+            db_type = str(column.type).split("(")[0]
+            column_names[column.name] = {
+                "type": types_map.get(db_type, str),
+                "nullable": column.nullable,
+            }
     return column_names, hashed_indexes
 
 
@@ -132,7 +134,9 @@ async def admin_model_add(request, model):
 @auth.login_required
 async def admin_model_add_submit(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
-    required = [key for key, value in columns_data.items() if value['nullable'] is False]
+    required = [
+        key for key, value in columns_data.items() if value["nullable"] is False
+    ]
     columns_names = list(columns_data.keys())
     request_params = {key: request.form[key][0] for key in request.form}
     not_filled = [x for x in required if x not in request_params]
@@ -141,14 +145,19 @@ async def admin_model_add_submit(request, model):
     else:
         if hashed_indexes:
             for hashed_index in hashed_indexes:
-                request_params[columns_names[hashed_index]+'_hash'] = hash_method(
-                    request_params[columns_names[hashed_index]])
+                request_params[columns_names[hashed_index] + "_hash"] = hash_method(
+                    request_params[columns_names[hashed_index]]
+                )
                 del request_params[columns_names[hashed_index]]
         try:
             for param in request_params:
-                if '_hash' not in param and not isinstance(request_params[param], columns_data[param]['type']):
+                if "_hash" not in param and not isinstance(
+                    request_params[param], columns_data[param]["type"]
+                ):
                     if columns_data[param] is not datetime:
-                        request_params[param] = columns_data[param]['type'](request_params[param])
+                        request_params[param] = columns_data[param]["type"](
+                            request_params[param]
+                        )
                     else:
                         # todo for date
                         request_params[param] = exatract_time(request_params[param])
@@ -159,7 +168,9 @@ async def admin_model_add_submit(request, model):
         except asyncpg.exceptions.ForeignKeyViolationError as e:
             request["flash"](e.args, "error")
         except asyncpg.exceptions.UniqueViolationError:
-            request["flash"](f"{model.capitalize()} with such id already exists", "error")
+            request["flash"](
+                f"{model.capitalize()} with such id already exists", "error"
+            )
         except asyncpg.exceptions.NotNullViolationError as e:
             column = e.args[0].split("column")[1].split("violates")[0]
             request["flash"](f"Field {column} cannot be null", "error")
@@ -212,27 +223,18 @@ def handle_no_auth(request):
 @admin.route("/<model>/delete", methods=["POST"])
 @auth.login_required
 async def admin_model_delete(request, model):
-    columns_names = [x.name for x in app_db.tables[model].columns]
+    """ route for delete item per row """
     request_params = {key: request.form[key][0] for key in request.form}
-    # TODO: not all objects can have id
     await models[model].delete.where(
-        models[model].id == request_params["action_id"]
+        models[model].id == request_params["id"]
     ).gino.status()
-    request["flash"]("Object was added", "success")
-    return jinja.render(
-        "model_view.html",
-        request,
-        model=model,
-        objects=app_db.tables,
-        columns_names=columns_names,
-        url_prefix=url_prefix,
-    )
+    request["flash"](f"Object with {request_params['id']} was deleted", "success")
+    return response.redirect(f"/admin/{model}")
 
 
 @admin.route("/<model>/delete_all", methods=["POST"])
 @auth.login_required
 async def admin_model_delete_all(request, model):
-    columns_names = [x.name for x in app_db.tables[model].columns]
     try:
         await models[model].delete.where(True).gino.status()
         request["flash"]("Object was added", "success")
@@ -256,10 +258,7 @@ async def login(request):
     else:
         request["flash"]("Password or login is incorrect", "error")
     return jinja.render(
-        "login.html",
-        request,
-        objects=app_db.tables,
-        url_prefix=url_prefix,
+        "login.html", request, objects=app_db.tables, url_prefix=url_prefix,
     )
 
 
@@ -269,7 +268,9 @@ async def halt_response(request, response):
     return response
 
 
-def add_admin_panel(app: Sanic, db: Gino, gino_models: List, custom_hash_method: Callable = None):
+def add_admin_panel(
+    app: Sanic, db: Gino, gino_models: List, custom_hash_method: Callable = None
+):
     # todo need to change this to object params
     global app_db, models, config, hash_method
     models = {model.__tablename__: model for model in gino_models}

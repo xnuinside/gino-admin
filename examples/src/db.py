@@ -6,8 +6,8 @@ db = Gino()
 class GiftCard(db.Model):
     __tablename__ = "gifts"
     # class to test different types support
+    id = db.Column(db.String(), db.ForeignKey("users.id"))
     card_number = db.Column(db.BigInteger(), unique=True, primary_key=True)
-    user_id = db.Column(db.String(), db.ForeignKey("users.user_id"))
     balance = db.Column(db.Integer(), default=0)
     rate = db.Column(db.Numeric())
     rate_3 = db.Column(db.Float())
@@ -20,7 +20,7 @@ class User(db.Model):
 
     __tablename__ = "users"
 
-    user_id = db.Column(db.String(24), unique=True, primary_key=True)
+    id = db.Column(db.String(), unique=True, primary_key=True)
     password_hash = db.Column(db.String(), nullable=False)
     email = db.Column(db.String(24))
     name = db.Column(db.String())
@@ -47,10 +47,10 @@ class City(db.Model):
     location = db.Column(db.String())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # to init db
     import sqlalchemy as sa
-    db_engine = sa.create_engine('postgresql://gino:gino@localhost:5432/gino')
+
+    db_engine = sa.create_engine("postgresql://gino:gino@localhost:5432/gino")
     db.create_all(bind=db_engine)
     db_engine.dispose()
-

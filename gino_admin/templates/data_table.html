@@ -1,0 +1,37 @@
+<!-- table for model view -->
+
+
+<table id="table_id" class="display ui compact sortable celled definition table">
+    <!-- header row -->
+    <thead class="full-width">
+        <tr>{% for column_name  in columns %}
+            <th>{{column_name}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <!-- body with data rows -->
+    <tbody>
+    {% for row in model_data %}
+        <tr>
+            <!-- columns with data -->
+            {% for field in row %}
+                <td>{{field}}</td>
+            {% endfor %}
+
+            <!-- column controls(edit, delete and etc.) -->
+            <td>
+                <form action="{{url_prefix}}/{{model.lower()}}/delete/" method="post">
+                    <button type="submit" class="ui right floated small primary icon button">
+                        <i class="edit outline icon"></i>
+                    </button>
+                    <input type="hidden" name="id" value="{{row.id}}"\>
+                    <button type="submit" class="ui right floated small grey icon button">
+                        <i class="trash icon"></i>
+                    </button>
+                </form>
+            </td>
+        </tr>
+{% endfor %}
+    </tbody>
+</table>
