@@ -57,19 +57,19 @@ In process:
 Screens:
 --------
 
-.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/auth.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
   :width: 250
   :alt: Simple auth
 
-.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/add_item.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
   :width: 250
   :alt: Add item
 
-.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/table_view.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view.png
   :width: 250
   :alt: Table view
 
-.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/csv_upload.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/csv_upload.png
   :width: 250
   :alt: Add rows from CSV upload
 
