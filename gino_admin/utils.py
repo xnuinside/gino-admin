@@ -3,11 +3,14 @@ import os
 import re
 from typing import Any, Dict, List, Text
 from unicodedata import normalize
+from uuid import uuid4
 
 import aiofiles
+from passlib.hash import pbkdf2_sha256
 
 from gino_admin.config import Config
 
+salt = uuid4().hex
 cfg = Config
 
 _windows_device_files = (
@@ -156,3 +159,8 @@ def extract_columns_data(model_id: Text):
                 "nullable": column.nullable,
             }
     return column_names, hashed_indexes
+
+
+def generate_token(ip: Text):
+    """ generate session token based on user name and salt """
+    return pbkdf2_sha256.encrypt(salt + ip)

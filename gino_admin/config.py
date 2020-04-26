@@ -1,3 +1,4 @@
+from expiring_dict import ExpiringDict
 from passlib.hash import pbkdf2_sha256
 
 
@@ -15,7 +16,7 @@ class Config:
     app = App
     hash_method = pbkdf2_sha256.encrypt
     models = {}
-    session = {}
+    sessions = ExpiringDict(ttl=3600)
     # upload from csv config
     upload_dir = "files/"
     max_file_size = 10485760

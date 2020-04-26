@@ -9,26 +9,20 @@ from jinja2 import FileSystemLoader
 from sanic import Blueprint, Sanic, response
 from sanic_jinja2 import SanicJinja2
 
-from gino_admin import utils
-from gino_admin.auth import auth, validate_login
+from gino_admin import auth, utils
 from gino_admin.utils import cfg, extract_columns_data
 
 loader = FileSystemLoader(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 )
-
 jinja = SanicJinja2(loader=loader)
 
+cfg.jinja = jinja
 admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
 
 
-@admin.middleware("request")
-async def add_session(request):
-    request["session"] = cfg.session
-
-
 @admin.route("/")
-@auth.login_required
+@auth.token_validation()
 @jinja.template("index.html")  # decorator method is staticmethod
 async def bp_root(request):
     return jinja.render(
@@ -41,7 +35,7 @@ async def bp_root(request):
 
 
 @admin.route("/<model>", methods=["GET"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
     columns_names = list(columns_data.keys())
@@ -61,7 +55,7 @@ async def admin_model(request, model):
 
 
 @admin.route("/<model>/add", methods=["GET"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model_add(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
     columns_names = list(columns_data.keys())
@@ -80,7 +74,7 @@ async def admin_model_add(request, model):
 
 
 @admin.route("/<model>/add", methods=["POST"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model_add_submit(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
     required = [
@@ -124,7 +118,7 @@ async def admin_model_add_submit(request, model):
 
 
 @admin.route("/<model_id>/<obj_id>/edit", methods=["GET"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model_edit(request, model_id, obj_id):
     columns_data, hashed_indexes = extract_columns_data(model_id)
     columns_names = list(columns_data.keys())
@@ -144,7 +138,7 @@ async def admin_model_edit(request, model_id, obj_id):
 
 
 @admin.route("/<model_id>/<obj_id>/edit", methods=["POST"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model_edit_post(request, model_id, obj_id):
     columns_data, hashed_indexes = extract_columns_data(model_id)
     columns_names = list(columns_data.keys())
@@ -184,7 +178,7 @@ async def admin_model_edit_post(request, model_id, obj_id):
 
 
 @admin.route("/logout")
-@auth.login_required
+@auth.token_validation()
 async def logout(request):
     auth.logout_user(request)
     return response.redirect("login")
@@ -195,7 +189,7 @@ def handle_no_auth(request):
 
 
 @admin.route("/<model>/delete", methods=["POST"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model_delete(request, model):
     """ route for delete item per row """
     request_params = {key: request.form[key][0] for key in request.form}
@@ -207,7 +201,7 @@ async def admin_model_delete(request, model):
 
 
 @admin.route("/<model>/delete_all", methods=["POST"])
-@auth.login_required
+@auth.token_validation()
 async def admin_model_delete_all(request, model):
     try:
         await cfg.models[model].delete.where(True).gino.status()
@@ -218,7 +212,7 @@ async def admin_model_delete_all(request, model):
 
 
 @admin.route("/<model_id>/upload/", methods=["POST"])
-@auth.login_required
+@auth.token_validation()
 async def file_upload(request, model_id):
     if not os.path.exists(cfg.upload_dir):
         os.makedirs(cfg.upload_dir)
@@ -243,7 +237,6 @@ async def file_upload(request, model_id):
             try:
                 for num, row in enumerate(csv_reader):
                     # row variable is a list that represents a row in csv
-                    print(row)
                     if num == 0:
                         columns_data, hashed_indexes = extract_columns_data(model_id)
                         columns_names = list(columns_data.keys())
@@ -251,8 +244,6 @@ async def file_upload(request, model_id):
                         hashed_columns_names = [
                             columns_names[index] for index in hashed_indexes
                         ]
-                        print(header)
-                        print(hashed_columns_names)
                         for _num, name in enumerate(header):
                             if name in hashed_columns_names:
                                 header[_num] = name + "_hash"
@@ -286,20 +277,22 @@ async def file_upload(request, model_id):
 
 @admin.route("/login", methods=["GET", "POST"])
 async def login(request):
-    _login = validate_login(request, cfg.app.config)
+    _login = auth.validate_login(request, cfg.app.config)
     if _login:
-        return response.redirect("/")
+        _token = utils.generate_token(request.ip)
+        cfg.sessions[_token] = request.headers["User-Agent"]
+        request.cookies["auth-token"] = _token
+        request["session"] = {"_auth": True}
+        _response = jinja.render(
+            "index.html", request, objects=cfg.app.db.tables, url_prefix=cfg.URL_PREFIX
+        )
+        _response.cookies["auth-token"] = _token
+        return _response
     else:
         request["flash"]("Password or login is incorrect", "error")
     return jinja.render(
         "login.html", request, objects=cfg.app.db.tables, url_prefix=cfg.URL_PREFIX,
     )
-
-
-@admin.middleware("response")
-async def halt_response(request, response):
-    # catch response and send data for menu
-    return response
 
 
 def add_admin_panel(
@@ -313,7 +306,6 @@ def add_admin_panel(
         cfg.hash_method = custom_hash_method
     try:
         app.config.AUTH_LOGIN_ENDPOINT = "admin.login"
-        auth.setup(app)
     except RuntimeError:
         pass
     jinja.init_app(app)

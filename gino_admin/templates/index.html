@@ -5,43 +5,14 @@
 {% block body %}
 <h1 class="ui header">Welcome to Sanic-Gino Admin Panel</h1>
 <br><br>
-<div class="ui cards">
-  <div class="card">
-    <div class="content">
-      <div class="header">Set DB to state #1 </div>
-      <div class="description">
-        Some description
-      </div>
-    </div>
-    <div class="ui bottom attached button">
+
+{% for key, value in objects.items() %}
+
+    <button class="ui labeled icon button">
+      <a href="{{url_prefix}}/{{key.lower()}}" class="item">
       <i class="database icon"></i>
-      Set state
-    </div>
-  </div>
-  <div class="card">
-    <div class="content">
-      <div class="header">Set DB to state #3 </div>
-      <div class="description">
-        Some description
-      </div>
-    </div>
-    <div class="ui bottom attached button">
-      <i class="database icon"></i>
-      Set state
-    </div>
-  </div>
-  <div class="card">
-    <div class="content">
-      <div class="header">Set DB to state #3 </div>
-      <div class="description">
-        Some description
-      </div>
-    </div>
-    <div class="ui bottom attached button">
-      <i class="database icon"></i>
-      Set state
-    </div>
-  </div>
-</div>
+      {{key.capitalize()}} model </a>
+    </button>
+        {% endfor %}
 
 {% endblock %}
