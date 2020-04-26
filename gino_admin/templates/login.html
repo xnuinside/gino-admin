@@ -3,9 +3,6 @@
 {% block title %}Index Page{% endblock %}
 
 {% block body %}
-{% for cat, msg in get_flashed_messages(with_categories=true) %}
-      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-{% endfor %}
 <div class="ui grid">
     <div class="six wide column">
 <h2>Please sign in, you can try:</h2>

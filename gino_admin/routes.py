@@ -1,4 +1,6 @@
 from typing import List, Callable
+
+from datetime import datetime
 import os
 import asyncpg
 
@@ -30,20 +32,45 @@ session = {}
 hash_method = pbkdf2_sha256.encrypt
 
 
-def extract_column_names(model: Gino.Model):
+def exatract_date(date_str):
+
+    date_object = datetime.strptime(date_str, '%m-%d-%y')
+    return date_object
+
+
+def exatract_time(datetime_str):
+
+    datetime_object = datetime.strptime(datetime_str, '%m-%d-%y %H:%M:%S')
+    return datetime_object
+
+
+def extract_columns_data(model: Gino.Model):
 
     _hash = '_hash'
+    types_map = {
+        'INTEGER': int,
+        'BIGINT': int,
+        'VARCHAR': str,
+        'FLOAT': float,
+        'DECIMAL': float,
+        'NUMERIC': float,
+        'DATETIME': datetime,
+        'DATE':  datetime,
+        'BOOLEAN': bool
 
-    column_names = []
+    }
+    column_names = {}
     hashed_indexes = []
     for num, column in enumerate(app_db.tables[model].columns):
         if _hash in column.name:
-            column_names.append(column.name.split(_hash)[0])
+            column_names[column.name.split(_hash)[0]] = {'type': 'HASH',
+                                                         'nullable': column.nullable}
             hashed_indexes.append(num)
         else:
-            column_names.append(column.name)
+            db_type = str(column.type).split('(')[0]
+            column_names[column.name] = {'type': types_map.get(db_type, str),
+                                         'nullable': column.nullable}
     return column_names, hashed_indexes
-
 
 
 @admin.middleware("request")
@@ -67,11 +94,11 @@ async def bp_root(request):
 @admin.route("/<model>", methods=["GET"])
 @auth.login_required
 async def admin_model(request, model):
-    columns_names, hashed_indexes = extract_column_names(model)
+    columns_data, hashed_indexes = extract_columns_data(model)
     model = app_db.tables[model]
     query = app_db.select([model])
     rows = await query.gino.all()
-
+    columns_names = list(columns_data.keys())
     response = jinja.render(
         "model_view.html",
         request,
@@ -87,7 +114,9 @@ async def admin_model(request, model):
 @admin.route("/<model>/add", methods=["GET"])
 @auth.login_required
 async def admin_model_add(request, model):
-    columns_names, hashed_indexes = extract_column_names(model)
+    columns_data, hashed_indexes = extract_columns_data(model)
+
+    columns_names = list(columns_data.keys())
     response = jinja.render(
         "add_form.html",
         request,
@@ -102,21 +131,38 @@ async def admin_model_add(request, model):
 @admin.route("/<model>/add", methods=["POST"])
 @auth.login_required
 async def admin_model_add_submit(request, model):
-    columns_names, hashed_indexes = extract_column_names(model)
+    columns_data, hashed_indexes = extract_columns_data(model)
+    required = [key for key, value in columns_data.items() if value['nullable'] is False]
+    columns_names = list(columns_data.keys())
     request_params = {key: request.form[key][0] for key in request.form}
-    if hashed_indexes:
-        for hashed_index in hashed_indexes:
-            request_params[columns_names[hashed_index]+'_hash'] = hash_method(
-                request_params[columns_names[hashed_index]])
-            del request_params[columns_names[hashed_index]]
-    try:
-        await models[model].create(**request_params)
-        request["flash"]("Object was added", "success")
-    except asyncpg.exceptions.UniqueViolationError:
-        request["flash"]("User with such id already exists", "error")
-    except asyncpg.exceptions.NotNullViolationError as e:
-        column = e.args[0].split("column")[1].split("violates")[0]
-        request["flash"](f"Field {column} cannot be null", "error")
+    not_filled = [x for x in required if x not in request_params]
+    if not_filled:
+        request["flash"](f"Fields {not_filled} required. Please fill it", "error")
+    else:
+        if hashed_indexes:
+            for hashed_index in hashed_indexes:
+                request_params[columns_names[hashed_index]+'_hash'] = hash_method(
+                    request_params[columns_names[hashed_index]])
+                del request_params[columns_names[hashed_index]]
+        try:
+            for param in request_params:
+                if '_hash' not in param and not isinstance(request_params[param], columns_data[param]['type']):
+                    if columns_data[param] is not datetime:
+                        request_params[param] = columns_data[param]['type'](request_params[param])
+                    else:
+                        # todo for date
+                        request_params[param] = exatract_time(request_params[param])
+            await models[model].create(**request_params)
+            request["flash"]("Object was added", "success")
+        except ValueError as e:
+            request["flash"](e.args, "error")
+        except asyncpg.exceptions.ForeignKeyViolationError as e:
+            request["flash"](e.args, "error")
+        except asyncpg.exceptions.UniqueViolationError:
+            request["flash"](f"{model.capitalize()} with such id already exists", "error")
+        except asyncpg.exceptions.NotNullViolationError as e:
+            column = e.args[0].split("column")[1].split("violates")[0]
+            request["flash"](f"Field {column} cannot be null", "error")
 
     return jinja.render(
         "add_form.html",
@@ -187,16 +233,12 @@ async def admin_model_delete(request, model):
 @auth.login_required
 async def admin_model_delete_all(request, model):
     columns_names = [x.name for x in app_db.tables[model].columns]
-    await models[model].delete.where(True).gino.status()
-    request["flash"]("Object was added", "success")
-    return jinja.render(
-        "model_view.html",
-        request,
-        model=model,
-        objects=app_db.tables,
-        columns_names=columns_names,
-        url_prefix=url_prefix,
-    )
+    try:
+        await models[model].delete.where(True).gino.status()
+        request["flash"]("Object was added", "success")
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
+        request["flash"](e.args, "error")
+    return response.redirect(f"/admin/{model}")
 
 
 @admin.route("/<model>/<tag>", methods=["POST"])

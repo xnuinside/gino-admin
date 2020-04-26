@@ -1,3 +1,5 @@
+All steps please do inside virtualenv.
+
 First of all run instance of PostgreSQL - use for this example-docker-compose.yml:
 
     docker-compose -f example-docker-compose.yml up --build postgres
@@ -5,6 +7,7 @@ First of all run instance of PostgreSQL - use for this example-docker-compose.ym
 Do:
 
     pip install gino_admin
+    pip install -r examples/requirements.txt
 
 After in new window run example/src/app.py:
 

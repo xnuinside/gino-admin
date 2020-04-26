@@ -1,5 +1,5 @@
 from sanic import Sanic, response
-from db import db, User, Place, City
+from db import db, User, Place, City, GiftCard
 from gino_admin import add_admin_panel
 
 from passlib.hash import pbkdf2_sha256
@@ -28,7 +28,7 @@ def custom_hash_method(*args, **kwargs):
     return pbkdf2_sha256.hash(*args, **kwargs)
 
 
-add_admin_panel(app, db, [User, Place, City], custom_hash_method=custom_hash_method)
+add_admin_panel(app, db, [User, Place, City, GiftCard], custom_hash_method=custom_hash_method)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

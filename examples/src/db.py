@@ -1,7 +1,19 @@
 from gino.ext.sanic import Gino
-from sqlalchemy.orm import validates
 
 db = Gino()
+
+
+class GiftCard(db.Model):
+    __tablename__ = "gifts"
+    # class to test different types support
+    card_number = db.Column(db.BigInteger(), unique=True, primary_key=True)
+    user_id = db.Column(db.String(), db.ForeignKey("users.user_id"))
+    balance = db.Column(db.Integer(), default=0)
+    rate = db.Column(db.Numeric())
+    rate_3 = db.Column(db.Float())
+    created_at = db.Column(db.DateTime())
+    magic_date = db.Column(db.Date())
+    active = db.Column(db.Boolean())
 
 
 class User(db.Model):
@@ -41,3 +53,4 @@ if __name__ == '__main__':
     db_engine = sa.create_engine('postgresql://gino:gino@localhost:5432/gino')
     db.create_all(bind=db_engine)
     db_engine.dispose()
+

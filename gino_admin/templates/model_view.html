@@ -14,25 +14,6 @@
 </p>
 
 
-<script>
-$(document).ready( function () {
-    $('#table_id').DataTable();
-} );
-$(function(){
-	$("#delete_all").click(function(){
-		$(".ui.basic.modal").modal('show');
-	});
-	$(".ui.basic.modal").modal({
-		closable: true
-	});
-});
-document.getElementById('buttonid').addEventListener('click', openDialog);
-
-function openDialog() {
-  document.getElementById('fileid').click();
-}
-
-</script>
 <table id="table_id" class="display ui compact sortable celled definition table">
     <thead class="full-width">
         <tr>{% for column_name  in columns %}
@@ -59,7 +40,7 @@ function openDialog() {
 {% endfor %}
     </tbody>
 </table>
-
+<!-- delete modal -->
 <div class="ui basic modal">
   <div class="ui icon header">
     <i class="trash icon"></i>
@@ -72,11 +53,13 @@ function openDialog() {
     <div class="ui red basic cancel inverted button">
       <i class="remove icon"></i>
       No
-    </div>
-    <div class="ui red ok inverted button">
-      <i class="checkmark icon"></i>
-      Yes
-    </div>
+    </div><br>
+        <form action="{{url_prefix}}/{{model.lower()}}/delete_all/" method="post">
+
+        <button id='delete' class="ui red ok inverted button" type='submit'>
+            <i class="checkmark icon"></i> Yes</button>
+
+        </form>
   </div>
 </div>
 
@@ -90,4 +73,24 @@ function openDialog() {
         </div>
 <a href=class="item"></a>
 
+
+<script>
+$(document).ready( function () {
+    $('#table_id').DataTable();
+} );
+$(function(){
+	$("#delete_all").click(function(){
+		$(".ui.basic.modal").modal('show');
+	});
+	$(".ui.basic.modal").modal({
+		closable: true
+	});
+});
+document.getElementById('buttonid').addEventListener('click', openDialog);
+
+function openDialog() {
+  document.getElementById('fileid').click();
+}
+
+</script>
 {% endblock %}
