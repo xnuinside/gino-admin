@@ -12,14 +12,16 @@
   <i class="right angle icon divider"></i>
   <a class="section" href="{{url_prefix}}/{{model}}">{{model.capitalize()}}</a>
   <i class="right angle icon divider"></i>
-  <div class="active section">Add {{model.capitalize()}}</div>
+  <div class="active section">{% if add %} Add {{model.capitalize()}} {% else %}
+    Edit {{model.capitalize()}} {% endif %}</div>
 </div>
 
-<form class="ui form" action="{{url_prefix}}/{{model}}/add" method="post">
+<form class="ui form" action="{{url}}" method="post">
 {% for column in columns_names %}
   <div class="field">
     <label>{{column}}</label>
-    <input type="text" name="{{column}}" placeholder="{{column}}">
+    <input type="text" name="{{column}}" placeholder="{{column if add else obj.get(column)}}"
+           value="{{'' if add else '' if column == 'password' else obj.get(column)}}">
   </div>
   {% endfor %}
   <button class="ui button" type="submit">Submit</button>

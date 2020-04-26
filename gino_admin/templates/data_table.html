@@ -7,6 +7,7 @@
         <tr>{% for column_name  in columns %}
             <th>{{column_name}}</th>
             {% endfor %}
+            <th></th>
         </tr>
     </thead>
 
@@ -21,15 +22,15 @@
 
             <!-- column controls(edit, delete and etc.) -->
             <td>
+                <input type="hidden" name="id" value="{{row.id}}">
+                   <a href="{{url_prefix}}/{{model.lower()}}/{{row.id}}/edit/" class="ui right  small primary icon button">
+                       <i class="edit outline icon white"></i></a>
                 <form action="{{url_prefix}}/{{model.lower()}}/delete/" method="post">
-                    <button type="submit" class="ui right floated small primary icon button">
-                        <i class="edit outline icon"></i>
-                    </button>
-                    <input type="hidden" name="id" value="{{row.id}}"\>
-                    <button type="submit" class="ui right floated small grey icon button">
-                        <i class="trash icon"></i>
-                    </button>
-                </form>
+                <input type="hidden" name="id" value="{{row.id}}">
+                <button type="submit" class="ui right  small grey icon button">
+                    <i class="trash icon"></i>
+                </button>
+            </form>
             </td>
         </tr>
 {% endfor %}

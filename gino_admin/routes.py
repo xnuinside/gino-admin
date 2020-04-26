@@ -5,11 +5,11 @@ from typing import Callable, List
 import asyncpg
 from gino.ext.sanic import Gino
 from jinja2 import FileSystemLoader
-from passlib.hash import pbkdf2_sha256
 from sanic import Blueprint, Sanic, response
 from sanic_jinja2 import SanicJinja2
 
 from gino_admin.auth import auth, validate_login
+from gino_admin.utils import hash_method, reverse_hash_names, serialize_dict
 
 loader = FileSystemLoader(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
@@ -17,18 +17,27 @@ loader = FileSystemLoader(
 
 jinja = SanicJinja2(loader=loader)
 
-models = {}
-config = {}
-app_db = None
 
-url_prefix = "/admin"
+class App:
+    """ class to store links to main app data app.config and DB"""
 
-admin = Blueprint("admin", url_prefix=url_prefix)
+    config = {}
+    db = None
 
 
-session = {}
+class Config:
+    """ Gino Admin Panel settings """
 
-hash_method = pbkdf2_sha256.encrypt
+    URL_PREFIX = "/admin"
+    hash_method = hash_method
+    models = {}
+    session = {}
+    app = App
+
+
+cfg = Config
+
+admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
 
 
 def exatract_date(date_str):
@@ -59,7 +68,7 @@ def extract_columns_data(model: Gino.Model):
     }
     column_names = {}
     hashed_indexes = []
-    for num, column in enumerate(app_db.tables[model].columns):
+    for num, column in enumerate(cfg.app.db.tables[model].columns):
         if _hash in column.name:
             column_names[column.name.split(_hash)[0]] = {
                 "type": "HASH",
@@ -77,7 +86,7 @@ def extract_columns_data(model: Gino.Model):
 
 @admin.middleware("request")
 async def add_session(request):
-    request["session"] = session
+    request["session"] = cfg.session
 
 
 @admin.route("/")
@@ -88,8 +97,8 @@ async def bp_root(request):
         "index.html",
         request,
         greetings="Hello, sanic!",
-        objects=app_db.tables,
-        url_prefix=url_prefix,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
     )
 
 
@@ -97,8 +106,8 @@ async def bp_root(request):
 @auth.login_required
 async def admin_model(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
-    model = app_db.tables[model]
-    query = app_db.select([model])
+    model = cfg.app.db.tables[model]
+    query = cfg.app.db.select([model])
     rows = await query.gino.all()
     columns_names = list(columns_data.keys())
     response = jinja.render(
@@ -107,8 +116,8 @@ async def admin_model(request, model):
         model=model.name,
         columns=columns_names,
         model_data=rows,
-        objects=app_db.tables,
-        url_prefix=url_prefix,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
     )
     return response
 
@@ -117,15 +126,16 @@ async def admin_model(request, model):
 @auth.login_required
 async def admin_model_add(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
-
     columns_names = list(columns_data.keys())
+
     response = jinja.render(
         "add_form.html",
         request,
         model=model,
+        add=True,
         columns_names=columns_names,
-        objects=app_db.tables,
-        url_prefix=url_prefix,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
     )
     return response
 
@@ -144,11 +154,9 @@ async def admin_model_add_submit(request, model):
         request["flash"](f"Fields {not_filled} required. Please fill it", "error")
     else:
         if hashed_indexes:
-            for hashed_index in hashed_indexes:
-                request_params[columns_names[hashed_index] + "_hash"] = hash_method(
-                    request_params[columns_names[hashed_index]]
-                )
-                del request_params[columns_names[hashed_index]]
+            request_params = reverse_hash_names(
+                hashed_indexes, columns_names, request_params
+            )
         try:
             for param in request_params:
                 if "_hash" not in param and not isinstance(
@@ -161,7 +169,7 @@ async def admin_model_add_submit(request, model):
                     else:
                         # todo for date
                         request_params[param] = exatract_time(request_params[param])
-            await models[model].create(**request_params)
+            await cfg.models[model].create(**request_params)
             request["flash"]("Object was added", "success")
         except ValueError as e:
             request["flash"](e.args, "error")
@@ -179,33 +187,62 @@ async def admin_model_add_submit(request, model):
         "add_form.html",
         request,
         model=model,
-        objects=app_db.tables,
+        objects=cfg.app.db.tables,
+        obj=None,
         columns_names=columns_names,
-        url_prefix=url_prefix,
+        url_prefix=cfg.URL_PREFIX,
     )
 
 
-@admin.route("/<model>/upload", methods=["POST"])
+@admin.route("/<model_id>/<obj_id>/edit", methods=["GET"])
 @auth.login_required
-async def admin_model_edit(request, model):
-    columns_names = [x.name for x in app_db.tables[model].columns]
-    request_params = {key: request.form[key][0] for key in request.form}
-    try:
-        await models[model].create(**request_params)
-        request["flash"]("Object was added", "success")
-    except asyncpg.exceptions.UniqueViolationError:
-        request["flash"]("User with such id already exists", "error")
-    except asyncpg.exceptions.NotNullViolationError as e:
-        column = e.args[0].split("column")[1].split("violates")[0]
-        request["flash"](f"Field {column} cannot be null", "error")
-
+async def admin_model_edit(request, model_id, obj_id):
+    columns_data, hashed_indexes = extract_columns_data(model_id)
+    columns_names = list(columns_data.keys())
+    model = cfg.models[model_id]
+    obj = serialize_dict((await model.get(obj_id)).to_dict())
     return jinja.render(
         "add_form.html",
         request,
-        model=model,
-        objects=app_db.tables,
+        model=model_id,
+        obj=obj,
+        objects=cfg.app.db.tables,
         columns_names=columns_names,
-        url_prefix=url_prefix,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/<model_id>/<obj_id>/edit", methods=["POST"])
+@auth.login_required
+async def admin_model_edit_post(request, model_id, obj_id):
+    columns_data, hashed_indexes = extract_columns_data(model_id)
+    columns_names = list(columns_data.keys())
+    model = cfg.models[model_id]
+    obj = await model.get(obj_id)
+    request_params = {key: request.form[key][0] for key in request.form}
+    if hashed_indexes:
+        request_params = reverse_hash_names(
+            hashed_indexes, columns_names, request_params
+        )
+    try:
+        await obj.update(**request_params).apply()
+        obj = obj.to_dict()
+    except asyncpg.exceptions.UniqueViolationError:
+        request["flash"](
+            f"{model_id.capitalize()} with such id already exists", "error"
+        )
+    except asyncpg.exceptions.NotNullViolationError as e:
+        column = e.args[0].split("column")[1].split("violates")[0]
+        request["flash"](f"Field {column} cannot be null", "error")
+    return jinja.render(
+        "add_form.html",
+        request,
+        model=model_id,
+        obj=obj,
+        objects=cfg.app.db.tables,
+        columns_names=columns_names,
+        url_prefix=cfg.URL_PREFIX,
+        url=f"{cfg.URL_PREFIX}/{model}/{obj_id}/edit",
     )
 
 
@@ -225,8 +262,8 @@ def handle_no_auth(request):
 async def admin_model_delete(request, model):
     """ route for delete item per row """
     request_params = {key: request.form[key][0] for key in request.form}
-    await models[model].delete.where(
-        models[model].id == request_params["id"]
+    await cfg.models[model].delete.where(
+        cfg.models[model].id == request_params["id"]
     ).gino.status()
     request["flash"](f"Object with {request_params['id']} was deleted", "success")
     return response.redirect(f"/admin/{model}")
@@ -236,7 +273,7 @@ async def admin_model_delete(request, model):
 @auth.login_required
 async def admin_model_delete_all(request, model):
     try:
-        await models[model].delete.where(True).gino.status()
+        await cfg.models[model].delete.where(True).gino.status()
         request["flash"]("Object was added", "success")
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         request["flash"](e.args, "error")
@@ -252,13 +289,13 @@ async def admin_model_update(request, model, tag):
 
 @admin.route("/login", methods=["GET", "POST"])
 async def login(request):
-    _login = validate_login(request, config)
+    _login = validate_login(request, cfg.app.config)
     if _login:
         return response.redirect("/")
     else:
         request["flash"]("Password or login is incorrect", "error")
     return jinja.render(
-        "login.html", request, objects=app_db.tables, url_prefix=url_prefix,
+        "login.html", request, objects=cfg.app.db.tables, url_prefix=cfg.URL_PREFIX,
     )
 
 
@@ -271,17 +308,16 @@ async def halt_response(request, response):
 def add_admin_panel(
     app: Sanic, db: Gino, gino_models: List, custom_hash_method: Callable = None
 ):
-    # todo need to change this to object params
-    global app_db, models, config, hash_method
-    models = {model.__tablename__: model for model in gino_models}
-    app_db = db
+    """ init admin panel and configure """
+    cfg.models = {model.__tablename__: model for model in gino_models}
+    cfg.app.db = db
     app.blueprint(admin)
     if custom_hash_method:
-        hash_method = custom_hash_method
+        cfg.hash_method = custom_hash_method
     try:
         app.config.AUTH_LOGIN_ENDPOINT = "admin.login"
         auth.setup(app)
     except RuntimeError:
         pass
     jinja.init_app(app)
-    config = app.config
+    cfg.app.config = app.config
