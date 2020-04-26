@@ -6,8 +6,8 @@ db = Gino()
 class GiftCard(db.Model):
     __tablename__ = "gifts"
     # class to test different types support
-    id = db.Column(db.String(), db.ForeignKey("users.id"))
-    card_number = db.Column(db.BigInteger(), unique=True, primary_key=True)
+    id = db.Column(db.BigInteger(), unique=True, primary_key=True)
+    user_id = db.Column(db.String(), db.ForeignKey("users.id"))
     balance = db.Column(db.Integer(), default=0)
     rate = db.Column(db.Numeric())
     rate_3 = db.Column(db.Float())

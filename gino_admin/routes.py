@@ -1,4 +1,5 @@
 import os
+from csv import reader
 from datetime import datetime
 from typing import Callable, List
 
@@ -8,8 +9,9 @@ from jinja2 import FileSystemLoader
 from sanic import Blueprint, Sanic, response
 from sanic_jinja2 import SanicJinja2
 
+from gino_admin import utils
 from gino_admin.auth import auth, validate_login
-from gino_admin.utils import hash_method, reverse_hash_names, serialize_dict
+from gino_admin.utils import cfg, extract_columns_data
 
 loader = FileSystemLoader(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
@@ -17,71 +19,7 @@ loader = FileSystemLoader(
 
 jinja = SanicJinja2(loader=loader)
 
-
-class App:
-    """ class to store links to main app data app.config and DB"""
-
-    config = {}
-    db = None
-
-
-class Config:
-    """ Gino Admin Panel settings """
-
-    URL_PREFIX = "/admin"
-    hash_method = hash_method
-    models = {}
-    session = {}
-    app = App
-
-
-cfg = Config
-
 admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
-
-
-def exatract_date(date_str):
-
-    date_object = datetime.strptime(date_str, "%m-%d-%y")
-    return date_object
-
-
-def exatract_time(datetime_str):
-
-    datetime_object = datetime.strptime(datetime_str, "%m-%d-%y %H:%M:%S")
-    return datetime_object
-
-
-def extract_columns_data(model: Gino.Model):
-
-    _hash = "_hash"
-    types_map = {
-        "INTEGER": int,
-        "BIGINT": int,
-        "VARCHAR": str,
-        "FLOAT": float,
-        "DECIMAL": float,
-        "NUMERIC": float,
-        "DATETIME": datetime,
-        "DATE": datetime,
-        "BOOLEAN": bool,
-    }
-    column_names = {}
-    hashed_indexes = []
-    for num, column in enumerate(cfg.app.db.tables[model].columns):
-        if _hash in column.name:
-            column_names[column.name.split(_hash)[0]] = {
-                "type": "HASH",
-                "nullable": column.nullable,
-            }
-            hashed_indexes.append(num)
-        else:
-            db_type = str(column.type).split("(")[0]
-            column_names[column.name] = {
-                "type": types_map.get(db_type, str),
-                "nullable": column.nullable,
-            }
-    return column_names, hashed_indexes
 
 
 @admin.middleware("request")
@@ -106,10 +44,10 @@ async def bp_root(request):
 @auth.login_required
 async def admin_model(request, model):
     columns_data, hashed_indexes = extract_columns_data(model)
+    columns_names = list(columns_data.keys())
     model = cfg.app.db.tables[model]
     query = cfg.app.db.select([model])
     rows = await query.gino.all()
-    columns_names = list(columns_data.keys())
     response = jinja.render(
         "model_view.html",
         request,
@@ -154,21 +92,11 @@ async def admin_model_add_submit(request, model):
         request["flash"](f"Fields {not_filled} required. Please fill it", "error")
     else:
         if hashed_indexes:
-            request_params = reverse_hash_names(
+            request_params = utils.reverse_hash_names(
                 hashed_indexes, columns_names, request_params
             )
         try:
-            for param in request_params:
-                if "_hash" not in param and not isinstance(
-                    request_params[param], columns_data[param]["type"]
-                ):
-                    if columns_data[param] is not datetime:
-                        request_params[param] = columns_data[param]["type"](
-                            request_params[param]
-                        )
-                    else:
-                        # todo for date
-                        request_params[param] = exatract_time(request_params[param])
+            request_params = utils.correct_types(request_params, columns_data)
             await cfg.models[model].create(**request_params)
             request["flash"]("Object was added", "success")
         except ValueError as e:
@@ -200,7 +128,9 @@ async def admin_model_edit(request, model_id, obj_id):
     columns_data, hashed_indexes = extract_columns_data(model_id)
     columns_names = list(columns_data.keys())
     model = cfg.models[model_id]
-    obj = serialize_dict((await model.get(obj_id)).to_dict())
+    # id can be str or int
+    obj_id = columns_data["id"]["type"](obj_id)
+    obj = utils.serialize_dict((await model.get(obj_id)).to_dict())
     return jinja.render(
         "add_form.html",
         request,
@@ -218,10 +148,16 @@ async def admin_model_edit_post(request, model_id, obj_id):
     columns_data, hashed_indexes = extract_columns_data(model_id)
     columns_names = list(columns_data.keys())
     model = cfg.models[model_id]
-    obj = await model.get(obj_id)
-    request_params = {key: request.form[key][0] for key in request.form}
+    obj = await model.get(columns_data["id"]["type"](obj_id))
+    request_params = utils.correct_types(
+        {
+            key: request.form[key][0] if request.form[key][0] != "None" else None
+            for key in request.form
+        },
+        columns_data,
+    )
     if hashed_indexes:
-        request_params = reverse_hash_names(
+        request_params = utils.reverse_hash_names(
             hashed_indexes, columns_names, request_params
         )
     try:
@@ -242,7 +178,7 @@ async def admin_model_edit_post(request, model_id, obj_id):
         objects=cfg.app.db.tables,
         columns_names=columns_names,
         url_prefix=cfg.URL_PREFIX,
-        url=f"{cfg.URL_PREFIX}/{model}/{obj_id}/edit",
+        url=f"{cfg.URL_PREFIX}/{model_id}/{obj_id}/edit",
     )
 
 
@@ -280,11 +216,71 @@ async def admin_model_delete_all(request, model):
     return response.redirect(f"/admin/{model}")
 
 
-@admin.route("/<model>/<tag>", methods=["POST"])
+@admin.route("/<model_id>/upload/", methods=["POST"])
 @auth.login_required
-async def admin_model_update(request, model, tag):
-    # TODO
-    ...
+async def file_upload(request, model_id):
+    if not os.path.exists(cfg.upload_dir):
+        os.makedirs(cfg.upload_dir)
+    upload_file = request.files.get("file_names")
+    if not upload_file:
+        request["flash"]("No file chosen to Upload", "error")
+        return response.redirect(f"/admin/{model_id}")
+    file_name = utils.secure_filename(upload_file.name)
+    if not utils.valid_file_size(upload_file.body, cfg.max_file_size):
+        return response.redirect("/?error=invalid_file_size")
+    else:
+        file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
+        await utils.write_file(file_path, upload_file.body)
+
+        # open file in read mode
+        with open(file_path, "r") as read_obj:
+            # pass the file object to reader() to get the reader object
+            csv_reader = reader(read_obj)
+            # Iterate over each row in the csv using reader object
+            header = None
+            id_added = []
+            try:
+                for num, row in enumerate(csv_reader):
+                    # row variable is a list that represents a row in csv
+                    print(row)
+                    if num == 0:
+                        columns_data, hashed_indexes = extract_columns_data(model_id)
+                        columns_names = list(columns_data.keys())
+                        header = [x.strip().replace("\ufeff", "") for x in row]
+                        hashed_columns_names = [
+                            columns_names[index] for index in hashed_indexes
+                        ]
+                        print(header)
+                        print(hashed_columns_names)
+                        for _num, name in enumerate(header):
+                            if name in hashed_columns_names:
+                                header[_num] = name + "_hash"
+                            if name not in columns_names:
+                                request["flash"](
+                                    f"Wrong columns in CSV file. Header did not much model's columns. "
+                                    f"For {model_id.capitalize()} possible columns {columns_names}",
+                                    "error",
+                                )
+                                return response.redirect(f"/admin/{model_id}/")
+                    else:
+                        row = {header[index]: value for index, value in enumerate(row)}
+                        row = utils.correct_types(row, columns_data)
+                        await cfg.models[model_id].create(**row)
+                        id_added.append(row["id"])
+                request["flash"](f"Objects with ids {id_added} was added", "success")
+            except ValueError as e:
+                request["flash"](e.args, "error")
+            except asyncpg.exceptions.ForeignKeyViolationError as e:
+                request["flash"](e.args, "error")
+            except asyncpg.exceptions.UniqueViolationError:
+                request["flash"](
+                    f"{model_id.capitalize()} with id '{row['id']}' already exists",
+                    "error",
+                )
+            except asyncpg.exceptions.NotNullViolationError as e:
+                column = e.args[0].split("column")[1].split("violates")[0]
+                request["flash"](f"Field {column} cannot be null", "error")
+        return response.redirect(f"/admin/{model_id}/")
 
 
 @admin.route("/login", methods=["GET", "POST"])

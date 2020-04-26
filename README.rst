@@ -8,6 +8,18 @@ If you have time and want to fix:
 Please open issues with that you want to add
 or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
+
+Version 0.0.4 Updates:
+----------------------
+
+1. Upload from CSV - works, added example to `examples/` files. You can upload data from '.csv' tables.
+2. Edit per row - now exist button 'edit'.
+3. Fixed delete for ALL rows of the model
+4. Fixed delete per element.
+
+Now works full 'CRUD'.
+
+
 Limitations
 -----------
 
@@ -45,17 +57,21 @@ In process:
 Screens:
 --------
 
-.. image:: docs/img/auth.png
+.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/auth.png
   :width: 250
   :alt: Simple auth
 
-.. image:: docs/img/add_item.png
+.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/add_item.png
   :width: 250
   :alt: Add item
 
-.. image:: docs/img/table_view.png
+.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/table_view.png
   :width: 250
   :alt: Table view
+
+.. image:: https://github.com/thebjorn/pydeps/blob/master/docs/img/csv_upload.png
+  :width: 250
+  :alt: Add rows from CSV upload
 
 
 Contributions

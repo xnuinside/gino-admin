@@ -3,16 +3,8 @@
 {% block title %}{{model}}}{% endblock %}
 {% block body %}
 <h1>{{model}}</h1>
-<p>
-<form action="{{url_prefix}}/{{model.lower()}}/upload/" method="post">
-<input id='fileid' accept=".csv" type='file' hidden/>
 
-<button id='buttonid' class="ui right floated small primary labeled icon button"
-        type='submit'><i class="file alternate icon"></i>Upload CSV</button>
-
-</form></br></br>
-</p>
-
+{% include 'file_upload.html' %}
 {% include 'data_table.html' %}
 
 <!-- delete modal -->
@@ -58,9 +50,6 @@ $(function(){
 });
 document.getElementById('buttonid').addEventListener('click', openDialog);
 
-function openDialog() {
-  document.getElementById('fileid').click();
-}
 </script>
 
 {% endblock %}
