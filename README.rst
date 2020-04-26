@@ -16,8 +16,9 @@ Version 0.0.4 Updates:
 2. Edit per row - now exist button 'edit'.
 3. Fixed delete for ALL rows of the model
 4. Fixed delete per element.
+5. Now works full 'CRUD'.
+6. Fixed auth, now it sets 'cookie' and compare user-agent (for multiple users per login)
 
-Now works full 'CRUD'.
 
 
 Limitations
@@ -40,18 +41,22 @@ so if you define model, for example, User:
 Supported operations
 --------------------
 
-- Simple auth
+- One user auth
 - Create item by one for the Model
 - Delete all rows
+- Delete one item
+- Edit existed data
+- Upload data from csv
 
 
-In process:
+TODO:
 
-- Upload rows from csv
-- Delete item
-- Edit item
 - Select multiple for delete
 - Edit multiple
+- Multiple users
+- Set up data presets (drop table for some data state, defined from csv)
+- Filters in columns
+- Actions history
 
 
 Screens:
