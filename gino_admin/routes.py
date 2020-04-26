@@ -71,6 +71,7 @@ async def admin_model_add(request, model):
         request,
         model=model,
         add=True,
+        obj={},
         columns_names=columns_names,
         objects=cfg.app.db.tables,
         url_prefix=cfg.URL_PREFIX,
@@ -116,7 +117,7 @@ async def admin_model_add_submit(request, model):
         request,
         model=model,
         objects=cfg.app.db.tables,
-        obj=None,
+        obj={},
         columns_names=columns_names,
         url_prefix=cfg.URL_PREFIX,
     )
