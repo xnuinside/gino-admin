@@ -8,6 +8,55 @@ If you have time and want to fix:
 Please open issues with that you want to add
 or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
+How to install
+--------------
+
+.. code-block:: python
+    
+    pip install gino_admin
+    
+
+Usage example
+-------------
+
+Full example placed in 'examples' folder:
+
+.. code-block:: python
+    
+    examples/
+
+
+How to use
+----------
+
+
+Create in your project 'admin.py' file and use `add_admin_panel` from from gino_admin import add_admin_panel
+
+
+Example:
+
+.. code-block:: python
+    
+    
+    from from gino_admin import add_admin_panel
+    
+    
+    add_admin_panel(
+        app, db, [User, Place, City, GiftCard], custom_hash_method=custom_hash_method
+    )
+        
+    
+Where:
+
+    'app' - your Sanic application
+    'db' : from gino.ext.sanic import Gino; db = Gino() 
+        and [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
+        
+    custom_hash_method - optional parameter to define you own hash method to encrypt all '_hash' columns of your Models.
+    In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
+
+
+Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
 
 
 Version 0.0.5 Updates:
@@ -48,6 +97,16 @@ so if you define model, for example, User:
 
         id = db.Column(db.String(), unique=True, primary_key=True)
 
+id also can be Integer/BigInteger:
+
+
+.. code-block:: python
+
+    class User(db.Model):
+
+        __tablename__ = "users"
+
+        id = db.Column(db.BigInteger(), unique=True, primary_key=True)
 
 Supported operations
 --------------------
