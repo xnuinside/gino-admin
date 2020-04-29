@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from csv import reader
 from datetime import datetime
 from typing import Callable, List
@@ -34,24 +35,31 @@ async def bp_root(request):
     )
 
 
-@admin.route("/<model>", methods=["GET"])
+@admin.route("/<model_id>", methods=["GET"])
 @auth.token_validation()
-async def admin_model(request, model):
-    columns_data, hashed_indexes = extract_columns_data(model)
+async def admin_model(request, model_id):
+    columns_data, hashed_indexes = extract_columns_data(model_id)
     columns_names = list(columns_data.keys())
-    model = cfg.app.db.tables[model]
+    model = cfg.app.db.tables[model_id]
     query = cfg.app.db.select([model])
     rows = await query.gino.all()
-    response = jinja.render(
+    output = []
+    for row in rows:
+        row = {columns_names[num]: field for num, field in enumerate(row)}
+        for index in hashed_indexes:
+            row[columns_names[index]] = "*************"
+        output.append(row)
+    output = output[::-1]
+    _response = jinja.render(
         "model_view.html",
         request,
-        model=model.name,
+        model=model_id,
         columns=columns_names,
-        model_data=rows,
+        model_data=output,
         objects=cfg.app.db.tables,
         url_prefix=cfg.URL_PREFIX,
     )
-    return response
+    return _response
 
 
 @admin.route("/<model>/add", methods=["GET"])
@@ -196,7 +204,7 @@ async def admin_model_delete(request, model_id):
     """ route for delete item per row """
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data, hashed_indexes = extract_columns_data(model_id)
-    request_params["id"] = columns_data["id"]["type"](columns_data["id"])
+    request_params["id"] = columns_data["id"]["type"](request_params["id"])
     await cfg.models[model_id].delete.where(
         cfg.models[model_id].id == request_params["id"]
     ).gino.status()
@@ -249,9 +257,10 @@ async def file_upload(request, model_id):
                         hashed_columns_names = [
                             columns_names[index] for index in hashed_indexes
                         ]
-                        for _num, name in enumerate(header):
+                        validate_header = deepcopy(header)
+                        for _num, name in enumerate(validate_header):
                             if name in hashed_columns_names:
-                                header[_num] = name + "_hash"
+                                validate_header[_num] = name + "_hash"
                             if name not in columns_names:
                                 request["flash"](
                                     f"Wrong columns in CSV file. Header did not much model's columns. "
@@ -261,6 +270,9 @@ async def file_upload(request, model_id):
                                 return response.redirect(f"/admin/{model_id}/")
                     else:
                         row = {header[index]: value for index, value in enumerate(row)}
+                        row = utils.reverse_hash_names(
+                            hashed_indexes, columns_names, row
+                        )
                         row = utils.correct_types(row, columns_data)
                         try:
                             await cfg.models[model_id].create(**row)
@@ -268,7 +280,6 @@ async def file_upload(request, model_id):
                             errors.append((num, row["id"], e.args))
                             continue
                         id_added.append(row["id"])
-                        print(errors)
                 if errors:
                     request["flash"](
                         f"Errors: was not added  (row number, row id, error) : {errors}",

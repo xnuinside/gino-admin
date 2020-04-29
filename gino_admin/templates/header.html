@@ -4,9 +4,24 @@
           Sanic-Gino Admin Panel
         </a>
         {% for key, value in objects.items() %}
+          {% if loop.index <= 4 %}
       <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
-   {% endfor %}
+          {% else %}
 
+          {% endif %}
+   {% endfor %}
+          {% if objects.items() | length > 4 %}
+          <div class="ui simple dropdown item">
+          More Models <i class="dropdown icon"></i>
+          <div class="menu">
+              {% for key, value in objects.items() %}
+            <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
+              {% endfor %}
+          </div>
+
+          </div>
+        {% endif %}
+      </div>
           <div class="right menu">
           {% if '_auth' in session %}
             <a href="{{url_prefix}}/logout" class="header item">Logout</a>

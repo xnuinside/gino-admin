@@ -5,10 +5,12 @@
 <h1>{{model}}</h1>
 
 {% include 'file_upload.html' %}
+
 {% include 'data_table.html' %}
+
 {% for cat, msg in get_flashed_messages(with_categories=true) %}
-      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-    {% endfor %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
 <!-- delete modal -->
 
 <div class="ui basic modal">

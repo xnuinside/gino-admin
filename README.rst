@@ -9,6 +9,19 @@ Please open issues with that you want to add
 or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
 
+
+Version 0.0.5 Updates:
+----------------------
+
+1. Upload from CSV: fixed upload from _hash fields - now in step of upload called hash function (
+same as in edit, or add per item)
+2. Fixed errors relative to datetime fields edit, added datetime_str_formats field to Config object,
+that allows to add custom datetime str formats. They used in step of convert str from DB to datetime object.
+3. Now '_hash' fields values in table showed as '***********'
+4. Fixed errors relative to int id's. Now they works correct in edit and delete.
+5. Update Menu template. Now if there is more when 4 models - they will be available under Dropdown menu.
+
+
 Version 0.0.4 Updates:
 ----------------------
 

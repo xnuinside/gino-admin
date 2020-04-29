@@ -116,7 +116,6 @@ def correct_types(params: Dict, columns_data: Dict):
             # mean None
             to_del.append(param)
             continue
-        print(params)
         if "_hash" not in param and not isinstance(
             params[param], columns_data[param]["type"]
         ):
@@ -124,20 +123,19 @@ def correct_types(params: Dict, columns_data: Dict):
                 params[param] = columns_data[param]["type"](params[param])
             else:
                 # todo for date
-                params[param] = exatract_time(params[param])
+                params[param] = extract_datetime(params[param])
     for param in to_del:
         del params[param]
     return params
 
 
-def exatract_date(date_str: Text):
+def extract_date(date_str: Text):
     date_object = datetime.datetime.strptime(date_str, "%m-%d-%y")
 
     return date_object
 
 
-def exatract_time(datetime_str: Text):
-    print(datetime_str)
+def extract_datetime(datetime_str: Text):
     for str_format in cfg.datetime_str_formats:
         try:
             datetime_object = datetime.datetime.strptime(datetime_str, str_format)
