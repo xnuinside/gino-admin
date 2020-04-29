@@ -5,9 +5,14 @@
 <h1>{{model}}</h1>
 
 {% include 'file_upload.html' %}
+
 {% include 'data_table.html' %}
 
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
 <!-- delete modal -->
+
 <div class="ui basic modal">
   <div class="ui icon header">
     <i class="trash icon"></i> Delete all {{model}}

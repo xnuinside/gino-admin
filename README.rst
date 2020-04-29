@@ -9,6 +9,19 @@ Please open issues with that you want to add
 or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
 
+
+Version 0.0.5 Updates:
+----------------------
+
+1. Upload from CSV: fixed upload from _hash fields - now in step of upload called hash function (
+same as in edit, or add per item)
+2. Fixed errors relative to datetime fields edit, added datetime_str_formats field to Config object,
+that allows to add custom datetime str formats. They used in step of convert str from DB to datetime object.
+3. Now '_hash' fields values in table showed as '***********'
+4. Fixed errors relative to int id's. Now they works correct in edit and delete.
+5. Update Menu template. Now if there is more when 4 models - they will be available under Dropdown menu.
+
+
 Version 0.0.4 Updates:
 ----------------------
 
@@ -16,8 +29,9 @@ Version 0.0.4 Updates:
 2. Edit per row - now exist button 'edit'.
 3. Fixed delete for ALL rows of the model
 4. Fixed delete per element.
+5. Now works full 'CRUD'.
+6. Fixed auth, now it sets 'cookie' and compare user-agent (for multiple users per login)
 
-Now works full 'CRUD'.
 
 
 Limitations
@@ -40,18 +54,22 @@ so if you define model, for example, User:
 Supported operations
 --------------------
 
-- Simple auth
+- One user auth
 - Create item by one for the Model
 - Delete all rows
+- Delete one item
+- Edit existed data
+- Upload data from csv
 
 
-In process:
+TODO:
 
-- Upload rows from csv
-- Delete item
-- Edit item
 - Select multiple for delete
 - Edit multiple
+- Multiple users
+- Set up data presets (drop table for some data state, defined from csv)
+- Filters in columns
+- Actions history
 
 
 Screens:
