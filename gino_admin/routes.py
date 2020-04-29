@@ -144,13 +144,15 @@ async def admin_model_edit_post(request, model_id, obj_id):
     columns_names = list(columns_data.keys())
     model = cfg.models[model_id]
     obj = await model.get(columns_data["id"]["type"](obj_id))
-    request_params = utils.correct_types(
-        {
-            key: request.form[key][0] if request.form[key][0] != "None" else None
-            for key in request.form
-        },
-        columns_data,
-    )
+    request_params = {
+        key: request.form[key][0] if request.form[key][0] != "None" else None
+        for key in request.form
+    }
+    if hashed_indexes:
+        request_params = utils.reverse_hash_names(
+            hashed_indexes, columns_names, request_params
+        )
+    request_params = utils.correct_types(request_params, columns_data)
     if hashed_indexes:
         request_params = utils.reverse_hash_names(
             hashed_indexes, columns_names, request_params
@@ -188,16 +190,18 @@ def handle_no_auth(request):
     return response.json(dict(message="unauthorized"), status=401)
 
 
-@admin.route("/<model>/delete", methods=["POST"])
+@admin.route("/<model_id>/delete", methods=["POST"])
 @auth.token_validation()
-async def admin_model_delete(request, model):
+async def admin_model_delete(request, model_id):
     """ route for delete item per row """
     request_params = {key: request.form[key][0] for key in request.form}
-    await cfg.models[model].delete.where(
-        cfg.models[model].id == request_params["id"]
+    columns_data, hashed_indexes = extract_columns_data(model_id)
+    request_params["id"] = columns_data["id"]["type"](columns_data["id"])
+    await cfg.models[model_id].delete.where(
+        cfg.models[model_id].id == request_params["id"]
     ).gino.status()
     request["flash"](f"Object with {request_params['id']} was deleted", "success")
-    return response.redirect(f"/admin/{model}")
+    return response.redirect(f"/admin/{model_id}")
 
 
 @admin.route("/<model>/delete_all", methods=["POST"])
@@ -235,6 +239,7 @@ async def file_upload(request, model_id):
             header = None
             id_added = []
             try:
+                errors = []
                 for num, row in enumerate(csv_reader):
                     # row variable is a list that represents a row in csv
                     if num == 0:
@@ -257,8 +262,18 @@ async def file_upload(request, model_id):
                     else:
                         row = {header[index]: value for index, value in enumerate(row)}
                         row = utils.correct_types(row, columns_data)
-                        await cfg.models[model_id].create(**row)
+                        try:
+                            await cfg.models[model_id].create(**row)
+                        except Exception as e:
+                            errors.append((num, row["id"], e.args))
+                            continue
                         id_added.append(row["id"])
+                        print(errors)
+                if errors:
+                    request["flash"](
+                        f"Errors: was not added  (row number, row id, error) : {errors}",
+                        "error",
+                    )
                 request["flash"](f"Objects with ids {id_added} was added", "success")
             except ValueError as e:
                 request["flash"](e.args, "error")

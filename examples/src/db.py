@@ -1,3 +1,5 @@
+import uuid
+
 from gino.ext.sanic import Gino
 
 db = Gino()
@@ -37,12 +39,22 @@ class Place(db.Model):
     description = db.Column(db.String())
 
 
+class Country(db.Model):
+
+    __tablename__ = "countries"
+
+    id = db.Column(db.String(24), unique=True, primary_key=True, default=uuid.uuid4)
+    country = db.Column(db.String())
+    population = db.Column(db.BigInteger())
+    location = db.Column(db.String())
+
+
 class City(db.Model):
 
     __tablename__ = "cities"
 
-    id = db.Column(db.String(24), unique=True, primary_key=True)
-    country = db.Column(db.DateTime())
+    id = db.Column(db.String(), unique=True, primary_key=True, default=uuid.uuid4)
+    country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
 

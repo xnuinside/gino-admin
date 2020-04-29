@@ -21,3 +21,9 @@ class Config:
     upload_dir = "files/"
     max_file_size = 10485760
     allowed_file_types = ["csv"]
+    datetime_str_formats = [
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%m-%d-%yT%H:%M:%S.%f",
+        "%m-%d-%y %H:%M:%S",
+    ]

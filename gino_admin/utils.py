@@ -34,8 +34,8 @@ types_map = {
     "FLOAT": float,
     "DECIMAL": float,
     "NUMERIC": float,
-    "DATETIME": datetime,
-    "DATE": datetime,
+    "DATETIME": datetime.datetime,
+    "DATE": datetime.datetime,
     "BOOLEAN": bool,
 }
 
@@ -116,10 +116,11 @@ def correct_types(params: Dict, columns_data: Dict):
             # mean None
             to_del.append(param)
             continue
+        print(params)
         if "_hash" not in param and not isinstance(
             params[param], columns_data[param]["type"]
         ):
-            if columns_data[param] is not datetime:
+            if columns_data[param]["type"] is not datetime.datetime:
                 params[param] = columns_data[param]["type"](params[param])
             else:
                 # todo for date
@@ -130,14 +131,18 @@ def correct_types(params: Dict, columns_data: Dict):
 
 
 def exatract_date(date_str: Text):
+    date_object = datetime.datetime.strptime(date_str, "%m-%d-%y")
 
-    date_object = datetime.strptime(date_str, "%m-%d-%y")
     return date_object
 
 
 def exatract_time(datetime_str: Text):
-
-    datetime_object = datetime.strptime(datetime_str, "%m-%d-%y %H:%M:%S")
+    print(datetime_str)
+    for str_format in cfg.datetime_str_formats:
+        try:
+            datetime_object = datetime.datetime.strptime(datetime_str, str_format)
+        except ValueError:
+            continue
     return datetime_object
 
 

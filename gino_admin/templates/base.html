@@ -4,7 +4,7 @@
 
     {% for cat, msg in get_flashed_messages(with_categories=true) %}
       <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-{% endfor %}
+    {% endfor %}
       {% block body %}{% endblock %}
     </div>
     <div class="ui inverted vertical footer segment">
