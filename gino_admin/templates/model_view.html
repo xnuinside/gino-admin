@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{model}}}{% endblock %}
+{% block title %}{{model}}{% endblock %}
 {% block body %}
 <div id="header_grid" class="ui grid">
     <div class="sixteen column row">
@@ -18,13 +18,7 @@
 </div>
 {% include 'data_table.html' %}
 
-{% for cat, msg in get_flashed_messages(with_categories=true) %}
-    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-{% endfor %}
 <!-- delete modal -->
-{% for cat, msg in get_flashed_messages(with_categories=true) %}
-      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-      {% endfor %}
 
 <div id="grid_footer" class="ui grid right aligned content">
     <div class="three column " id="grid_footer_row">
@@ -49,7 +43,9 @@
   </div>
 </div>
 <!-- end of modal -->
-
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+      {% endfor %}
     <button id="add" class="ui right floated small green labeled icon button" type="button">
         <i class="user icon"></i>
         <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
@@ -108,7 +104,4 @@ $(function(){
 });
 </script>
 
-{% for cat, msg in get_flashed_messages(with_categories=true) %}
-      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-      {% endfor %}
 {% endblock %}
