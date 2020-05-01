@@ -1,6 +1,6 @@
 gino_admin
 ----------
-Admin Panel for PostgreSQL DB with Gino ORM and Sanic (inspired by Flask-Admin)
+Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
   :width: 250
@@ -58,7 +58,7 @@ Where:
 Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
 
 
-Version 0.0.6 Updates (current master):
+Version 0.0.6 Updates (not released yet, current master):
 ----------------------
 1. Clean up template, hide row controls under menu.
 2. Added 'Copy' option to DB row.
@@ -66,6 +66,8 @@ Version 0.0.6 Updates (current master):
 4. Added possible to work without auth (for Debug purposes). Set env variable 'ADMIN_AUTH_DISABLE=True'
 5. Template updated
 6. Added export Table's Data to CSV
+7. SQL-query execution page (run any query and get answer from PostgreSQL)
+
 
 
 Version 0.0.5 Updates:
@@ -186,10 +188,6 @@ Screens:
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
   :width: 250
   :alt: Table view
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/csv_upload.png
-  :width: 250
-  :alt: Add rows from CSV upload
 
 
 Contributions

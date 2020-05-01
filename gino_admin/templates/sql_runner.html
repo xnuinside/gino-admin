@@ -1,14 +1,17 @@
 {% extends 'base.html' %}
-
-{% block title %}{{model}}{% endblock %}
+{% block title %}SQL-runner{% endblock %}
 {% block body %}
+
 <div id="header_grid" class="ui grid">
-    <div class="sixteen column row">
-        <div class="ten wide column">
-<h1>{{model}}</h1></div>
-        <div class="six wide column right aligned content">
-{% include 'file_upload.html' %}
-        </div>
+
+    <div class="ui ten wide column">
+<h1>SQL-runner</h1><br>
+        <form class="ui form" action="{{url_prefix}}/sql_run" method="post">
+            <label class="ui green ribbon label">Write SQL Query</label>
+            <textarea rows="8" name="sql_query"></textarea><br><br>
+            <button type="submit" class="ui right floated labeled icon small button green">
+                <i class="play icon"></i>Run SQL</button>
+        </form>
     </div>
     <div class="ui divider"></div>
 </div>
@@ -16,41 +19,16 @@
     <div class="sixteen column row" id="row_filters">
     </div>
 </div>
+
+
 {% include 'data_table.html' %}
 
 <!-- delete modal -->
-
 <div id="grid_footer" class="ui grid right aligned content">
-    <div class="three column " id="grid_footer_row">
+    <div class="three column" id="grid_footer_row">
     </div>
 </div>
 
-<div class="ui basic modal">
-  <div class="ui icon header">
-    <i class="trash icon"></i> Delete all {{model}}
-  </div>
-  <div class="content">
-    <p>Are you sure, that you want to delete all {{model}}?</p>
-  </div>
-  <div class="actions">
-    <div class="ui red basic cancel inverted button">
-      <i class="remove icon"></i>No
-    </div><br>
-        <form action="{{url_prefix}}/{{model.lower()}}/delete_all/" method="post">
-        <button id='delete' class="ui red ok inverted button" type='submit'>
-            <i class="checkmark icon"></i> Yes</button>
-        </form>
-  </div>
-</div>
-<!-- end of modal -->
-
-    <button id="add" class="ui right floated small green labeled icon button" type="button">
-        <i class="user icon"></i>
-        <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
-    </button>
-
-    <button id="delete_all" class="ui left floated small red inverted labeled icon button" type="button">
-    <i class="trash icon"></i>Delete all {{model}}</button>
 <script>
 $(document).ready( function () {
     $('#models_table').DataTable({
@@ -60,7 +38,7 @@ $(document).ready( function () {
         {
             extend: 'csvHtml5',
             text: 'Export to csv',
-            filename: '{{model}}',
+            filename: 'query',
             exportOptions: {
                 modifier: {
                     search: 'none'
@@ -79,7 +57,6 @@ initComplete: function () {
     $('#buttons-csv').attr('class','ui right floated five wide small green labeled icon button')
     $('#buttons-csv').html('<i class="download icon"></i>Export to CSV')
 
-    $('#buttons-csv').insertBefore('#add');
     $("#models_table_length").appendTo("#row_filters");
     $("#models_table_filter").appendTo("#row_filters");
     $('#grid_footer').insertAfter('#models_table');
@@ -88,18 +65,15 @@ initComplete: function () {
     $('<br>').appendTo("#grid_footer_row");
     $('#models_table_paginate').appendTo("#grid_footer_row");
     $('<br>').insertBefore("#models_table")
+
+    $('#buttons-csv').insertAfter('#models_table_paginate');
+    $('<br>').insertBefore("#buttons-csv")
 }
 } );
 } );
-
-$(function(){
-	$("#delete_all").click(function(){
-		$(".ui.basic.modal").modal('show');
-	});
-	$(".ui.basic.modal").modal({
-		closable: true
-	});
-});
 </script>
 
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
 {% endblock %}
