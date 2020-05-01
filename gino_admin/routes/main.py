@@ -182,23 +182,13 @@ async def sql_query_run(request):
         sql_query = request.form["sql_query"][0]
         try:
             result = await cfg.app.db.status(cfg.app.db.text(sql_query))
-            request["flash"](f"{result}", "success")
         except asyncpg.exceptions.PostgresSyntaxError as e:
             request["flash"](f"{e.args}", "error")
-        """rows = await query.gino.all()
-        output = []
-        for row in rows:
-            row = {columns_names[num]: field for num, field in enumerate(row)}
-            for index in hashed_indexes:
-                row[columns_names[index]] = "*************"
-
-            output.append(row)
-        output = output[::-1]
-         """
     return jinja.render(
         "sql_runner.html",
         request,
-        columns=result,
+        columns=result[1],
+        result=result[1],
         objects=cfg.app.db.tables,
         url_prefix=cfg.URL_PREFIX,
     )

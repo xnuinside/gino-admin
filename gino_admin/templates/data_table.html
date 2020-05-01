@@ -1,5 +1,5 @@
 <!-- table for model view -->
-<table id="models_table" class="ui green padded compact sortable celled definition table">
+<table id="models_table" class="ui green padded compact sortable celled table">
     <!-- header row -->
     <thead class="full-width">
         <tr>{% for column_name  in columns %}
@@ -15,7 +15,7 @@
         <tr class="full-width">
             <!-- columns with data -->
             {% for key, field in row.items() %}
-                <td class="two wide">{{field}}</td>
+                <td class="three wide">{{field}}</td>
             {% endfor %}
 
             <!-- column controls(edit, delete and etc.) -->

@@ -3,7 +3,6 @@
 {% block body %}
 
 <div id="header_grid" class="ui grid">
-
     <div class="ui ten wide column">
 <h1>SQL-runner</h1><br>
         <form class="ui form" action="{{url_prefix}}/sql_run" method="post">
@@ -15,24 +14,42 @@
     </div>
     <div class="ui divider"></div>
 </div>
+
 <div id="grid" class="ui grid">
     <div class="sixteen column row" id="row_filters">
     </div>
 </div>
 
+{% if result %}
+<table id="sql_answer" class="ui green padded compact sortable celled table">
 
-{% include 'data_table.html' %}
-
-<!-- delete modal -->
+    <!-- body with data rows -->
+    <thead>
+    {% for field in result[0] %}
+    <th></th>
+    {% endfor %}
+    </thead>
+    <tbody>
+    {% for row in result %}
+        <tr class="full-width">
+            <!-- columns with data -->
+            {% for field in row %}
+                <td class="two wide">{{field}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+<br>
 <div id="grid_footer" class="ui grid right aligned content">
     <div class="three column" id="grid_footer_row">
     </div>
 </div>
-
 <script>
 $(document).ready( function () {
-    $('#models_table').DataTable({
-    dom: 'Blfrtip',
+    $('#sql_answer').DataTable({
+    dom: 'B',
 
     buttons: [
         {
@@ -42,9 +59,7 @@ $(document).ready( function () {
             exportOptions: {
                 modifier: {
                     search: 'none'
-                },
-
-                 columns: 'th:not(:last-child)'
+                }
             }
         }
     ],
@@ -66,7 +81,7 @@ initComplete: function () {
     $('#models_table_paginate').appendTo("#grid_footer_row");
     $('<br>').insertBefore("#models_table")
 
-    $('#buttons-csv').insertAfter('#models_table_paginate');
+    $('#buttons-csv').insertAfter('#models_table');
     $('<br>').insertBefore("#buttons-csv")
 }
 } );

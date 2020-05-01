@@ -173,13 +173,9 @@ TODO:
 Screens:
 --------
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
   :width: 250
-  :alt: Simple auth
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
-  :width: 250
-  :alt: Add item
+  :alt: Table view
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
   :width: 250
@@ -187,7 +183,18 @@ Screens:
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
   :width: 250
-  :alt: Table view
+  :alt: SQL-runner
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
+  :width: 250
+  :alt: Add item
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
+  :width: 250
+  :alt: Simple auth
+
+
+
 
 
 Contributions

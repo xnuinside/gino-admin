@@ -43,7 +43,9 @@
   </div>
 </div>
 <!-- end of modal -->
-
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+      {% endfor %}
     <button id="add" class="ui right floated small green labeled icon button" type="button">
         <i class="user icon"></i>
         <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
