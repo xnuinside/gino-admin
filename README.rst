@@ -2,7 +2,7 @@ gino_admin
 ----------
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic (inspired by Flask-Admin)
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
   :width: 250
   :alt: Table view
 
@@ -183,7 +183,7 @@ Screens:
   :width: 250
   :alt: Add item
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
   :width: 250
   :alt: Table view
 
