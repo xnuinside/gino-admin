@@ -21,5 +21,3 @@ Use password and login to enter admin panel:
 
     login: admin
     password: 1234
-
-You can use files in 'examples/csv_to_upload' to check supported CSV format and check how does it work.
