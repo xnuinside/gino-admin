@@ -1,4 +1,4 @@
-from db import City, GiftCard, Place, User, db
+from db import City, Country, GiftCard, Place, User, db
 from passlib.hash import pbkdf2_sha256
 from sanic import Sanic, response
 
@@ -28,7 +28,10 @@ def custom_hash_method(*args, **kwargs):
 
 
 add_admin_panel(
-    app, db, [User, Place, City, GiftCard], custom_hash_method=custom_hash_method
+    app,
+    db,
+    [User, Place, City, GiftCard, Country],
+    custom_hash_method=custom_hash_method,
 )
 
 if __name__ == "__main__":
