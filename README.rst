@@ -2,6 +2,10 @@ gino_admin
 ----------
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic (inspired by Flask-Admin)
 
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view.png
+  :width: 250
+  :alt: Table view
+
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
   :width: 250
   :alt: Features per row
@@ -64,6 +68,8 @@ Version 0.0.6 Updates (current master):
 2. Added 'Copy' option to DB row.
 3. Now errors showed correct in table view pages in process of Delete, Copy, CSV Upload
 4. Added possible to work without auth (for Debug purposes). Set env variable 'ADMIN_AUTH_DISABLE=True'
+5. Template updated
+6. Added export Table's Data to CSV
 
 
 Version 0.0.5 Updates:
