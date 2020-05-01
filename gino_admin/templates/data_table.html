@@ -1,9 +1,5 @@
 <!-- table for model view -->
-
-{% for cat, msg in get_flashed_messages(with_categories=true) %}
-      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
-      {% endfor %}
-<table id="table_id" class="ui green padded compact sortable celled definition table">
+<table id="models_table" class="ui green padded compact sortable celled definition table">
     <!-- header row -->
     <thead class="full-width">
         <tr>{% for column_name  in columns %}
@@ -31,3 +27,4 @@
     </tbody>
 </table>
 <br>
+
