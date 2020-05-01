@@ -181,7 +181,7 @@ Screens:
   :width: 250
   :alt: Features per row
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/sql_runner.png
   :width: 250
   :alt: SQL-runner
 
