@@ -1,4 +1,5 @@
 import os
+import uuid
 from copy import deepcopy
 from csv import reader
 from datetime import datetime
@@ -22,6 +23,11 @@ cfg.jinja = jinja
 admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
 
 
+admin.static(
+    "/static", os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+)
+
+
 @admin.route("/")
 @auth.token_validation()
 @jinja.template("index.html")  # decorator method is staticmethod
@@ -35,9 +41,7 @@ async def bp_root(request):
     )
 
 
-@admin.route("/<model_id>", methods=["GET"])
-@auth.token_validation()
-async def admin_model(request, model_id):
+async def render_model_view(request, model_id):
     columns_data, hashed_indexes = extract_columns_data(model_id)
     columns_names = list(columns_data.keys())
     model = cfg.app.db.tables[model_id]
@@ -60,6 +64,12 @@ async def admin_model(request, model_id):
         url_prefix=cfg.URL_PREFIX,
     )
     return _response
+
+
+@admin.route("/<model_id>", methods=["GET"])
+@auth.token_validation()
+async def admin_model(request, model_id):
+    return await render_model_view(request, model_id)
 
 
 @admin.route("/<model>/add", methods=["GET"])
@@ -198,6 +208,36 @@ def handle_no_auth(request):
     return response.json(dict(message="unauthorized"), status=401)
 
 
+@admin.route("/<model_id>/deepcopy", methods=["POST"])
+@auth.token_validation()
+async def admin_model_deepcopy(request, model_id):
+    # TODO:
+    ...
+
+
+@admin.route("/<model_id>/copy", methods=["POST"])
+@auth.token_validation()
+async def admin_model_copy(request, model_id):
+    """ route for copy item per row """
+    request_params = {key: request.form[key][0] for key in request.form}
+    columns_data, hashed_indexes = extract_columns_data(model_id)
+    request_params["id"] = columns_data["id"]["type"](request_params["id"])
+    model = cfg.models[model_id]
+    # id can be str or int
+    if isinstance(request_params["id"], str):
+        new_obj_id = request_params["id"] + "_copy_" + uuid.uuid1().hex
+    else:
+        new_obj_id = request_params["id"] + uuid.uuid1().int
+    bas_obj = utils.serialize_dict((await model.get(request_params["id"])).to_dict())
+    bas_obj["id"] = new_obj_id
+    try:
+        await model.create(**bas_obj)
+        request["flash"](f"Object with {request_params['id']} was copied", "success")
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
+        request["flash"](e.args, "error")
+    return await render_model_view(request, model_id)
+
+
 @admin.route("/<model_id>/delete", methods=["POST"])
 @auth.token_validation()
 async def admin_model_delete(request, model_id):
@@ -205,22 +245,25 @@ async def admin_model_delete(request, model_id):
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data, hashed_indexes = extract_columns_data(model_id)
     request_params["id"] = columns_data["id"]["type"](request_params["id"])
-    await cfg.models[model_id].delete.where(
-        cfg.models[model_id].id == request_params["id"]
-    ).gino.status()
-    request["flash"](f"Object with {request_params['id']} was deleted", "success")
-    return response.redirect(f"/admin/{model_id}")
-
-
-@admin.route("/<model>/delete_all", methods=["POST"])
-@auth.token_validation()
-async def admin_model_delete_all(request, model):
     try:
-        await cfg.models[model].delete.where(True).gino.status()
-        request["flash"]("Object was added", "success")
+        await cfg.models[model_id].delete.where(
+            cfg.models[model_id].id == request_params["id"]
+        ).gino.status()
+        request["flash"](f"Object with {request_params['id']} was deleted", "success")
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         request["flash"](e.args, "error")
-    return response.redirect(f"/admin/{model}")
+    return await render_model_view(request, model_id)
+
+
+@admin.route("/<model_id>/delete_all", methods=["POST"])
+@auth.token_validation()
+async def admin_model_delete_all(request, model_id):
+    try:
+        await cfg.models[model_id].delete.where(True).gino.status()
+        request["flash"]("All objects was deleted", "success")
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
+        request["flash"](e.args, "error")
+    return await render_model_view(request, model_id)
 
 
 @admin.route("/<model_id>/upload/", methods=["POST"])

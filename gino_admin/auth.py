@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 
 from sanic import response as r
@@ -9,18 +10,21 @@ def token_validation():
     def decorator(route):
         @wraps(route)
         async def validate(request, *args, **kwargs):
-            if (
-                not request.cookies
-                or request.cookies["auth-token"] not in cfg.sessions
-                or (
-                    request.cookies["auth-token"] in cfg.sessions
-                    and cfg.sessions[request.cookies["auth-token"]]
-                    != request.headers["User-Agent"]
-                )
-            ):
-                return r.redirect("/admin/login")
+            if not os.getenv("ADMIN_AUTH_DISABLE") == "1":
+                if (
+                    not request.cookies
+                    or request.cookies["auth-token"] not in cfg.sessions
+                    or (
+                        request.cookies["auth-token"] in cfg.sessions
+                        and cfg.sessions[request.cookies["auth-token"]]
+                        != request.headers["User-Agent"]
+                    )
+                ):
+                    return r.redirect("/admin/login")
+                else:
+                    request["session"] = {"_auth": True}
+                    return await route(request, *args, **kwargs)
             else:
-                request["session"] = {"_auth": True}
                 return await route(request, *args, **kwargs)
 
         return validate

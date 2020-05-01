@@ -1,0 +1,28 @@
+<div class="ui simple dropdown item">
+       <i class="ellipsis vertical icon"></i>
+          <div class="menu">
+        <a href="{{url_prefix}}/{{model.lower()}}/{{row['id']}}/edit/" class="item">
+            <i class="pencil icon"></i> Edit
+        </a>
+        <a href="javascript:;" class="item" onclick="document.getElementById('copy_{{row['id']}}').submit();">
+            Copy
+        </a>
+        <a href="javascript:;" class="item disabled" onclick="document.getElementById('deepcopy_{{row['id']}}').submit();">
+            Deepcopy
+        </a>
+         <a href="javascript:;" class="item" onclick="document.getElementById('delete_{{row['id']}}').submit();">
+             <i class="trash icon"></i> Delete
+         </a>
+
+<form id="delete_{{row['id']}}" action="{{url_prefix}}/{{model.lower()}}/delete/" method="post" >
+    <input type="hidden" name="id" value="{{row['id']}}">
+</form>
+<form id="copy_{{row['id']}}" action="{{url_prefix}}/{{model.lower()}}/copy/" method="post" >
+    <input type="hidden" name="id" value="{{row['id']}}">
+</form>
+<form id="deepcopy_{{row['id']}}" action="{{url_prefix}}/{{model.lower()}}/deepcopy/" method="post" >
+    <input type="hidden" name="id" value="{{row['id']}}">
+</form>
+    </div>
+          </div>
+
