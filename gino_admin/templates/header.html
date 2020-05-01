@@ -14,8 +14,10 @@
           <div class="ui simple dropdown item">
           More Models <i class="dropdown icon"></i>
           <div class="menu">
-              {% for key, value in objects.items() %}
+              {% for key in objects %}
+              {% if loop.index > 4 %}
             <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
+              {% endif %}
               {% endfor %}
           </div>
 

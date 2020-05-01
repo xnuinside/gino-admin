@@ -1,39 +1,33 @@
 <!-- table for model view -->
 
-
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+      {% endfor %}
 <table id="table_id" class="ui green padded compact sortable celled definition table">
     <!-- header row -->
     <thead class="full-width">
         <tr>{% for column_name  in columns %}
-            <th class="three wide">{{column_name}}</th>
+            <th class="two wide">{{column_name}}</th>
             {% endfor %}
-            <th></th>
+            <th class="one wide"></th>
         </tr>
     </thead>
 
     <!-- body with data rows -->
     <tbody>
     {% for row in model_data %}
-        <tr>
+        <tr class="full-width">
             <!-- columns with data -->
             {% for key, field in row.items() %}
-                <td>{{field}}</td>
+                <td class="two wide">{{field}}</td>
             {% endfor %}
 
             <!-- column controls(edit, delete and etc.) -->
-            <td>
-                <input type="hidden" name="id" value="{{row['id']}}">
-                   <a href="{{url_prefix}}/{{model.lower()}}/{{row['id']}}/edit/" class="ui right floated right primary icon button">
-                       <i class="edit outline icon white"></i></a>
-                <form action="{{url_prefix}}/{{model.lower()}}/delete/" method="post">
-                <input type="hidden" name="id" value="{{row['id']}}">
-                <button type="submit" class="ui right floated grey icon button">
-                    <i class="trash icon"></i>
-                </button>
-            </form>
+            <td class="two wide">
+                {% include 'table_control_items.html' %}
             </td>
         </tr>
-{% endfor %}
+    {% endfor %}
     </tbody>
 </table>
 <br>

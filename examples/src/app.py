@@ -5,21 +5,20 @@ from sanic import Sanic, response
 from gino_admin import add_admin_panel
 
 app = Sanic()
+app.config["ADMIN_USER"] = "admin"
+app.config["ADMIN_PASSWORD"] = "1234"
 
 app.config["DB_HOST"] = "localhost"
 app.config["DB_DATABASE"] = "gino"
 app.config["DB_USER"] = "gino"
 app.config["DB_PASSWORD"] = "gino"
+
 db.init_app(app)
 
 
 @app.route("/")
 async def index(request):
     return response.redirect("/admin")
-
-
-app.config["ADMIN_USER"] = "admin"
-app.config["ADMIN_PASSWORD"] = "1234"
 
 
 # custom_hash_method you can define your own hash method to use it in backend and Admin

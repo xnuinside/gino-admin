@@ -1,12 +1,11 @@
 gino_admin
 ----------
-Admin Panel for DB with Gino ORM and Sanic (inspired by Flask-Admin)
+Admin Panel for PostgreSQL DB with Gino ORM and Sanic (inspired by Flask-Admin)
 
-Work in progress
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
+  :width: 250
+  :alt: Features per row
 
-If you have time and want to fix:
-Please open issues with that you want to add
-or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
 How to install
 --------------
@@ -59,6 +58,14 @@ Where:
 Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
 
 
+Version 0.0.6 Updates (current master):
+----------------------
+1. Clean up template, hide row controls under menu.
+2. Added 'Copy' option to DB row.
+3. Now errors showed correct in table view pages in process of Delete, Copy, CSV Upload
+4. Added possible to work without auth (for Debug purposes). Set env variable 'ADMIN_AUTH_DISABLE=True'
+
+
 Version 0.0.5 Updates:
 ----------------------
 
@@ -79,6 +86,34 @@ Version 0.0.4 Updates:
 5. Now works full 'CRUD'.
 6. Fixed auth, now it sets 'cookie' and compare user-agent (for multiple users per login)
 
+Authentication
+--------------
+
+1. To disable authorisation:
+
+Set environment variable 'ADMIN_AUTH_DISABLE=1'
+
+.. code-block:: python
+    os.environ['ADMIN_AUTH_DISABLE'] = '1'
+
+or from shell:
+
+.. code-block:: python
+
+        export ADMIN_AUTH_DISABLE=1
+
+
+2. To define admin user & password:
+
+check example/ folder to get code snippets
+
+
+.. code-block:: python
+
+    app = Sanic()
+
+    app.config["ADMIN_USER"] = "admin"
+    app.config["ADMIN_PASSWORD"] = "1234"
 
 
 Limitations
@@ -115,13 +150,15 @@ Supported operations
 - Create item by one for the Model
 - Delete all rows
 - Delete one item
+- Copy existed element (data table row)
 - Edit existed data
 - Upload data from csv
 
 
 TODO:
 
-- Select multiple for delete
+- Select multiple for delete/copy
+- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
 - Edit multiple
 - Multiple users
 - Set up data presets (drop table for some data state, defined from csv)
@@ -153,6 +190,11 @@ Contributions
 ---------------
 
 Contributions and feature requests are very welcome!
+
+
+If you have time and want to fix:
+Please open issues with that you want to add
+or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
 
 Developer guide
