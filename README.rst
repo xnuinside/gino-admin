@@ -1,5 +1,13 @@
 gino_admin
 ----------
+
+|badge1| |badge3| |badge2| 
+
+.. |badge1| image:: https://img.shields.io/pypi/v/gino_admin 
+.. |badge2| image:: https://img.shields.io/pypi/l/gino_admin
+.. |badge3| image:: https://img.shields.io/pypi/pyversions/gino_admin
+
+
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
@@ -48,8 +56,7 @@ Example:
 Where:
 
     'app' - your Sanic application
-    'db' : from gino.ext.sanic import Gino; db = Gino() 
-        and [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
+    'db' : from gino.ext.sanic import Gino; db = Gino() and [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
         
     custom_hash_method - optional parameter to define you own hash method to encrypt all '_hash' columns of your Models.
     In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
@@ -58,7 +65,7 @@ Where:
 Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
 
 
-Version 0.0.6 Updates (not released yet, current master):
+Version 0.0.6 Updates:
 ----------------------
 1. Clean up template, hide row controls under menu.
 2. Added 'Copy' option to DB row.
@@ -98,6 +105,7 @@ Authentication
 Set environment variable 'ADMIN_AUTH_DISABLE=1'
 
 .. code-block:: python
+
     os.environ['ADMIN_AUTH_DISABLE'] = '1'
 
 or from shell:
@@ -207,7 +215,7 @@ Screens:
   :width: 250
   :alt: Features per row
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/sql_runner.png
   :width: 250
   :alt: SQL-runner
 

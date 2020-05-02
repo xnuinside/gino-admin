@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gino_admin"
-version = "0.0.5"
+version = "0.0.6"
 description = "Admin Panel for DB with Gino ORM and Sanic (inspired by Flask-Admin)"
 authors = ["xnuinside <xnuinside@gmail.com>"]
 license = "MIT"
