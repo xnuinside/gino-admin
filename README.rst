@@ -1,5 +1,13 @@
 gino_admin
 ----------
+
+|badge1| |badge3| |badge2| 
+
+.. |badge1| image:: https://img.shields.io/pypi/v/gino_admin 
+.. |badge2| image:: https://img.shields.io/pypi/l/gino_admin
+.. |badge3| image:: https://img.shields.io/pypi/pyversions/gino_admin
+
+
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
