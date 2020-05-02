@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}DB Drop{% endblock %}
+{% block body %}
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+
+<div id="header_grid" class="ui grid">
+    <div class="ui ten wide column">
+<h1>DB Drop</h1><br>
+        <p> <h3>In DB: </h3><br><br>
+
+        {% for model, rows in data.items() %}
+
+        - <b>{{model.capitalize()}}:</b> {{rows}} rows <br>
+
+        {% endfor %}
+        </p>
+
+        <h3>Do you wanna Drop all Data in DB?</h3>
+
+
+    <button id="delete_all" class="ui left floated small red labeled icon button" type="button">
+    <i class="database icon"></i>Delete all data from DB</button>
+    </div>
+</div>
+{% set model = 'DB Data' %}
+{% set modal_url = 'db_drop' %}
+{% include 'delete_modal.html' %}
+
+{% endblock %}

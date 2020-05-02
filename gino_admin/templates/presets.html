@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}SQL-runner{% endblock %}
+{% block body %}
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+
+<div id="header_grid" class="ui grid">
+    <div class="ui ten wide column">
+<h1>DB Presets</h1><br>
+    </div>
+</div>
+<p>{% for preset in preset %}
+    {{present}} <br></p>
+{% endfor %}
+{% endblock %}

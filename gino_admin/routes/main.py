@@ -83,6 +83,82 @@ async def model_copy(request, model_id):
     return await render_model_view(request, model_id)
 
 
+@admin.route("/db_drop", methods=["GET"])
+@auth.token_validation()
+async def db_drop_view(request: Request):
+    data = {"users": 2323, "gifts": 3203}
+    return jinja.render(
+        "db_drop.html",
+        request,
+        data=data,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/db_drop", methods=["POST"])
+@auth.token_validation()
+async def db_drop_run(request: Request):
+    data = {"users": 2323, "gifts": 3203}
+    return jinja.render(
+        "db_drop.html",
+        request,
+        data=data,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/presets", methods=["GET"])
+@auth.token_validation()
+async def presets_view(request: Request):
+    presets = [
+        (
+            "Preset 1",
+            "Preset description",
+            {"users": "csv_name1.csv", "gifts": "csv_name2.csv"},
+        ),
+        (
+            "Preset 2",
+            "Preset description",
+            {"users": "csv_name3.csv", "gifts": "csv_name4.csv"},
+        ),
+    ]
+
+    return jinja.render(
+        "presets.html",
+        request,
+        presets=presets,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/presets/<preset_id>", methods=["POST"])
+@auth.token_validation()
+async def presets_use(request: Request, preset_id: Text):
+    presets = [
+        (
+            "Preset 1",
+            "Preset description",
+            {"users": "csv_name1.csv", "gifts": "csv_name2.csv"},
+        ),
+        (
+            "Preset 2",
+            "Preset description",
+            {"users": "csv_name3.csv", "gifts": "csv_name4.csv"},
+        ),
+    ]
+
+    return jinja.render(
+        "presets.html",
+        request,
+        presets=presets,
+        objects=cfg.app.db.tables,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
 @admin.route("/<model_id>/upload/", methods=["POST"])
 @auth.token_validation()
 async def file_upload(request: Request, model_id: Text):
