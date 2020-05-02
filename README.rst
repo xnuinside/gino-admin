@@ -66,11 +66,11 @@ Version 0.0.6 Updates (not released yet, current master):
 4. Added possible to work without auth (for Debug purposes). Set env variable 'ADMIN_AUTH_DISABLE=True'
 5. Template updated
 6. Added export Table's Data to CSV
-7. SQL-query execution page (run any query and get answer from PostgreSQL)
+7. First version of SQL-query execution (run any query and get answer from PostgreSQL)
+8. Fixed error display on csv upload
 
 
-
-Version 0.0.5 Updates:
+Version 0.0.5 Updates
 ----------------------
 
 1. Upload from CSV: fixed upload from _hash fields - now in step of upload called hash function (same as in edit, or add per item)
@@ -170,32 +170,6 @@ TODO:
 - Actions history
 
 
-Screens:
---------
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
-  :width: 250
-  :alt: Table view
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
-  :width: 250
-  :alt: Features per row
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
-  :width: 250
-  :alt: SQL-runner
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
-  :width: 250
-  :alt: Add item
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
-  :width: 250
-  :alt: Simple auth
-
-
-
-
 
 Contributions
 ---------------
@@ -220,3 +194,33 @@ Just run:
     pre-commit install
 
 to install git hooks in your .git/ directory.
+
+
+Screens:
+--------
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+  :width: 250
+  :alt: Table view
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
+  :width: 250
+  :alt: Features per row
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+  :width: 250
+  :alt: SQL-runner
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
+  :width: 250
+  :alt: Add item
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
+  :width: 250
+  :alt: Simple auth
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/display_errors_on_upload_from_csv.png
+  :width: 250
+  :alt: Display errors on upload data from CSV
+
+

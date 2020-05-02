@@ -1,15 +1,15 @@
 import os
 import uuid
-from copy import deepcopy
-from csv import reader
 from datetime import datetime
+from typing import Text
 
 import asyncpg
 from sanic import response
+from sanic.request import Request
 
 from gino_admin import auth, utils
 from gino_admin.core import admin, jinja
-from gino_admin.routes.logic import render_model_view
+from gino_admin.routes.logic import insert_data_from_csv, render_model_view
 from gino_admin.utils import cfg, extract_columns_data
 
 
@@ -24,7 +24,7 @@ async def bp_root(request):
 
 @admin.route("/logout")
 @auth.token_validation()
-async def logout(request):
+async def logout(request: Request):
     auth.logout_user(request)
     return response.redirect("login")
 
@@ -49,7 +49,7 @@ async def login(request):
     )
 
 
-def handle_no_auth(request):
+def handle_no_auth(request: Request):
     return response.json(dict(message="unauthorized"), status=401)
 
 
@@ -85,7 +85,7 @@ async def model_copy(request, model_id):
 
 @admin.route("/<model_id>/upload/", methods=["POST"])
 @auth.token_validation()
-async def file_upload(request, model_id):
+async def file_upload(request: Request, model_id: Text):
     if not os.path.exists(cfg.upload_dir):
         os.makedirs(cfg.upload_dir)
     upload_file = request.files.get("file_names")
@@ -99,66 +99,9 @@ async def file_upload(request, model_id):
         file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
         await utils.write_file(file_path, upload_file.body)
 
-        # open file in read mode
-        with open(file_path, "r") as read_obj:
-            # pass the file object to reader() to get the reader object
-            csv_reader = reader(read_obj)
-            # Iterate over each row in the csv using reader object
-            header = None
-            id_added = []
-            try:
-                errors = []
-                for num, row in enumerate(csv_reader):
-                    # row variable is a list that represents a row in csv
-                    if num == 0:
-                        columns_data, hashed_indexes = extract_columns_data(model_id)
-                        columns_names = list(columns_data.keys())
-                        header = [x.strip().replace("\ufeff", "") for x in row]
-                        hashed_columns_names = [
-                            columns_names[index] for index in hashed_indexes
-                        ]
-                        validate_header = deepcopy(header)
-                        for _num, name in enumerate(validate_header):
-                            if name in hashed_columns_names:
-                                validate_header[_num] = name + "_hash"
-                            if name not in columns_names:
-                                request["flash"](
-                                    f"Wrong columns in CSV file. Header did not much model's columns. "
-                                    f"For {model_id.capitalize()} possible columns {columns_names}",
-                                    "error",
-                                )
-                                return response.redirect(f"/admin/{model_id}/")
-                    else:
-                        row = {header[index]: value for index, value in enumerate(row)}
-                        row = utils.reverse_hash_names(
-                            hashed_indexes, columns_names, row
-                        )
-                        row = utils.correct_types(row, columns_data)
-                        try:
-                            await cfg.models[model_id].create(**row)
-                        except Exception as e:
-                            errors.append((num, row["id"], e.args))
-                            continue
-                        id_added.append(row["id"])
-                if errors:
-                    request["flash"](
-                        f"Errors: was not added  (row number, row id, error) : {errors}",
-                        "error",
-                    )
-                request["flash"](f"Objects with ids {id_added} was added", "success")
-            except ValueError as e:
-                request["flash"](e.args, "error")
-            except asyncpg.exceptions.ForeignKeyViolationError as e:
-                request["flash"](e.args, "error")
-            except asyncpg.exceptions.UniqueViolationError:
-                request["flash"](
-                    f"{model_id.capitalize()} with id '{row['id']}' already exists",
-                    "error",
-                )
-            except asyncpg.exceptions.NotNullViolationError as e:
-                column = e.args[0].split("column")[1].split("violates")[0]
-                request["flash"](f"Field {column} cannot be null", "error")
-        return response.redirect(f"/admin/{model_id}/")
+        request, code = await insert_data_from_csv(file_path, model_id, request)
+
+        return await render_model_view(request, model_id)
 
 
 @admin.route("/sql_run", methods=["GET"])
