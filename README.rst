@@ -48,8 +48,7 @@ Example:
 Where:
 
     'app' - your Sanic application
-    'db' : from gino.ext.sanic import Gino; db = Gino() 
-        and [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
+    'db' : from gino.ext.sanic import Gino; db = Gino() and [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
         
     custom_hash_method - optional parameter to define you own hash method to encrypt all '_hash' columns of your Models.
     In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
@@ -98,6 +97,7 @@ Authentication
 Set environment variable 'ADMIN_AUTH_DISABLE=1'
 
 .. code-block:: python
+
     os.environ['ADMIN_AUTH_DISABLE'] = '1'
 
 or from shell:
