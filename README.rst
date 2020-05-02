@@ -58,7 +58,7 @@ Where:
 Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
 
 
-Version 0.0.6 Updates (not released yet, current master):
+Version 0.0.6 Updates:
 ----------------------
 1. Clean up template, hide row controls under menu.
 2. Added 'Copy' option to DB row.
