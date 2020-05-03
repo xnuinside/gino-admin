@@ -1,5 +1,5 @@
 import os
-from typing import Callable, List
+from typing import Callable, List, Text
 
 from gino.ext.sanic import Gino
 from jinja2 import FileSystemLoader
@@ -26,13 +26,17 @@ admin.static(
 
 
 def add_admin_panel(
-    app: Sanic, db: Gino, gino_models: List, custom_hash_method: Callable = None
+    app: Sanic,
+    db: Gino,
+    gino_models: List,
+    custom_hash_method: Callable = None,
+    presets_folder: Text = "presets",
 ):
     """ init admin panel and configure """
 
     cfg.models = {model.__tablename__: model for model in gino_models}
     cfg.app.db = db
-
+    cfg.presets_folder = presets_folder
     app.blueprint(admin)
     if custom_hash_method:
         cfg.hash_method = custom_hash_method

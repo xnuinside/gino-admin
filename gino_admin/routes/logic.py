@@ -31,7 +31,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
         model=model_id,
         columns=columns_names,
         model_data=output,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
     return _response
@@ -89,10 +89,16 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
             request["flash"](e.args, "error")
         except asyncpg.exceptions.UniqueViolationError:
             request["flash"](
-                f"{model_id.capitalize()} with id '{row['id']}' already exists",
-                "error",
+                f"{model_id.capitalize()} with id '{row['id']}' already exists", "error"
             )
         except asyncpg.exceptions.NotNullViolationError as e:
             column = e.args[0].split("column")[1].split("violates")[0]
             request["flash"](f"Field {column} cannot be null", "error")
     return request, True
+
+
+async def drop_and_recreate_all_tables():
+    for model_id in cfg.models:
+        sql_query = f"DROP TABLE {model_id} CASCADE"
+        await cfg.app.db.status(cfg.app.db.text(sql_query))
+    await cfg.app.db.gino.create_all()

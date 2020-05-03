@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import re
 from typing import Any, Dict, List, Text
@@ -6,9 +7,12 @@ from unicodedata import normalize
 from uuid import uuid4
 
 import aiofiles
+import yaml
 from passlib.hash import pbkdf2_sha256
 
 from gino_admin.config import Config
+
+logger = logging.getLogger("Gino Admin")
 
 salt = uuid4().hex
 cfg = Config
@@ -167,3 +171,24 @@ def extract_columns_data(model_id: Text):
 def generate_token(ip: Text):
     """ generate session token based on user name and salt """
     return pbkdf2_sha256.encrypt(salt + ip)
+
+
+def read_yaml(preset_file):
+    with open(preset_file, "r") as preset_file:
+        return yaml.safe_load(preset_file)
+
+
+def get_presets():
+    presets = []
+    if not os.path.isdir(cfg.presets_folder):
+        if os.path.isfile(cfg.presets_folder):
+            logger.error(f"Presets folder is file. Must be a path to folder")
+        logger.info(f"Presets folder not found. Create new folder.")
+        os.makedirs(cfg.presets_folder)
+    else:
+        for file_name in os.listdir(cfg.presets_folder):
+            if file_name.endswith(".yml"):
+                file_path = os.path.join(cfg.presets_folder, file_name)
+                preset_definition = read_yaml(file_path)
+                presets.append(preset_definition)
+    return presets

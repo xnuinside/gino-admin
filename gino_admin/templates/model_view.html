@@ -19,29 +19,8 @@
 {% include 'data_table.html' %}
 
 <!-- delete modal -->
-
-<div id="grid_footer" class="ui grid right aligned content">
-    <div class="three column " id="grid_footer_row">
-    </div>
-</div>
-
-<div class="ui basic modal">
-  <div class="ui icon header">
-    <i class="trash icon"></i> Delete all {{model}}
-  </div>
-  <div class="content">
-    <p>Are you sure, that you want to delete all {{model}}?</p>
-  </div>
-  <div class="actions">
-    <div class="ui red basic cancel inverted button">
-      <i class="remove icon"></i>No
-    </div><br>
-        <form action="{{url_prefix}}/{{model.lower()}}/delete_all/" method="post">
-        <button id='delete' class="ui red ok inverted button" type='submit'>
-            <i class="checkmark icon"></i> Yes</button>
-        </form>
-  </div>
-</div>
+{% set modal_url = model.lower() + '/delete_all/' %}
+{% include 'delete_modal.html' %}
 <!-- end of modal -->
 {% for cat, msg in get_flashed_messages(with_categories=true) %}
       <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>

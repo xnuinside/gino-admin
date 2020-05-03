@@ -25,7 +25,7 @@ async def model_edit_view(request, model_id, obj_id):
         request,
         model=model_id,
         obj=obj,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         columns_names=columns_names,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -66,7 +66,7 @@ async def model_edit_post(request, model_id, obj_id):
         request,
         model=model_id,
         obj=obj,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         columns_names=columns_names,
         url_prefix=cfg.URL_PREFIX,
         url=f"{cfg.URL_PREFIX}/{model_id}/{obj_id}/edit",
@@ -78,7 +78,6 @@ async def model_edit_post(request, model_id, obj_id):
 async def model_add_view(request, model):
     columns_data, hashed_indexes = utils.extract_columns_data(model)
     columns_names = list(columns_data.keys())
-
     response = jinja.render(
         "add_form.html",
         request,
@@ -86,7 +85,7 @@ async def model_add_view(request, model):
         add=True,
         obj={},
         columns_names=columns_names,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
     return response
@@ -113,9 +112,11 @@ async def model_add(request, model):
             request_params = utils.correct_types(request_params, columns_data)
             await cfg.models[model].create(**request_params)
             request["flash"]("Object was added", "success")
-        except ValueError as e:
-            request["flash"](e.args, "error")
-        except asyncpg.exceptions.ForeignKeyViolationError as e:
+        except (
+            asyncpg.exceptions.StringDataRightTruncationError,
+            ValueError,
+            asyncpg.exceptions.ForeignKeyViolationError,
+        ) as e:
             request["flash"](e.args, "error")
         except asyncpg.exceptions.UniqueViolationError:
             request["flash"](
@@ -129,7 +130,7 @@ async def model_add(request, model):
         "add_form.html",
         request,
         model=model,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         obj={},
         columns_names=columns_names,
         url_prefix=cfg.URL_PREFIX,

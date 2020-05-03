@@ -1,0 +1,31 @@
+Version 0.0.6 Updates:
+----------------------
+1. Clean up template, hide row controls under menu.
+2. Added 'Copy' option to DB row.
+3. Now errors showed correct in table view pages in process of Delete, Copy, CSV Upload
+4. Added possible to work without auth (for Debug purposes). Set env variable 'ADMIN_AUTH_DISABLE=True'
+5. Template updated
+6. Added export Table's Data to CSV
+7. First version of SQL-query execution (run any query and get answer from PostgreSQL)
+8. Fixed error display on csv upload
+
+
+Version 0.0.5 Updates
+----------------------
+
+1. Upload from CSV: fixed upload from _hash fields - now in step of upload called hash function (same as in edit, or add per item)
+2. Fixed errors relative to datetime fields edit, added datetime_str_formats field to Config object, that allows to add custom datetime str formats. They used in step of convert str from DB to datetime object.
+3. Now '_hash' fields values in table showed as '***********'
+4. Fixed errors relative to int id's. Now they works correct in edit and delete.
+5. Update Menu template. Now if there is more when 4 models - they will be available under Dropdown menu.
+
+
+Version 0.0.4 Updates:
+----------------------
+
+1. Upload from CSV - works, added example to `examples/` files. You can upload data from '.csv' tables.
+2. Edit per row - now exist button 'edit'.
+3. Fixed delete for ALL rows of the model
+4. Fixed delete per element.
+5. Now works full 'CRUD'.
+6. Fixed auth, now it sets 'cookie' and compare user-agent (for multiple users per login)

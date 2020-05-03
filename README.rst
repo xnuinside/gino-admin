@@ -14,6 +14,9 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
   :width: 250
   :alt: Table view
 
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+  :width: 250
+  :alt: Load Presets
 
 How to install
 --------------
@@ -64,6 +67,77 @@ Where:
 
 Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
 
+Version 0.0.7 Updates:
+----------------------
+1. Fixes: datetime issue in 'Copy' action, delete all modal
+2. New feature "Presets" (define multiple CSV files with data - upload all with one click).
+3. New feature "Drop DB" (full clean up & recreate tables).
+
+New features can be find under menu with 'Cogs' near 'SQL-Runner' button.
+
+Screen with update.
+
+
+Presets
+-------
+Load multiple CSV to DB in order by one click.
+
+'Presets' feature allows to define folder with DB presets described in yml format.
+Presets described that CSV-s files and in that order
+
+Check also 'example/' folder.
+
+
+Example:
+
+.. code-block:: python
+
+    name: First Preset
+    description: "Init DB with minimal data"
+    files:
+      users: csv/user.csv
+      gifts: csv/gift.csv
+
+
+Check examples/src/csv_to_upload for example with presets files.
+
+
+In order defined in yml, Gino-Admin will load csv files to models.
+'files:' describe that file (right sight) must be loaded to the model (left side).
+
+In current example: load data from csv/user.csv to Users table, csv/gift.csv to Gifts.
+
+Don't forget to setup path to folder with presets like with **'presets_folder'** argument.
+
+.. code-block:: python
+
+    ...
+
+    current_path = os.path.dirname(os.path.abspath(__file__))
+
+    add_admin_panel(
+        app,
+        db,
+        [User, Place, City, GiftCard, Country],
+        custom_hash_method=custom_hash_method,
+        presets_folder=os.path.join(current_path, "csv_to_upload"),
+    )
+
+Check example project for more clearly example.
+
+
+Drop DB
+-------
+
+Drop DB feature used for doing full clean up DB - it drop all tables & create them after Drop for all models in Admin Panel.
+
+
+
+Upload from CSV
+---------------
+
+Files samples for example project can be found here: **examples/src/csv_to_upload**
+
 
 Version 0.0.6 Updates:
 ----------------------
@@ -77,25 +151,6 @@ Version 0.0.6 Updates:
 8. Fixed error display on csv upload
 
 
-Version 0.0.5 Updates
-----------------------
-
-1. Upload from CSV: fixed upload from _hash fields - now in step of upload called hash function (same as in edit, or add per item)
-2. Fixed errors relative to datetime fields edit, added datetime_str_formats field to Config object, that allows to add custom datetime str formats. They used in step of convert str from DB to datetime object.
-3. Now '_hash' fields values in table showed as '***********'
-4. Fixed errors relative to int id's. Now they works correct in edit and delete.
-5. Update Menu template. Now if there is more when 4 models - they will be available under Dropdown menu.
-
-
-Version 0.0.4 Updates:
-----------------------
-
-1. Upload from CSV - works, added example to `examples/` files. You can upload data from '.csv' tables.
-2. Edit per row - now exist button 'edit'.
-3. Fixed delete for ALL rows of the model
-4. Fixed delete per element.
-5. Now works full 'CRUD'.
-6. Fixed auth, now it sets 'cookie' and compare user-agent (for multiple users per login)
 
 Authentication
 --------------
@@ -155,27 +210,31 @@ id also can be Integer/BigInteger:
 
         id = db.Column(db.BigInteger(), unique=True, primary_key=True)
 
+
 Supported operations
 --------------------
 
-- One user auth
-- Create item by one for the Model
-- Delete all rows
-- Delete one item
+- Auth by login/pass with cookie check
+- Create(Add new) item by one for the Model
+- Search/sort in tables
+- Upload/export data from/to CSV
+- Delete all rows/per element
 - Copy existed element (data table row)
-- Edit existed data
-- Upload data from csv
+- Edit existed data (table row)
+- SQL-Runner (execute SQL-queries)
+- Load DB Presets (bunch of CSV)
+- Drop DB (Full clean up behavior: Drop tables & Recreate)
 
 
 TODO:
 
 - Select multiple for delete/copy
 - Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
-- Edit multiple
-- Multiple users
-- Set up data presets (drop table for some data state, defined from csv)
-- Filters in columns
-- Actions history
+- Edit multiple items (?)
+- Roles & User store in DB
+- Filters in Table's columns
+- History logs on changes (log for admin panel actions)
+- Add possible to add new Presets from GUI
 
 
 
