@@ -16,6 +16,9 @@
       <i class="remove icon"></i>No
     </div><br>
         <form action="{{url_prefix}}/{{modal_url}}" method="post">
+            {% if data %}
+             <input type="hidden" name="data" value="{{data}}">
+            {% endif %}
         <button id='delete' class="ui red ok inverted button" type='submit'>
             <i class="checkmark icon"></i> Yes</button>
         </form>

@@ -113,9 +113,11 @@ async def model_add(request, model):
             request_params = utils.correct_types(request_params, columns_data)
             await cfg.models[model].create(**request_params)
             request["flash"]("Object was added", "success")
-        except ValueError as e:
-            request["flash"](e.args, "error")
-        except asyncpg.exceptions.ForeignKeyViolationError as e:
+        except (
+            asyncpg.exceptions.StringDataRightTruncationError,
+            ValueError,
+            asyncpg.exceptions.ForeignKeyViolationError,
+        ) as e:
             request["flash"](e.args, "error")
         except asyncpg.exceptions.UniqueViolationError:
             request["flash"](
