@@ -1,4 +1,4 @@
-gino_admin
+gino-admin
 ----------
 
 |badge1| |badge3| |badge2| 
