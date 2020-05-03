@@ -14,7 +14,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
   :width: 250
   :alt: Table view
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_presets.png
   :width: 250
   :alt: Load Presets
 
@@ -289,5 +289,9 @@ Screens:
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/display_errors_on_upload_from_csv.png
   :width: 250
   :alt: Display errors on upload data from CSV
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_clean_up.png
+  :width: 250
+  :alt: DB Drop
 
 
