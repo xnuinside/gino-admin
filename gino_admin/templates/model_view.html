@@ -19,7 +19,7 @@
 {% include 'data_table.html' %}
 
 <!-- delete modal -->
-{% set modal_url = '{{model.lower()}}/delete_all/' %}
+{% set modal_url = model.lower() + '/delete_all/' %}
 {% include 'delete_modal.html' %}
 <!-- end of modal -->
 {% for cat, msg in get_flashed_messages(with_categories=true) %}

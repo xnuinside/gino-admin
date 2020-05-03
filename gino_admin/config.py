@@ -27,3 +27,4 @@ class Config:
         "%m-%d-%yT%H:%M:%S.%f",
         "%m-%d-%y %H:%M:%S",
     ]
+    presets_folder = "presets"
