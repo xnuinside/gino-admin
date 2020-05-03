@@ -55,7 +55,6 @@ def serialize_obj(obj: Any) -> Any:
 def serialize_dict(container: Dict) -> Dict:
     """ method to serialise datetime in dict """
     for key, value in container.items():
-        print(key, value)
         container[key] = serialize_obj(value)
     return container
 

@@ -31,7 +31,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
         model=model_id,
         columns=columns_names,
         model_data=output,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
     return _response

@@ -21,7 +21,7 @@ from gino_admin.utils import cfg, extract_columns_data
 @jinja.template("index.html")  # decorator method is staticmethod
 async def bp_root(request):
     return jinja.render(
-        "index.html", request, objects=cfg.app.db.tables, url_prefix=cfg.URL_PREFIX,
+        "index.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
     )
 
 
@@ -41,14 +41,14 @@ async def login(request):
         request.cookies["auth-token"] = _token
         request["session"] = {"_auth": True}
         _response = jinja.render(
-            "index.html", request, objects=cfg.app.db.tables, url_prefix=cfg.URL_PREFIX
+            "index.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX
         )
         _response.cookies["auth-token"] = _token
         return _response
     else:
         request["flash"]("Password or login is incorrect", "error")
     return jinja.render(
-        "login.html", request, objects=cfg.app.db.tables, url_prefix=cfg.URL_PREFIX,
+        "login.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
     )
 
 
@@ -69,6 +69,7 @@ async def model_copy(request, model_id):
     """ route for copy item per row """
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data, hashed_indexes = extract_columns_data(model_id)
+    columns_names = list(columns_data.keys())
     request_params["id"] = columns_data["id"]["type"](request_params["id"])
     model = cfg.models[model_id]
     # id can be str or int
@@ -78,6 +79,17 @@ async def model_copy(request, model_id):
         new_obj_id = request_params["id"] + randint(0, 10000000000)
     bas_obj = (await model.get(request_params["id"])).to_dict()
     bas_obj["id"] = new_obj_id
+    required = [
+        key for key, value in columns_data.items() if value["nullable"] is False
+    ]
+    for item in required:
+        # todo: need to document this behaviour in copy step
+        if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
+            bas_obj[item] = bas_obj["id"]
+            if columns_data[item]["type"] == "HASH":
+                bas_obj[item] = cfg.hash_method(bas_obj["id"])
+
+    bas_obj = utils.reverse_hash_names(hashed_indexes, columns_names, bas_obj)
     try:
         await model.create(**bas_obj)
         request["flash"](
@@ -99,7 +111,7 @@ async def db_drop_view(request: Request):
         "db_drop.html",
         request,
         data=data,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
 
@@ -122,7 +134,7 @@ async def db_drop_run(request: Request):
         "db_drop.html",
         request,
         data=data,
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
 
@@ -134,7 +146,7 @@ async def presets_view(request: Request):
         "presets.html",
         request,
         presets=utils.get_presets(),
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
 
@@ -158,7 +170,7 @@ async def presets_use(request: Request):
         "presets.html",
         request,
         presets=utils.get_presets(),
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
 
@@ -186,10 +198,7 @@ async def file_upload(request: Request, model_id: Text):
 @auth.token_validation()
 async def sql_query_run_view(request):
     return jinja.render(
-        "sql_runner.html",
-        request,
-        objects=cfg.app.db.tables,
-        url_prefix=cfg.URL_PREFIX,
+        "sql_runner.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
     )
 
 
@@ -210,6 +219,6 @@ async def sql_query_run(request):
         request,
         columns=result[1],
         result=result[1],
-        objects=cfg.app.db.tables,
+        objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
