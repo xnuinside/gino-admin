@@ -53,7 +53,7 @@ class Country(db.Model):
 
     __tablename__ = "countries"
 
-    code = db.Column(db.String(8), unique=True, primary_key=True)
+    code = db.Column(db.String(8), unique=True)
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())

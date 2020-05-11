@@ -16,6 +16,9 @@ os.environ["SANIC_DB_PASSWORD"] = "gino"
 os.environ["SANIC_ADMIN_USER"] = "admin"
 os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
 
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+
 if __name__ == "__main__":
     # variable GINO_ADMIN must be set up before import db module, this is why we do import under if __name__
     import db  # noqa E402
@@ -29,4 +32,5 @@ if __name__ == "__main__":
         port=5000,
         db=db.db,
         db_models=[db.User, db.City, db.GiftCard, db.Country],
+        config={"presets_folder": os.path.join(current_path, "csv_to_upload")},
     )

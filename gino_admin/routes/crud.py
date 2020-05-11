@@ -16,7 +16,9 @@ async def model_view_table(
     if flash_messages and not isinstance(flash_messages[0], tuple):
         request["flash"](*flash_messages)
     elif flash_messages:
+        print(flash_messages)
         for flash in flash_messages:
+            print(flash)
             request["flash"](*flash)
     return await render_model_view(request, model_id)
 
@@ -116,7 +118,8 @@ async def model_delete(request, model_id):
             "success",
         )
     except asyncpg.exceptions.ForeignKeyViolationError as e:
-        flash_message = (e.args, "error")
+        flash_message = (str(e.args), "error")
+    print(flash_message)
     return await model_view_table(request, model_id, flash_message)
 
 

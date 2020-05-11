@@ -25,11 +25,12 @@ admin.static(
 )
 
 
-def extract_column_data(model_id: Text):
+def extract_column_data(model_id: Text) -> Dict:
     """ extract data about column """
     _hash = "_hash"
     columns_data, hashed_indexes = {}, []
     for num, column in enumerate(cfg.app.db.tables[model_id].columns):
+
         if _hash in column.name:
             name = column.name.split(_hash)[0]
             type_ = "HASH"
@@ -46,22 +47,34 @@ def extract_column_data(model_id: Text):
             "len": len_,
             "nullable": column.nullable,
             "unique": column.unique,
+            "foreign_keys": column.foreign_keys,
         }
     required = [
         key for key, value in columns_data.items() if value["nullable"] is False
     ]
     unique = [key for key, value in columns_data.items() if value["unique"] is True]
-    column_details = {
+    foreign_keys = {}
+    for column_name, data in columns_data.items():
+        print(columns_data)
+
+        print("key33")
+        for key in data["foreign_keys"]:
+            foreign_keys[key._colspec.split(".")[0]] = (
+                column_name,
+                key._colspec.split(".")[1],
+            )
+    columns_details = {
         "unique_columns": unique,
         "required_columns": required,
         "columns_data": columns_data,
         "columns_names": list(columns_data.keys()),
         "hashed_indexes": hashed_indexes,
+        "foreign_keys": foreign_keys,
     }
-    return column_details
+    return columns_details
 
 
-def extract_models_metadata(db: Gino, db_models: List):
+def extract_models_metadata(db: Gino, db_models: List) -> None:
     """ extract required data about DB Models """
     cfg.models = {model.__tablename__: {"model": model} for model in db_models}
     cfg.app.db = db
@@ -90,6 +103,7 @@ def add_admin_panel(
     db_models: List,
     custom_hash_method: Callable = None,
     presets_folder: Text = "presets",
+    composite_csv_settings: Dict = None,
     *args,
     **kwargs,
 ):
@@ -97,6 +111,7 @@ def add_admin_panel(
 
     extract_models_metadata(db, db_models)
     cfg.presets_folder = presets_folder
+    cfg.composite_csv_settings = composite_csv_settings
     app.blueprint(admin)
     if custom_hash_method:
         cfg.hash_method = custom_hash_method

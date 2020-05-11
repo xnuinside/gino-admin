@@ -45,8 +45,8 @@ If model does not have 'unique' column - it will not showed in admin panel and y
 
 3. Added display max len of fields in 'Add & Edit' forms
 
-4. Combined data CSV upload
-4.1 Added **Feature "Combined CSV data upload"** - possibility to define one CSV files, that contains several relative tables.
+4. New feature "Composite CSV upload"
+4.1 Added **Feature "Composite CSV data upload"** - possibility to define one CSV files, that contains several relative tables.
 Used special to prepare dataset for demo purposes or tests. When it more effective and fast to define
 relative data in one file.
 4.2 Added new config param **composite_csv_settings** that allow to describe some patterns how must be parsed Composite CSV files.
@@ -232,7 +232,10 @@ Composite CSV to Upload
 -----------------------
 Default upload from CSV allows to load CSV with data per table.
 
-Composite CSV files allow to load data for several tables from one CSV files.
+Composite CSV files allow to load data for several tables from one CSV files and don't define ForeignKey columns.
+You can define table from left to right and if previous table contain ForeignKey for the next table when as linked row will be taken value from current or previous row.
+This allow you to define one time Country and 10 cities for it. If it sounds tricky - check example DB schema and XLS example on google docs.
+
 This useful if you want to fill DB with related data, for example, User has some GiftCards (ForeignKey - user.id), GiftCard can be spend to pay off for some Order (ForeignKey - gift_card.id).
 So you have set of data that knit together. If you works on some Demo or POC presentation - it's important to keep data consistent, so you want to define 'beautiful data', it's hard if you have 3-4-5 models to define in separate csv.
 
@@ -291,12 +294,11 @@ So, now let's define **composite_csv_settings**
     composite_csv_settings = {(Place, Education, Camp): {'alias': 'area', 'type_column': 'type'}}
 
 This mean, when we see in CSV-header 'area' this is data for one of this 3 models, to identify which of this 3 models - check column with header 'area:type'.
+In type column values must be same 1-to-1 as table names.
 
+Check source code with example: examples/composite_csv_example
 
-Check source code with example:
-
-
-And table sample for it:
+And table sample for it: https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
 
 
 

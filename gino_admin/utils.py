@@ -116,12 +116,18 @@ async def write_file(path, body):
         f.close()
 
 
+class CompositeType:
+    pass
+
+
 def correct_types(params: Dict, columns_data: Dict):
     to_del = []
     for param in params:
         if not params[param]:
             # mean None
             to_del.append(param)
+            continue
+        if isinstance(param, CompositeType):
             continue
         if "_hash" not in param and not isinstance(
             params[param], columns_data[param]["type"]
@@ -179,7 +185,7 @@ def get_presets():
 
 def get_settings():
     settings = {}
-    settings_list = ["presets_folder", "composite_csv"]
+    settings_list = ["presets_folder", "composite_csv_settings"]
     for setting in settings_list:
         settings[setting] = getattr(cfg, setting)
     return settings

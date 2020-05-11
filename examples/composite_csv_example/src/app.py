@@ -1,7 +1,6 @@
 import os
 
 from db import Address, Camp, City, Country, Education, Place, db
-from passlib.hash import pbkdf2_sha256
 from sanic import Sanic, response
 
 from gino_admin import add_admin_panel
@@ -14,19 +13,13 @@ app.config["DB_HOST"] = "localhost"
 app.config["DB_DATABASE"] = "gino"
 app.config["DB_USER"] = "gino"
 app.config["DB_PASSWORD"] = "gino"
-
+os.environ["ADMIN_AUTH_DISABLE"] = "1"
 db.init_app(app)
 
 
 @app.route("/")
 async def index(request):
     return response.redirect("/admin")
-
-
-# custom_hash_method you can define your own hash method to use it in backend and Admin
-def custom_hash_method(*args, **kwargs):
-    print("My custom hash method! Must return python callable object")
-    return pbkdf2_sha256.hash(*args, **kwargs)
 
 
 current_path = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +30,7 @@ add_admin_panel(
     db,
     [Place, City, Camp, Education, Address, Country],
     composite_csv_settings={
-        (Place, Education, Camp): {"alias": "area", "type_column": "type"}
+        "area": {"models": (Place, Education, Camp), "type_column": "type"}
     },
     presets_folder=os.path.join(current_path, "csv_to_upload"),
 )
