@@ -13,6 +13,10 @@ Gino-Admin is up and run as separate web application, so it does not matter on t
 
 All steps please do inside virtualenv.
 
+Be aware:
+
+    if you run before some other examples - remove 'data/' folder before run postgres, to clean up DB that was created for previous example
+
 First of all run instance of PostgreSQL - use for this example-docker-compose.yml (from base 'examples/' folder:
 
     docker-compose -f example-docker-compose.yml up --build postgres

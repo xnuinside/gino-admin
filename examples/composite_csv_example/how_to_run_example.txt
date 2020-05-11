@@ -1,4 +1,4 @@
-All steps please do inside virtualenv.
+All steps do inside virtualenv.
 
 Be aware:
 
@@ -10,14 +10,21 @@ First of all run instance of PostgreSQL - use for this example-docker-compose.ym
 
 Do:
 
-    pip install -r examples/requirements.txt
+    pip install -r requirements.txt
 
 After in new window run example/src/app.py:
 
-    python example/base_example/src/db.py  # to init DB
+    python example/composite_csv_example/src/db.py  # to init DB
 
 And finally:
-    python example/base_example/src/app.py
+    python example/composite_csv_example/src/app.py
+
+
+XLS-table sample in Google Sheets:
+
+https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
+
+Click - Download -> CSV and you will get result, that can be found in **examples/composite_csv_example/src/csv_to_upload**
 
 
 Use password and login to enter admin panel:

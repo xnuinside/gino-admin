@@ -1,0 +1,5 @@
+name: Composite CSV Preset
+description: "Init DB with data from composite CSV"
+files:
+  composite: csv/preset_a/users.csv
+

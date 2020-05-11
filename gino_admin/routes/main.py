@@ -75,7 +75,6 @@ async def model_copy(request, model_id):
     columns_data = model_data["columns_data"]
     request_params = {elem: request.form[elem][0] for elem in request.form}
     key = model_data["key"]
-    print(request_params)
     request_params[key] = columns_data[key]["type"](request_params[key])
     model = cfg.models[model_id]["model"]
     # id can be str or int
@@ -86,8 +85,6 @@ async def model_copy(request, model_id):
             + f"{'_' if not request_params[key].endswith('_') else ''}"
             + uuid.uuid1().hex[5:10]
         )
-        print("request_params[key] ")
-        print(new_obj_id)
         len_ = model_data["columns_data"][key]["len"]
         if len_:
             if new_obj_id[:len_] == request_params[key]:
@@ -102,8 +99,6 @@ async def model_copy(request, model_id):
         new_obj_id = request_params[key] + randint(0, 10000000000)
     bas_obj = (await model.get(request_params[key])).to_dict()
     bas_obj[key] = new_obj_id
-    print("new_obj_id")
-    print(new_obj_id)
     for item in model_data["required_columns"]:
         # todo: need to document this behaviour in copy step
         if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
@@ -168,6 +163,18 @@ async def presets_view(request: Request):
         request,
         presets_folder=cfg.presets_folder,
         presets=utils.get_presets(),
+        objects=cfg.models,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/settings", methods=["GET"])
+@auth.token_validation()
+async def settings_view(request: Request):
+    return jinja.render(
+        "settings.html",
+        request,
+        settings=utils.get_settings(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )

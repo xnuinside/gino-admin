@@ -43,15 +43,18 @@ Admin Panel checks 'unique' flag in the column. And first unique column will be 
 
 If model does not have 'unique' column - it will not showed in admin panel and you will see error message about it in logs as warning.
 
-3. Added max len display in 'Add & Edit' forms
+3. Added display max len of fields in 'Add & Edit' forms
 
-4. Added Feature "Combined data upload" - possibility to define one CSV files, that contains several relative tables.
+4. Combined data CSV upload
+4.1 Added **Feature "Combined CSV data upload"** - possibility to define one CSV files, that contains several relative tables.
 Used special to prepare dataset for demo purposes or tests. When it more effective and fast to define
 relative data in one file.
-
-Example with CSVs samples added to
-
+4.2 Added new config param **composite_csv_settings** that allow to describe some patterns how must be parsed Composite CSV files.
+Check more information in example and doc's section **Config**
+4.3 Example with CSVs samples added to
 5. Fixed issue with Logout.
+6. Added page 'Settings' to check that Settings are used in admin panel. Display now composite_csv param & presets folder.
+
 
 
 Usage example
@@ -225,14 +228,76 @@ Don't forget to setup path to folder with presets like with **'presets_folder'**
 
 Check example project for more clearly example.
 
-Configure Gino Admin
---------------------
+Composite CSV to Upload
+-----------------------
+Default upload from CSV allows to load CSV with data per table.
+
+Composite CSV files allow to load data for several tables from one CSV files.
+This useful if you want to fill DB with related data, for example, User has some GiftCards (ForeignKey - user.id), GiftCard can be spend to pay off for some Order (ForeignKey - gift_card.id).
+So you have set of data that knit together. If you works on some Demo or POC presentation - it's important to keep data consistent, so you want to define 'beautiful data', it's hard if you have 3-4-5 models to define in separate csv.
+
+Composite CSV allow use CSV files with headers with pattern "table_name:column" and also allow to add aliases patterns
+
+Check 'examples/composite_csv_example' code to check DB structure.
+
+And XLS-table sample in Google Sheets:
+
+https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
+
+Click - Download -> CSV and you will get result, that can be found in **examples/composite_csv_example/src/csv_to_upload**
+
+
+Composite CSV can be loaded manual from any Model's Page where exist button 'Upload CSV' - it does not matter from that model you load.
+
+Or you can define preset with Composite CSV and load it as preset. To use composite CSV you need to define key, that started with 'composite' word.
+
+Example:
+
+.. code-block:: python
+
+    name: Composite CSV Preset
+    description: "Init DB with data from composite CSV"
+    files:
+      composite_csv: csv/preset_a/users.csv
+
+'composite_csv: csv/preset_a/users.csv' can be 'composite_any_key: csv/preset_a/users.csv'
+
+You can use multiple composite CSV in one preset.
+
+
+Config Gino Admin
+------------------
 
 You can define in config:
 
 * presets_folder: path where stored predefined DB presets
 * custom_hash_method: method that used to hash passwords and other data, that stored as *_hash columns in DB,
     by default used pbkdf2_sha256.encrypt
+* composite_csv_settings: describe some rules how to parse and load Composite CSV files
+
+composite_csv_settings
+######################
+
+composite_csv_settings allow to define multiple tables as one alias
+
+For example, in our example project with composite CSV we have 3 huge different categories separated by tables (they have some different columns) - Camps, Education(courses, lessons, colleges and etc.) and Places(Shopping, Restaurants and etc.)
+But we want to avoid duplicate similar columns 3 times, so we can call those 3 tables by one alias name,
+for example: 'area' and some column to understand that exactly this is an 'area' - capms, educations or places table for this we need to define 'type_column' we don't use in any model column 'type' so we will use this name for type-column
+
+So, now let's define **composite_csv_settings**
+
+.. code-block:: python
+
+    composite_csv_settings = {(Place, Education, Camp): {'alias': 'area', 'type_column': 'type'}}
+
+This mean, when we see in CSV-header 'area' this is data for one of this 3 models, to identify which of this 3 models - check column with header 'area:type'.
+
+
+Check source code with example:
+
+
+And table sample for it:
+
 
 
 Drop DB

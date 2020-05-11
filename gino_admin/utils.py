@@ -175,3 +175,11 @@ def get_presets():
                 preset_definition = read_yaml(file_path)
                 presets.append(preset_definition)
     return presets
+
+
+def get_settings():
+    settings = {}
+    settings_list = ["presets_folder", "composite_csv"]
+    for setting in settings_list:
+        settings[setting] = getattr(cfg, setting)
+    return settings

@@ -28,3 +28,4 @@ class Config:
         "%m-%d-%y %H:%M:%S",
     ]
     presets_folder = "presets"
+    composite_csv = "no settings"

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}DB Presets{% endblock %}
+{% block body %}
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+
+{% for setting, value in settings.items() %}
+
+    {{setting}}: {{value}}
+
+{% endfor %}
+{% endblock %}
