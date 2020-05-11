@@ -23,8 +23,36 @@ How to install
 
 .. code-block:: python
     
-    pip install gino_admin
+    pip install gino-admin
     
+
+
+Version 0.0.8 Updates:
+----------------------
+1. Added more possibilities to use Gino Admin with applications in different frameworks (Fast API, or aiohttp, or any others)
+
+1.1 Added example how to Gino Admin if main application developed with different Framework (Fast API or smth else). Example in **examples/use_with_any_framework_in_main_app**
+1.2 added **create_admin_app** method to full init admin app as separate server
+1.3 Old example moved to **base_example/** folder
+1.4 in method 'init_admin_app' argument 'gino_models' was renamed to 'db_models'
+
+2. Added support for Unique columns that used in models to identify data row.
+Previous, your model must have 'id' column for correct work copy/edit/delete methods, but now required ANY unique column in table
+
+Admin Panel checks 'unique' flag in the column. And first unique column will be used to define that row to delete/edit/or copy
+
+If model does not have 'unique' column - it will not showed in admin panel and you will see error message about it in logs as warning.
+
+3. Added max len display in 'Add & Edit' forms
+
+4. Added Feature "Combined data upload" - possibility to define one CSV files, that contains several relative tables.
+Used special to prepare dataset for demo purposes or tests. When it more effective and fast to define
+relative data in one file.
+
+Example with CSVs samples added to
+
+5. Fixed issue with Logout.
+
 
 Usage example
 -------------
@@ -149,33 +177,6 @@ Now, we need to create **admin.py** to run admin panel:
 All environment variables you can move to define in docker or .env files as you wish, they not needed to be define in '.py', this is just for example shortness.
 
 
-Version 0.0.8 Updates:
-----------------------
-1. Added more possibilities to use Gino Admin with applications in different frameworks (Fast API, or aiohttp, or any others)
-1.1 Added example how to Gino Admin if main application developed with different Framework (Fast API or smth else)
-
-Example in **examples/use_with_any_framework_in_main_app**
-
-1.2 added **create_admin_app** method to full init admin app as separate server
-
-1.3 Old example moved to **base_example/** folder
-
-1.4 in method 'init_admin_app' argument 'gino_models' was renamed to 'db_models'
-
-3. Added support for columns with different names can be used as 'id'
-- now Admin Panel checks 'unique' flag in the column.
-If model does not have 'unique' column - it will not showed in admin panel
-and you will see error message about it at the start and in logs.
-
-4. Added Feature "Combined data upload" - possibility to define one CSV files, that contains several relative tables.
-Used special to prepare dataset for demo purposes or tests. When it more effective and fast to define
-relative data in one file.
-
-Example with CSVs samples added to
-
-5. Fixed issue with Logout.
-
-
 
 Presets
 -------
@@ -281,21 +282,12 @@ check example/ folder to get code snippets
 Limitations
 -----------
 
-For correct work of Admin Panel all models MUST contain unique 'id' field.
-'id' used to identify row (one element) for Edit & Delete operations.
+For correct work of Admin Panel all models MUST contain at least one unique Column (field).
 
-so if you define model, for example, User:
+This column used to identify row (one element) for Copy & Edit & Delete operations.
+Name of unique column and type does not matter.
 
-.. code-block:: python
-
-    class User(db.Model):
-
-        __tablename__ = "users"
-
-        id = db.Column(db.String(), unique=True, primary_key=True)
-
-id also can be Integer/BigInteger:
-
+So if you define model, for example, User, you can have column **user_id** as unique:
 
 .. code-block:: python
 
@@ -303,7 +295,21 @@ id also can be Integer/BigInteger:
 
         __tablename__ = "users"
 
-        id = db.Column(db.BigInteger(), unique=True, primary_key=True)
+        user_id = db.Column(db.String(), unique=True, primary_key=True)
+
+
+
+
+Or for model 'Country' it can be 'code'
+
+.. code-block:: python
+
+    class Country(db.Model):
+
+        __tablename__ = "countries"
+
+        code = db.Column(db.String(8), unique=True, primary_key=True)
+        name = db.Column(db.String())
 
 
 Supported operations

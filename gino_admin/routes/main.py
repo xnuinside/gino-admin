@@ -11,8 +11,10 @@ from sanic.request import Request
 
 from gino_admin import auth, utils
 from gino_admin.core import admin, jinja
-from gino_admin.routes.logic import (drop_and_recreate_all_tables,
-                                     insert_data_from_csv, render_model_view)
+from gino_admin.routes.crud import model_view_table
+from gino_admin.routes.logic import (count_elements_in_db,
+                                     drop_and_recreate_all_tables,
+                                     insert_data_from_csv)
 from gino_admin.utils import cfg
 
 
@@ -25,11 +27,17 @@ async def bp_root(request):
     )
 
 
-@admin.route("/logout")
-@auth.token_validation()
+@admin.route("/logout", methods=["GET"])
 async def logout(request: Request):
-    auth.logout_user(request)
-    return response.redirect("login")
+    request = auth.logout_user(request)
+    return jinja.render(
+        "login.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/logout", methods=["POST"])
+async def logout_post(request: Request):
+    return await login(request)
 
 
 @admin.route("/login", methods=["GET", "POST"])
@@ -52,10 +60,6 @@ async def login(request):
     )
 
 
-def handle_no_auth(request: Request):
-    return response.json(dict(message="unauthorized"), status=401)
-
-
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
 @auth.token_validation()
 async def model_deepcopy(request, model_id):
@@ -69,46 +73,68 @@ async def model_copy(request, model_id):
     """ route for copy item per row """
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
-    request_params = {key: request.form[key][0] for key in request.form}
-    request_params["id"] = columns_data["id"]["type"](request_params["id"])
-    model = cfg.models[model_id]
+    request_params = {elem: request.form[elem][0] for elem in request.form}
+    key = model_data["key"]
+    print(request_params)
+    request_params[key] = columns_data[key]["type"](request_params[key])
+    model = cfg.models[model_id]["model"]
     # id can be str or int
-    if isinstance(request_params["id"], str):
-        new_obj_id = request_params["id"] + "_copy_" + uuid.uuid1().hex[5:10]
+    # todo: need fix for several unique columns
+    if isinstance(request_params[key], str):
+        new_obj_id = (
+            request_params[key]
+            + f"{'_' if not request_params[key].endswith('_') else ''}"
+            + uuid.uuid1().hex[5:10]
+        )
+        print("request_params[key] ")
+        print(new_obj_id)
+        len_ = model_data["columns_data"][key]["len"]
+        if len_:
+            if new_obj_id[:len_] == request_params[key]:
+                # if we spend all id previous
+                new_obj_id = new_obj_id[
+                    len_ : len_ + len_  # noqa E203
+                ]  # auto format from black
+            else:
+                new_obj_id = new_obj_id[:len_]
     else:
-        new_obj_id = request_params["id"] + randint(0, 10000000000)
-    bas_obj = (await model.get(request_params["id"])).to_dict()
-    bas_obj["id"] = new_obj_id
+        # todo: need to check ints with max size
+        new_obj_id = request_params[key] + randint(0, 10000000000)
+    bas_obj = (await model.get(request_params[key])).to_dict()
+    bas_obj[key] = new_obj_id
+    print("new_obj_id")
+    print(new_obj_id)
     for item in model_data["required_columns"]:
         # todo: need to document this behaviour in copy step
         if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
-            bas_obj[item] = bas_obj["id"]
+            bas_obj[item] = bas_obj[key]
             if columns_data[item]["type"] == "HASH":
-                bas_obj[item] = cfg.hash_method(bas_obj["id"])
-    bas_obj = utils.reverse_hash_names(
-        model_data["hashed_indexes"], model_data["columns_names"], bas_obj
-    )
+                bas_obj[item] = cfg.hash_method(bas_obj[key])
+    bas_obj = utils.reverse_hash_names(model_id, bas_obj)
     try:
         await model.create(**bas_obj)
-        request["flash"](
-            f"Object with {request_params['id']} was copied with id {bas_obj['id']}",
+        flash_message = (
+            f"Object with {key} {request_params[key]} was copied with {key} {bas_obj[key]}",
             "success",
         )
+    except asyncpg.exceptions.UniqueViolationError as e:
+        flash_message = (
+            f"Duplicate in Unique column Error during copy: {e.args}. \n"
+            f"Try to rename existed id or add manual.",
+            "error",
+        )
     except asyncpg.exceptions.ForeignKeyViolationError as e:
-        request["flash"](e.args, "error")
-    return await render_model_view(request, model_id)
+        flash_message = (e.args, "error")
+    return await model_view_table(request, model_id, flash_message)
 
 
 @admin.route("/db_drop", methods=["GET"])
 @auth.token_validation()
 async def db_drop_view(request: Request):
-    data = {}
-    for model_id, model in cfg.models.items():
-        data[model_id] = await cfg.app.db.func.count(model.id).gino.scalar()
     return jinja.render(
         "db_drop.html",
         request,
-        data=data,
+        data=await count_elements_in_db(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -124,14 +150,11 @@ async def db_drop_run(request: Request):
         count += value
     await drop_and_recreate_all_tables()
 
-    data = {}
-    for model_id, model in cfg.models.items():
-        data[model_id] = await cfg.app.db.func.count(model.id).gino.scalar()
     request["flash"](f"{count} object was deleted", "success")
     return jinja.render(
         "db_drop.html",
         request,
-        data=data,
+        data=await count_elements_in_db(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -143,6 +166,7 @@ async def presets_view(request: Request):
     return jinja.render(
         "presets.html",
         request,
+        presets_folder=cfg.presets_folder,
         presets=utils.get_presets(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
@@ -173,6 +197,11 @@ async def presets_use(request: Request):
     )
 
 
+@admin.middleware("request")
+async def print_on_request(request):
+    request["flash_messages"] = []
+
+
 @admin.route("/<model_id>/upload/", methods=["POST"])
 @auth.token_validation()
 async def file_upload(request: Request, model_id: Text):
@@ -180,8 +209,8 @@ async def file_upload(request: Request, model_id: Text):
         os.makedirs(cfg.upload_dir)
     upload_file = request.files.get("file_names")
     if not upload_file:
-        request["flash"]("No file chosen to Upload", "error")
-        return response.redirect(f"/admin/{model_id}")
+        flash_message = ("No file chosen to Upload", "error")
+        return await model_view_table(request, model_id, flash_message)
     file_name = utils.secure_filename(upload_file.name)
     if not utils.valid_file_size(upload_file.body, cfg.max_file_size):
         return response.redirect("/?error=invalid_file_size")
@@ -189,7 +218,7 @@ async def file_upload(request: Request, model_id: Text):
         file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
         await utils.write_file(file_path, upload_file.body)
         request, code = await insert_data_from_csv(file_path, model_id, request)
-        return await render_model_view(request, model_id)
+        return await model_view_table(request, model_id, request["flash_messages"])
 
 
 @admin.route("/sql_run", methods=["GET"])

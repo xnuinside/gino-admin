@@ -16,7 +16,6 @@ os.environ["SANIC_DB_PASSWORD"] = "gino"
 os.environ["SANIC_ADMIN_USER"] = "admin"
 os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
 
-
 if __name__ == "__main__":
     # variable GINO_ADMIN must be set up before import db module, this is why we do import under if __name__
     import db  # noqa E402
@@ -26,5 +25,8 @@ if __name__ == "__main__":
     # that allow set path to presets folder or custom_hash_method, optional parameter
     # db_models - list of db.Models classes (tables) that you want to see in Admin Panel
     create_admin_app(
-        host="0.0.0.0", port=5000, db=db.db, db_models=[db.User, db.City, db.GiftCard]
+        host="0.0.0.0",
+        port=5000,
+        db=db.db,
+        db_models=[db.User, db.City, db.GiftCard, db.Country],
     )

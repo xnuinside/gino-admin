@@ -1,5 +1,4 @@
 import os
-import uuid
 
 # when gino admin runs it set 'GINO_ADMIN' = '1' to get possible check that application used DB Model
 # pay attention, that in this case you need to run admin panel and main app in different venvs
@@ -51,7 +50,7 @@ class Country(db.Model):
 
     __tablename__ = "countries"
 
-    id = db.Column(db.String(24), unique=True, primary_key=True, default=uuid.uuid4)
+    code = db.Column(db.String(8), unique=True, primary_key=True)
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
@@ -60,8 +59,8 @@ class Country(db.Model):
 class City(db.Model):
 
     __tablename__ = "cities"
-
-    id = db.Column(db.String(), unique=True, primary_key=True, default=uuid.uuid4)
+    # does not contain 'unique' column - so this Model will not showed in UI in Admin Panel
+    id = db.Column(db.String())
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())

@@ -6,7 +6,7 @@ from jinja2 import FileSystemLoader
 from sanic import Blueprint, Sanic, response
 from sanic_jinja2 import SanicJinja2
 
-from gino_admin.utils import cfg, types_map
+from gino_admin.utils import cfg, logger, types_map
 
 loader = FileSystemLoader(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
@@ -37,9 +37,13 @@ def extract_column_data(model_id: Text):
         else:
             name = column.name
             type_ = types_map.get(str(column.type).split("(")[0], str)
-
+        if len(str(column.type).split("(")) > 1:
+            len_ = int(str(column.type).split("(")[1].split(")")[0])
+        else:
+            len_ = None
         columns_data[name] = {
             "type": type_,
+            "len": len_,
             "nullable": column.nullable,
             "unique": column.unique,
         }
@@ -48,7 +52,7 @@ def extract_column_data(model_id: Text):
     ]
     unique = [key for key, value in columns_data.items() if value["unique"] is True]
     column_details = {
-        "unique_column": unique,
+        "unique_columns": unique,
         "required_columns": required,
         "columns_data": columns_data,
         "columns_names": list(columns_data.keys()),
@@ -57,14 +61,27 @@ def extract_column_data(model_id: Text):
     return column_details
 
 
-def create_database_metadata(db: Gino, db_models: List):
+def extract_models_metadata(db: Gino, db_models: List):
     """ extract required data about DB Models """
     cfg.models = {model.__tablename__: {"model": model} for model in db_models}
     cfg.app.db = db
 
+    models_to_remove = []
+
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
-        cfg.models[model_id].update(column_details)
+        if not column_details["unique_columns"]:
+            models_to_remove.append(model_id)
+        else:
+            cfg.models[model_id].update(column_details)
+            cfg.models[model_id]["key"] = cfg.models[model_id]["unique_columns"][0]
+
+    for model_id in models_to_remove:
+        logger.warning(
+            f"\nWARNING: Model {model_id.capitalize()} will not be displayed in Admin Panel"
+            f"because does not contains any unique column\n"
+        )
+        del cfg.models[model_id]
 
 
 def add_admin_panel(
@@ -74,11 +91,11 @@ def add_admin_panel(
     custom_hash_method: Callable = None,
     presets_folder: Text = "presets",
     *args,
-    **kwargs
+    **kwargs,
 ):
     """ init admin panel and configure """
 
-    create_database_metadata(db, db_models)
+    extract_models_metadata(db, db_models)
     cfg.presets_folder = presets_folder
     app.blueprint(admin)
     if custom_hash_method:

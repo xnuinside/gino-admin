@@ -2,7 +2,6 @@
 {% block title %}{{model}}{% endblock %}
 
 {% block body %}
-
 <div class="ui breadcrumb">
   <a class="section" href="{{url_prefix}}">Admin</a>
   <i class="right angle icon divider"></i>
@@ -11,11 +10,15 @@
   <div class="active section">{% if add %} Add {{model.capitalize()}} {% else %}
     Edit {{model.capitalize()}} {% endif %}</div>
 </div>
-
+<br><br>
 <form class="ui form" action="{{url}}" method="post">
-{% for column in columns_names %}
+{% for column, data in columns.items() %}
   <div class="field">
-    <label>{{column}}</label>
+    <label>{{column}}
+      {% if data['len'] %}
+        <span style="font-weight: normal;">(max length: {{ data['len'] }})</span>
+      {% endif %}
+    </label>
     <input type="text" name="{{column}}" placeholder="{{column if add else obj.get(column)}}"
            value="{{'' if add else '' if column == 'password' else obj.get(column)}}">
   </div>

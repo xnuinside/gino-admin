@@ -7,14 +7,13 @@ Check src/db.py
 
 But pay attention, that you need to run admin panel and main app in different venvs or docker containers because other way variable
 
-Gino-Admin is up and run as separate web application, so it does not matter on that writen your main App.
-
+Gino-Admin is up and run as separate web application, so it does not matter on that writen your main App
 
 
 
 All steps please do inside virtualenv.
 
-First of all run instance of PostgreSQL - use for this example-docker-compose.yml:
+First of all run instance of PostgreSQL - use for this example-docker-compose.yml (from base 'examples/' folder:
 
     docker-compose -f example-docker-compose.yml up --build postgres
 

@@ -7,12 +7,12 @@ from sanic.request import Request
 from sanic.response import HTTPResponse
 
 from gino_admin.core import cfg, jinja
-from gino_admin.utils import correct_types, reverse_hash_names
+from gino_admin.utils import correct_types, reverse_hash_names, serialize_dict
 
 
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
-    columns_names = list(cfg.models[model_id]["columns_data"].keys())
+    columns_names = cfg.models[model_id]["columns_names"]
     model = cfg.app.db.tables[model_id]
     query = cfg.app.db.select([model])
     rows = await query.gino.all()
@@ -29,6 +29,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
         model=model_id,
         columns=columns_names,
         model_data=output,
+        unique=cfg.models[model_id]["key"],
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -61,39 +62,50 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                         if name in hashed_columns_names:
                             validate_header[_num] = name + "_hash"
                         if name not in columns_names:
-                            request["flash"](
-                                f"Wrong columns in CSV file. Header did not much model's columns. "
-                                f"For {model_id.capitalize()} possible columns {columns_names}",
-                                "error",
+                            request["flash_messages"].append(
+                                (
+                                    f"Wrong columns in CSV file. Header did not much model's columns. "
+                                    f"For {model_id.capitalize()} possible columns {columns_names}",
+                                    "error",
+                                )
                             )
                             return request, False
                 else:
                     row = {header[index]: value for index, value in enumerate(row)}
-                    row = reverse_hash_names(hashed_indexes, columns_names, row)
+                    row = reverse_hash_names(model_id, row)
                     row = correct_types(row, columns_data)
                     try:
-                        await cfg.models[model_id].create(**row)
+                        await cfg.models[model_id]["model"].create(**row)
                     except Exception as e:
                         errors.append((num, row["id"], e.args))
                         continue
                     id_added.append(row["id"])
             if errors:
-                request["flash"](
-                    f"Errors: was not added  (row number, row id, error) : {errors}",
+                request["flash_messages"].append(
+                    (
+                        f"Errors: was not added  (row number, row id, error) : {errors}",
+                        "error",
+                    )
+                )
+            request["flash_messages"].append(
+                (f"Objects with ids {id_added} was added", "success")
+            )
+        except ValueError as e:
+            request["flash_messages"].append((e.args, "error"))
+        except asyncpg.exceptions.ForeignKeyViolationError as e:
+            request["flash_messages"].append((e.args, "error"))
+        except asyncpg.exceptions.UniqueViolationError:
+            request["flash_messages"].append(
+                (
+                    f"{model_id.capitalize()} with id '{row[cfg.models[model_id]['key']]}' already exists",
                     "error",
                 )
-            request["flash"](f"Objects with ids {id_added} was added", "success")
-        except ValueError as e:
-            request["flash"](e.args, "error")
-        except asyncpg.exceptions.ForeignKeyViolationError as e:
-            request["flash"](e.args, "error")
-        except asyncpg.exceptions.UniqueViolationError:
-            request["flash"](
-                f"{model_id.capitalize()} with id '{row['id']}' already exists", "error"
             )
         except asyncpg.exceptions.NotNullViolationError as e:
             column = e.args[0].split("column")[1].split("violates")[0]
-            request["flash"](f"Field {column} cannot be null", "error")
+            request["flash_messages"].append(
+                (f"Field {column} cannot be null", "error")
+            )
     return request, True
 
 
@@ -102,3 +114,40 @@ async def drop_and_recreate_all_tables():
         sql_query = f"DROP TABLE {model_id} CASCADE"
         await cfg.app.db.status(cfg.app.db.text(sql_query))
     await cfg.app.db.gino.create_all()
+
+
+async def render_add_or_edit_form(
+    request: Request, model_id: Text, obj_id: Text = None
+) -> HTTPResponse:
+
+    model_data = cfg.models[model_id]
+    model = cfg.models[model_id]["model"]
+    if obj_id:
+        obj_id = model_data["columns_data"][model_data["key"]]["type"](obj_id)
+        obj = serialize_dict((await model.get(obj_id)).to_dict())
+        add = False
+    else:
+        obj = {}
+        add = True
+    return jinja.render(
+        "add_form.html",
+        request,
+        model=model_id,
+        add=add,
+        obj=obj,
+        objects=cfg.models,
+        columns={
+            column_name: {"len": model_data["columns_data"][column_name]["len"]}
+            for column_name in model_data["columns_names"]
+        },
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+async def count_elements_in_db():
+    data = {}
+    for model_id, value in cfg.models.items():
+        data[model_id] = await cfg.app.db.func.count(
+            getattr(value["model"], value["key"])
+        ).gino.scalar()
+    return data

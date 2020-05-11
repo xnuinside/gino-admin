@@ -41,3 +41,10 @@ def validate_login(request, config):
         if username == admin_user and password == admin_password:
             return True
     return False
+
+
+def logout_user(request):
+    if request.cookies["auth-token"] in cfg.sessions:
+        del cfg.sessions[request.cookies["auth-token"]]
+    request.cookies["auth-token"] = None
+    return request
