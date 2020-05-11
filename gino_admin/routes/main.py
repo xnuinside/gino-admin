@@ -13,7 +13,7 @@ from gino_admin import auth, utils
 from gino_admin.core import admin, jinja
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
                                      insert_data_from_csv, render_model_view)
-from gino_admin.utils import cfg, extract_columns_data
+from gino_admin.utils import cfg
 
 
 @admin.route("/")
@@ -67,9 +67,9 @@ async def model_deepcopy(request, model_id):
 @auth.token_validation()
 async def model_copy(request, model_id):
     """ route for copy item per row """
+    model_data = cfg.models[model_id]
+    columns_data = model_data["columns_data"]
     request_params = {key: request.form[key][0] for key in request.form}
-    columns_data, hashed_indexes = extract_columns_data(model_id)
-    columns_names = list(columns_data.keys())
     request_params["id"] = columns_data["id"]["type"](request_params["id"])
     model = cfg.models[model_id]
     # id can be str or int
@@ -79,17 +79,15 @@ async def model_copy(request, model_id):
         new_obj_id = request_params["id"] + randint(0, 10000000000)
     bas_obj = (await model.get(request_params["id"])).to_dict()
     bas_obj["id"] = new_obj_id
-    required = [
-        key for key, value in columns_data.items() if value["nullable"] is False
-    ]
-    for item in required:
+    for item in model_data["required_columns"]:
         # todo: need to document this behaviour in copy step
         if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
             bas_obj[item] = bas_obj["id"]
             if columns_data[item]["type"] == "HASH":
                 bas_obj[item] = cfg.hash_method(bas_obj["id"])
-
-    bas_obj = utils.reverse_hash_names(hashed_indexes, columns_names, bas_obj)
+    bas_obj = utils.reverse_hash_names(
+        model_data["hashed_indexes"], model_data["columns_names"], bas_obj
+    )
     try:
         await model.create(**bas_obj)
         request["flash"](

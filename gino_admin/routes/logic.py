@@ -7,21 +7,19 @@ from sanic.request import Request
 from sanic.response import HTTPResponse
 
 from gino_admin.core import cfg, jinja
-from gino_admin.utils import (correct_types, extract_columns_data,
-                              reverse_hash_names)
+from gino_admin.utils import correct_types, reverse_hash_names
 
 
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
-    columns_data, hashed_indexes = extract_columns_data(model_id)
-    columns_names = list(columns_data.keys())
+    columns_names = list(cfg.models[model_id]["columns_data"].keys())
     model = cfg.app.db.tables[model_id]
     query = cfg.app.db.select([model])
     rows = await query.gino.all()
     output = []
     for row in rows:
         row = {columns_names[num]: field for num, field in enumerate(row)}
-        for index in hashed_indexes:
+        for index in cfg.models[model_id]["hashed_indexes"]:
             row[columns_names[index]] = "*************"
         output.append(row)
     output = output[::-1]
@@ -39,6 +37,10 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
 
 async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request):
     """ file_path - path to csv file"""
+    columns_names = cfg.models[model_id]["columns_names"]
+    hashed_indexes = cfg.models[model_id]["hashed_indexes"]
+    columns_data = cfg.models[model_id]["columns_data"]
+
     with open(file_path, "r") as read_obj:
         # pass the file object to reader() to get the reader object
         csv_reader = reader(read_obj)
@@ -50,8 +52,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
             for num, row in enumerate(csv_reader):
                 # row variable is a list that represents a row in csv
                 if num == 0:
-                    columns_data, hashed_indexes = extract_columns_data(model_id)
-                    columns_names = list(columns_data.keys())
                     header = [x.strip().replace("\ufeff", "") for x in row]
                     hashed_columns_names = [
                         columns_names[index] for index in hashed_indexes

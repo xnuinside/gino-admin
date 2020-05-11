@@ -59,13 +59,16 @@ def serialize_dict(container: Dict) -> Dict:
     return container
 
 
-def reverse_hash_names(hashed_indexes: List, columns_names: List, request_params: Dict):
-    for hashed_index in hashed_indexes:
-        if columns_names[hashed_index] in request_params:
-            request_params[columns_names[hashed_index] + "_hash"] = cfg.hash_method(
-                request_params[columns_names[hashed_index]]
+def reverse_hash_names(model_id: Text, request_params: Dict):
+    model_data = cfg.models[model_id]
+    for hashed_index in model_data["hashed_indexes"]:
+        if model_data["columns_names"][hashed_index] in request_params:
+            request_params[
+                model_data["columns_names"][hashed_index] + "_hash"
+            ] = cfg.hash_method(
+                request_params[model_data["columns_names"][hashed_index]]
             )
-            del request_params[columns_names[hashed_index]]
+            del request_params[model_data["columns_names"][hashed_index]]
     return request_params
 
 
@@ -146,26 +149,6 @@ def extract_datetime(datetime_str: Text):
         except ValueError:
             continue
     return datetime_object
-
-
-def extract_columns_data(model_id: Text):
-    _hash = "_hash"
-    column_names = {}
-    hashed_indexes = []
-    for num, column in enumerate(cfg.app.db.tables[model_id].columns):
-        if _hash in column.name:
-            column_names[column.name.split(_hash)[0]] = {
-                "type": "HASH",
-                "nullable": column.nullable,
-            }
-            hashed_indexes.append(num)
-        else:
-            db_type = str(column.type).split("(")[0]
-            column_names[column.name] = {
-                "type": types_map.get(db_type, str),
-                "nullable": column.nullable,
-            }
-    return column_names, hashed_indexes
 
 
 def generate_token(ip: Text):
