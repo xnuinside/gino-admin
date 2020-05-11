@@ -1,8 +1,12 @@
+import uuid
 from copy import deepcopy
 from csv import reader
-from typing import Text
+from random import randint
+from typing import Dict, List, Text
 
 import asyncpg
+from gino.declarative import Model
+from sanic.log import logger
 from sanic.request import Request
 from sanic.response import HTTPResponse
 
@@ -102,3 +106,29 @@ async def drop_and_recreate_all_tables():
         sql_query = f"DROP TABLE {model_id} CASCADE"
         await cfg.app.db.status(cfg.app.db.text(sql_query))
     await cfg.app.db.gino.create_all()
+
+
+async def create_object_copy(
+    base_obj: Dict, model: Model, columns_data: Dict, hashed_indexes: List[int]
+) -> str:
+    logger.debug(f"creating object copy of {base_obj} of model {model}")
+    object_id = base_obj["id"]
+    # id can be str or int
+    if isinstance(object_id, str):
+        new_obj_id = object_id + "_copy_" + uuid.uuid1().hex[5:10]
+    else:
+        new_obj_id = object_id + randint(0, 10000000000)
+    base_obj["id"] = new_obj_id
+    required = [
+        key for key, value in columns_data.items() if value["nullable"] is False
+    ]
+    for item in required:
+        # todo: need to document this behaviour in copy step
+        if (item in base_obj and not base_obj[item]) or item not in base_obj:
+            base_obj[item] = base_obj["id"]
+            if columns_data[item]["type"] == "HASH":
+                base_obj[item] = cfg.hash_method(base_obj["id"])
+    columns_names = list(columns_data.keys())
+    bas_obj = reverse_hash_names(hashed_indexes, columns_names, base_obj)
+    await model.create(**bas_obj)
+    return new_obj_id

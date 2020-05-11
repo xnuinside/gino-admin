@@ -18,6 +18,7 @@ passlib = "^1.7.2"
 aiofiles = "^0.5.0"
 expiring_dict = "^1.1.0"
 PyYAML = "^5.3.1"
+SQLAlchemy-Utils = "0.36.5"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.3.0"

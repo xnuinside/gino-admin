@@ -1,17 +1,20 @@
 import os
-import uuid
 from ast import literal_eval
 from datetime import datetime
-from random import randint
-from typing import Text
+from typing import Optional, Text
 
 import asyncpg
+from gino.declarative import Model
 from sanic import response
+from sanic.log import logger
 from sanic.request import Request
+from sqlalchemy.sql.schema import Column
+from sqlalchemy_utils.functions import identity
 
 from gino_admin import auth, utils
 from gino_admin.core import admin, jinja
-from gino_admin.routes.logic import (drop_and_recreate_all_tables,
+from gino_admin.routes.logic import (create_object_copy,
+                                     drop_and_recreate_all_tables,
                                      insert_data_from_csv, render_model_view)
 from gino_admin.utils import cfg, extract_columns_data
 
@@ -59,8 +62,69 @@ def handle_no_auth(request: Request):
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
 @auth.token_validation()
 async def model_deepcopy(request, model_id):
-    # TODO:
-    ...
+    """
+    Recursively creates copies for the whole chain of entities, referencing the given model and instance id through
+    the foreign keys.
+    :param request:
+    :param model_id:
+    :return:
+    """
+    request_params = {key: request.form[key][0] for key in request.form}
+    _columns_data, _ = extract_columns_data(model_id)
+    base_object_id = _columns_data["id"]["type"](request_params["id"])
+
+    async def _deepcopy_recursive(
+        model: Model,
+        object_id: str,
+        new_fk_link_id: Optional[str] = None,
+        fk_column: Optional[Column] = None,
+    ):
+        logger.debug(
+            f"Making a deepcopy of {model} with id {object_id} linking to foreign key"
+            f" {fk_column} with id {new_fk_link_id}"
+        )
+        base_object = utils.serialize_dict((await model.get(object_id)).to_dict())
+        if new_fk_link_id and fk_column is not None:
+            base_object[fk_column.name] = new_fk_link_id
+        columns_data, hashed_indexes = extract_columns_data(model.__tablename__)
+        new_obj_id = await create_object_copy(
+            base_object, model, columns_data, hashed_indexes
+        )
+        primary_key_col = identity(model)[0]
+        dependent_models = {}
+        # TODO(ehborisov): check how it works in the case of composite key
+        for m_id, model in cfg.models.items():
+            for column in cfg.app.db.tables[m_id].columns:
+                if column.references(primary_key_col):
+                    dependent_models[model] = column
+
+        for dep_model in dependent_models:
+            fk_column = dependent_models[dep_model]
+            all_referencing_instance_ids = (
+                await dep_model.select(identity(dep_model)[0].name)
+                .where(fk_column == object_id)
+                .gino.all()
+            )
+
+            # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
+            for inst_id in all_referencing_instance_ids:
+                await _deepcopy_recursive(dep_model, inst_id[0], new_obj_id, fk_column)
+        logger.debug(
+            f"Finished copying, returning newly created object's id {new_obj_id}"
+        )
+        return new_obj_id
+
+    try:
+        new_base_obj_id = await _deepcopy_recursive(
+            cfg.models[model_id], base_object_id
+        )
+        request["flash"](
+            f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}",
+            "success",
+        )
+    except asyncpg.exceptions.PostgresError as e:
+        request["flash"](e.args, "error")
+    return await render_model_view(request, model_id)
 
 
 @admin.route("/<model_id>/copy", methods=["POST"])
@@ -69,31 +133,15 @@ async def model_copy(request, model_id):
     """ route for copy item per row """
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data, hashed_indexes = extract_columns_data(model_id)
-    columns_names = list(columns_data.keys())
     request_params["id"] = columns_data["id"]["type"](request_params["id"])
     model = cfg.models[model_id]
-    # id can be str or int
-    if isinstance(request_params["id"], str):
-        new_obj_id = request_params["id"] + "_copy_" + uuid.uuid1().hex[5:10]
-    else:
-        new_obj_id = request_params["id"] + randint(0, 10000000000)
-    bas_obj = (await model.get(request_params["id"])).to_dict()
-    bas_obj["id"] = new_obj_id
-    required = [
-        key for key, value in columns_data.items() if value["nullable"] is False
-    ]
-    for item in required:
-        # todo: need to document this behaviour in copy step
-        if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
-            bas_obj[item] = bas_obj["id"]
-            if columns_data[item]["type"] == "HASH":
-                bas_obj[item] = cfg.hash_method(bas_obj["id"])
-
-    bas_obj = utils.reverse_hash_names(hashed_indexes, columns_names, bas_obj)
+    base_obj = (await model.get(request_params["id"])).to_dict()
     try:
-        await model.create(**bas_obj)
+        new_obj_id = await create_object_copy(
+            base_obj, model, columns_data, hashed_indexes
+        )
         request["flash"](
-            f"Object with {request_params['id']} was copied with id {bas_obj['id']}",
+            f"Object with {request_params['id']} was copied with id {new_obj_id}",
             "success",
         )
     except asyncpg.exceptions.ForeignKeyViolationError as e:
