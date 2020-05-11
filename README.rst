@@ -33,15 +33,18 @@ Full example placed in 'examples' folder:
 
 .. code-block:: python
     
-    examples/
+    examples/base_example/
 
 
 How to use
 ----------
-
+Add Admin Panel to existed Sanic application as '/admin' route
+##############################################################
 
 Create in your project 'admin.py' file and use `add_admin_panel` from from gino_admin import add_admin_panel
 
+Code example in:  examples/base_example
+How to run example in: examples/base_example/how_to_run_example.txt
 
 Example:
 
@@ -49,7 +52,10 @@ Example:
     
     
     from from gino_admin import add_admin_panel
-    
+
+
+    # your app code
+
     
     add_admin_panel(
         app, db, [User, Place, City, GiftCard], custom_hash_method=custom_hash_method
@@ -58,24 +64,114 @@ Example:
     
 Where:
 
-    'app' - your Sanic application
-    'db' : from gino.ext.sanic import Gino; db = Gino() and [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
-        
-    custom_hash_method - optional parameter to define you own hash method to encrypt all '_hash' columns of your Models.
-    In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
+* 'app' - your Sanic application
+* 'db' : from gino.ext.sanic import Gino; db = Gino() and
+* [User, Place, City, GiftCard] - list of models that you want to add in Admin Panel to maintain
+* custom_hash_method - optional parameter to define you own hash method to encrypt all '_hash' columns of your Models.
+
+In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
+
+Run Admin Panel as Standalone Sanic app (if you use different frameworks as main App)
+#####################################################################################
+
+You can use Gino Admin as stand alone web app. Does not matter what Framework used for your main App.
+
+Code example in:  examples/use_with_any_framework_in_main_app/
+How to run example in: examples/use_with_any_framework_in_main_app/how_to_run_example.txt
+
+1. In module where you define DB add 'if block'.
+We will use Fast API as main App in our example.
+
+We have db.py where we import Gino as:
+
+.. code-block:: python
+    from gino.ext.starlette import Gino
+    db = Gino(
+        dsn='postgresql://gino:gino@localhost:5432/gino'
+    )
+
+But if we use this module in Admin Panel we need to have initialisation like this:
+
+.. code-block:: python
+
+    from gino.ext.sanic import Gino
+    db = Gino()
+
+To get this, we will add some flag and based on this flag module will init db in needed to as way:
+.. code-block:: python
+
+    if os.environ.get('GINO_ADMIN'):
+        from gino.ext.sanic import Gino
+        db = Gino()
+    else:
+        from gino.ext.starlette import Gino
+        db = Gino(
+            dsn='postgresql://gino:gino@localhost:5432/gino'
+        )
+
+So, if now 'db' used by Gino Admin - we use init for Sanic apps, if not - we use for our Main application Framework
+
+Now, we need to create **admin.py** to run admin panel:
+
+.. code-block:: python
+
+    import os
+    # variable must be set up before import db module
+    os.environ['GINO_ADMIN'] = '1'
+
+    from gino_admin import create_admin_app
+    from db import db, User
+
+    # gino-admin uses Sanic as a framework, so you can define most params as environment variables with 'SANIC_' prefix
+    # in example used this way to define DB credentials & login-password to admin panel
+
+    os.environ['SANIC_DB_HOST'] = "localhost"
+    os.environ['SANIC_DB_DATABASE'] = "gino"
+    os.environ['SANIC_DB_USER'] = "gino"
+    os.environ['SANIC_DB_PASSWORD'] = "gino"
+
+    # define users to log in Admin panel
+    os.environ["SANIC_ADMIN_USER"] = "admin"
+    os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
 
 
-Or you can use admin as a standalone App, when you need to define Sanic Application first (check 'example' folder)
+    if __name__ == "__main__":
+        # host & port - will be used to up on them admin app
+        # config - Gino Admin configuration,
+        # that allow set path to presets folder or custom_hash_method, optional parameter
+        # db_models - list of db.Models classes (tables) that you want to see in Admin Panel
+        create_admin_app(host='0.0.0.0', port=5000, db=db, db_models=[User])
 
-Version 0.0.7 Updates:
+All environment variables you can move to define in docker or .env files as you wish, they not needed to be define in '.py', this is just for example shortness.
+
+
+
+Version 0.0.8 Updates:
 ----------------------
-1. Fixes: datetime issue in 'Copy' action, delete all modal
-2. New feature "Presets" (define multiple CSV files with data - upload all with one click).
-3. New feature "Drop DB" (full clean up & recreate tables).
+1. Added more possibilities to use Gino Admin with applications in different frameworks (Fast API, or aiohttp, or any others)
+1.1 Added example how to Gino Admin if main application developed with different Framework (Fast API or smth else)
 
-New features can be find under menu with 'Cogs' near 'SQL-Runner' button.
+Example in **examples/use_with_any_framework_in_main_app**
 
-Screen with update.
+1.2 added **create_admin_app** method to full init admin app as separate server
+
+1.3 Old example moved to **base_example/** folder
+
+1.4 in method 'init_admin_app' argument 'gino_models' was renamed to 'db_models'
+
+3. Added support for columns with different names can be used as 'id'
+- now Admin Panel checks 'unique' flag in the column.
+If model does not have 'unique' column - it will not showed in admin panel
+and you will see error message about it at the start and in logs.
+
+4. Added Feature "Combined data upload" - possibility to define one CSV files, that contains several relative tables.
+Used special to prepare dataset for demo purposes or tests. When it more effective and fast to define
+relative data in one file.
+
+Example with CSVs samples added to
+
+5. Fixed issue with Logout.
+
 
 
 Presets
@@ -99,7 +195,7 @@ Example:
       gifts: csv/gift.csv
 
 
-Check examples/src/csv_to_upload for example with presets files.
+Check examples/base_example/src/csv_to_upload for example with presets files.
 
 
 In order defined in yml, Gino-Admin will load csv files to models.
@@ -125,6 +221,15 @@ Don't forget to setup path to folder with presets like with **'presets_folder'**
 
 Check example project for more clearly example.
 
+Configure Gino Admin
+--------------------
+
+You can define in config:
+
+* presets_folder: path where stored predefined DB presets
+* custom_hash_method: method that used to hash passwords and other data, that stored as *_hash columns in DB,
+    by default used pbkdf2_sha256.encrypt
+
 
 Drop DB
 -------
@@ -136,20 +241,7 @@ Drop DB feature used for doing full clean up DB - it drop all tables & create th
 Upload from CSV
 ---------------
 
-Files samples for example project can be found here: **examples/src/csv_to_upload**
-
-
-Version 0.0.6 Updates:
-----------------------
-1. Clean up template, hide row controls under menu.
-2. Added 'Copy' option to DB row.
-3. Now errors showed correct in table view pages in process of Delete, Copy, CSV Upload
-4. Added possible to work without auth (for Debug purposes). Set env variable 'ADMIN_AUTH_DISABLE=True'
-5. Template updated
-6. Added export Table's Data to CSV
-7. First version of SQL-query execution (run any query and get answer from PostgreSQL)
-8. Fixed error display on csv upload
-
+Files-samples for example project can be found here: **examples/base_example/src/csv_to_upload**
 
 
 Authentication

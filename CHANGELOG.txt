@@ -1,3 +1,14 @@
+
+Version 0.0.7 Updates:
+----------------------
+1. Fixes: datetime issue in 'Copy' action, delete all modal
+2. New feature "Presets" (define multiple CSV files with data - upload all with one click).
+3. New feature "Drop DB" (full clean up & recreate tables).
+
+New features can be find under menu with 'Cogs' near 'SQL-Runner' button.
+
+
+
 Version 0.0.6 Updates:
 ----------------------
 1. Clean up template, hide row controls under menu.

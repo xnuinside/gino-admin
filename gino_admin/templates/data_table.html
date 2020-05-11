@@ -14,6 +14,8 @@
     {% for row in model_data %}
         <tr class="full-width">
             <!-- columns with data -->
+
+            {% set loop_index=loop.index-1 %}
             {% for key, field in row.items() %}
                 <td class="three wide">{{field}}</td>
             {% endfor %}

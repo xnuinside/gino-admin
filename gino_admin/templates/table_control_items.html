@@ -15,7 +15,10 @@
          </a>
 
 <form id="delete_{{row['id']}}" action="{{url_prefix}}/{{model.lower()}}/delete/" method="post" >
-    <input type="hidden" name="id" value="{{row['id']}}">
+    {% set current_row=model_data[loop_index]%}
+    {% for field, value in current_row.items() %}
+    <input type="hidden" name="{{field}}" value="{{value}}">
+    {% endfor %}
 </form>
 <form id="copy_{{row['id']}}" action="{{url_prefix}}/{{model.lower()}}/copy/" method="post" >
     <input type="hidden" name="id" value="{{row['id']}}">

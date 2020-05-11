@@ -143,12 +143,19 @@ async def model_delete(request, model_id):
     """ route for delete item per row """
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data, hashed_indexes = utils.extract_columns_data(model_id)
-    request_params["id"] = columns_data["id"]["type"](request_params["id"])
+    # todo: move to normal feature
+    _id_field = "id" if request_params.get("id") else "token"
+    request_params[_id_field] = columns_data[_id_field]["type"](
+        request_params[_id_field]
+    )
     try:
         await cfg.models[model_id].delete.where(
-            cfg.models[model_id].id == request_params["id"]
+            getattr(cfg.models[model_id], _id_field) == request_params[_id_field]
         ).gino.status()
-        request["flash"](f"Object with {request_params['id']} was deleted", "success")
+        request["flash"](
+            f"Object with {_id_field} {request_params[_id_field]} was deleted",
+            "success",
+        )
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
