@@ -13,7 +13,8 @@ app.config["DB_HOST"] = "localhost"
 app.config["DB_DATABASE"] = "gino"
 app.config["DB_USER"] = "gino"
 app.config["DB_PASSWORD"] = "gino"
-os.environ["ADMIN_AUTH_DISABLE"] = "1"
+
+# set os.environ["ADMIN_AUTH_DISABLE"] = "1" to disable auth
 db.init_app(app)
 
 

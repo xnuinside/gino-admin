@@ -40,14 +40,13 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
 
 def process_csv_header(model_id, row, request):
     composite = False
-    columns_names = cfg.models[model_id]["columns_names"]
-    hashed_indexes = cfg.models[model_id]["hashed_indexes"]
-
     header = [x.strip().replace("\ufeff", "") for x in row]
-    hashed_columns_names = [columns_names[index] for index in hashed_indexes]
     if ":" in header[0]:
         composite = True
     if not composite:
+        columns_names = cfg.models[model_id]["columns_names"]
+        hashed_indexes = cfg.models[model_id]["hashed_indexes"]
+        hashed_columns_names = [columns_names[index] for index in hashed_indexes]
         validate_header = deepcopy(header)
         for _num, name in enumerate(validate_header):
             if name in hashed_columns_names:
@@ -121,7 +120,9 @@ def extract_tables_from_header(header: List, request: Request):
 
 async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request):
     """ file_path - path to csv file"""
-    columns_data = cfg.models[model_id]["columns_data"]
+    if not model_id.startswith("composite"):
+        columns_data = cfg.models[model_id]["columns_data"]
+
     with open(file_path, "r") as read_obj:
         # pass the file object to reader() to get the reader object
         csv_reader = reader(read_obj)
@@ -160,6 +161,7 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                     id_added.append(row[cfg.models[model_id]["key"]])
                 else:
                     # if composite header each column == {'table': {}, 'column': None}
+                    # todo: refactor this huge code
                     table_num = 0
                     previous_table_name = None
                     for table_name, indexes in tables_indexes.items():
@@ -175,9 +177,7 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                         if not any(table_row_data):
                             previous_table_name = table_name
                             table_num += 1
-                            print("ANY")
                             continue
-                        print(unique_keys)
                         if table_header[0]["table"][0] == table_header[0]["table"][1]:
                             model_id = table_name
 
@@ -225,7 +225,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                             previous_table_name = table_name
                             table_num += 1
                         except Exception as e:
-                            raise e
                             errors.append((num, table_row, e))
                             # TODO: right now just abort if error during composite file upload
                             return request, False
@@ -246,8 +245,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                 )
             )
         except ValueError as e:
-
-            raise e
             request["flash_messages"].append((e.args, "error"))
         except asyncpg.exceptions.ForeignKeyViolationError as e:
             request["flash_messages"].append((e.args, "error"))

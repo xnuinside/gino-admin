@@ -11,6 +11,7 @@ class Education(db.Model):
         db.String(),
         db.Sequence("incremental_ids", minvalue=0, increment=1),
         unique=True,
+        primary_key=True,
     )
     title = db.Column(db.String())
     description = db.Column(db.String())
@@ -26,6 +27,7 @@ class Camp(db.Model):
         db.String(),
         db.Sequence("incremental_ids", minvalue=0, increment=1),
         unique=True,
+        primary_key=True,
     )
     title = db.Column(db.String())
     description = db.Column(db.String())
@@ -42,6 +44,7 @@ class Place(db.Model):
         db.String(),
         db.Sequence("incremental_ids", minvalue=0, increment=1),
         unique=True,
+        primary_key=True,
     )
     title = db.Column(db.String())
     description = db.Column(db.String())
@@ -53,7 +56,7 @@ class Country(db.Model):
 
     __tablename__ = "countries"
 
-    code = db.Column(db.String(8), unique=True)
+    code = db.Column(db.String(8), unique=True, primary_key=True)
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
@@ -63,7 +66,7 @@ class City(db.Model):
 
     __tablename__ = "cities"
 
-    id = db.Column(db.String(), unique=True)
+    id = db.Column(db.String(), unique=True, primary_key=True)
     country = db.Column(db.String(), db.ForeignKey("countries.code"))
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
@@ -77,6 +80,7 @@ class Address(db.Model):
         db.BigInteger(),
         db.Sequence("incremental_ids", minvalue=0, increment=1),
         unique=True,
+        primary_key=True,
     )
     address = db.Column(db.String())
     city = db.Column(db.String(), db.ForeignKey("cities.id"))
