@@ -1,5 +1,3 @@
-import uuid
-
 from gino.ext.sanic import Gino
 
 db = Gino()
@@ -34,7 +32,7 @@ class Place(db.Model):
 
     __tablename__ = "places"
 
-    id = db.Column(db.String(24), unique=True, primary_key=True)
+    id = db.Column(db.String(), unique=True, primary_key=True)
     title = db.Column(db.String())
     description = db.Column(db.String())
     owner = db.Column(db.String(24), db.ForeignKey("users.id"))
@@ -54,7 +52,7 @@ class Country(db.Model):
 
     __tablename__ = "countries"
 
-    id = db.Column(db.String(24), unique=True, primary_key=True, default=uuid.uuid4)
+    code = db.Column(db.String(8), unique=True, primary_key=True)
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
@@ -64,7 +62,8 @@ class City(db.Model):
 
     __tablename__ = "cities"
 
-    id = db.Column(db.String(), unique=True, primary_key=True, default=uuid.uuid4)
+    # does not contain 'unique' column - so this Model will not showed in UI in Admin Panel
+    id = db.Column(db.String())
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())

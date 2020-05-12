@@ -1,22 +1,20 @@
 import os
 from ast import literal_eval
 from datetime import datetime
-from typing import Optional, Text
+from typing import Text
 
 import asyncpg
-from gino.declarative import Model
 from sanic import response
-from sanic.log import logger
 from sanic.request import Request
-from sqlalchemy.sql.schema import Column
-from sqlalchemy_utils.functions import identity
 
 from gino_admin import auth, utils
 from gino_admin.core import admin, jinja
-from gino_admin.routes.logic import (create_object_copy,
+from gino_admin.routes.crud import model_view_table
+from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
+                                     deepcopy_recursive,
                                      drop_and_recreate_all_tables,
                                      insert_data_from_csv, render_model_view)
-from gino_admin.utils import cfg, extract_columns_data
+from gino_admin.utils import cfg
 
 
 @admin.route("/")
@@ -28,11 +26,17 @@ async def bp_root(request):
     )
 
 
-@admin.route("/logout")
-@auth.token_validation()
+@admin.route("/logout", methods=["GET"])
 async def logout(request: Request):
-    auth.logout_user(request)
-    return response.redirect("login")
+    request = auth.logout_user(request)
+    return jinja.render(
+        "login.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/logout", methods=["POST"])
+async def logout_post(request: Request):
+    return await login(request)
 
 
 @admin.route("/login", methods=["GET", "POST"])
@@ -55,10 +59,6 @@ async def login(request):
     )
 
 
-def handle_no_auth(request: Request):
-    return response.json(dict(message="unauthorized"), status=401)
-
-
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
 @auth.token_validation()
 async def model_deepcopy(request, model_id):
@@ -70,59 +70,19 @@ async def model_deepcopy(request, model_id):
     :return:
     """
     request_params = {key: request.form[key][0] for key in request.form}
-    _columns_data, _ = extract_columns_data(model_id)
-    base_object_id = _columns_data["id"]["type"](request_params["id"])
-
-    async def _deepcopy_recursive(
-        model: Model,
-        object_id: str,
-        new_fk_link_id: Optional[str] = None,
-        fk_column: Optional[Column] = None,
-    ):
-        logger.debug(
-            f"Making a deepcopy of {model} with id {object_id} linking to foreign key"
-            f" {fk_column} with id {new_fk_link_id}"
-        )
-        base_object = utils.serialize_dict((await model.get(object_id)).to_dict())
-        if new_fk_link_id and fk_column is not None:
-            base_object[fk_column.name] = new_fk_link_id
-        columns_data, hashed_indexes = extract_columns_data(model.__tablename__)
-        new_obj_id = await create_object_copy(
-            base_object, model, columns_data, hashed_indexes
-        )
-        primary_key_col = identity(model)[0]
-        dependent_models = {}
-        # TODO(ehborisov): check how it works in the case of composite key
-        for m_id, model in cfg.models.items():
-            for column in cfg.app.db.tables[m_id].columns:
-                if column.references(primary_key_col):
-                    dependent_models[model] = column
-
-        for dep_model in dependent_models:
-            fk_column = dependent_models[dep_model]
-            all_referencing_instance_ids = (
-                await dep_model.select(identity(dep_model)[0].name)
-                .where(fk_column == object_id)
-                .gino.all()
-            )
-
-            # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
-            for inst_id in all_referencing_instance_ids:
-                await _deepcopy_recursive(dep_model, inst_id[0], new_obj_id, fk_column)
-        logger.debug(
-            f"Finished copying, returning newly created object's id {new_obj_id}"
-        )
-        return new_obj_id
+    columns_data = cfg.models[model_id]["columns_data"]
+    base_object_id = columns_data["id"]["type"](request_params["id"])
 
     try:
-        new_base_obj_id = await _deepcopy_recursive(
-            cfg.models[model_id], base_object_id
+        new_base_obj_id = await deepcopy_recursive(
+            cfg.models[model_id]["model"], base_object_id
         )
         request["flash"](
             f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}",
             "success",
         )
     except asyncpg.exceptions.PostgresError as e:
+        raise e
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
 
@@ -131,34 +91,33 @@ async def model_deepcopy(request, model_id):
 @auth.token_validation()
 async def model_copy(request, model_id):
     """ route for copy item per row """
-    request_params = {key: request.form[key][0] for key in request.form}
-    columns_data, hashed_indexes = extract_columns_data(model_id)
-    request_params["id"] = columns_data["id"]["type"](request_params["id"])
-    model = cfg.models[model_id]
-    base_obj = (await model.get(request_params["id"])).to_dict()
+    model_data = cfg.models[model_id]
+    request_params = {elem: request.form[elem][0] for elem in request.form}
+    key = model_data["key"]
     try:
-        new_obj_id = await create_object_copy(
-            base_obj, model, columns_data, hashed_indexes
-        )
-        request["flash"](
-            f"Object with {request_params['id']} was copied with id {new_obj_id}",
+        new_obj_key = await create_object_copy(model_id, request_params[key])
+        flash_message = (
+            f"Object with {key} {request_params[key]} was copied with {key} {new_obj_key}",
             "success",
         )
+    except asyncpg.exceptions.UniqueViolationError as e:
+        flash_message = (
+            f"Duplicate in Unique column Error during copy: {e.args}. \n"
+            f"Try to rename existed id or add manual.",
+            "error",
+        )
     except asyncpg.exceptions.ForeignKeyViolationError as e:
-        request["flash"](e.args, "error")
-    return await render_model_view(request, model_id)
+        flash_message = (e.args, "error")
+    return await model_view_table(request, model_id, flash_message)
 
 
 @admin.route("/db_drop", methods=["GET"])
 @auth.token_validation()
 async def db_drop_view(request: Request):
-    data = {}
-    for model_id, model in cfg.models.items():
-        data[model_id] = await cfg.app.db.func.count(model.id).gino.scalar()
     return jinja.render(
         "db_drop.html",
         request,
-        data=data,
+        data=await count_elements_in_db(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -174,14 +133,11 @@ async def db_drop_run(request: Request):
         count += value
     await drop_and_recreate_all_tables()
 
-    data = {}
-    for model_id, model in cfg.models.items():
-        data[model_id] = await cfg.app.db.func.count(model.id).gino.scalar()
     request["flash"](f"{count} object was deleted", "success")
     return jinja.render(
         "db_drop.html",
         request,
-        data=data,
+        data=await count_elements_in_db(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -193,7 +149,20 @@ async def presets_view(request: Request):
     return jinja.render(
         "presets.html",
         request,
+        presets_folder=cfg.presets_folder,
         presets=utils.get_presets(),
+        objects=cfg.models,
+        url_prefix=cfg.URL_PREFIX,
+    )
+
+
+@admin.route("/settings", methods=["GET"])
+@auth.token_validation()
+async def settings_view(request: Request):
+    return jinja.render(
+        "settings.html",
+        request,
+        settings=utils.get_settings(),
         objects=cfg.models,
         url_prefix=cfg.URL_PREFIX,
     )
@@ -211,7 +180,8 @@ async def presets_use(request: Request):
             request, code = await insert_data_from_csv(
                 os.path.join(cfg.presets_folder, file_path), model_id.lower(), request
             )
-        request["flash"](f"Preset {preset['name']} was loaded", "success")
+        for message in request["flash_messages"]:
+            request["flash"](*message)
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
     return jinja.render(
@@ -223,6 +193,11 @@ async def presets_use(request: Request):
     )
 
 
+@admin.middleware("request")
+async def middleware_request(request):
+    request["flash_messages"] = []
+
+
 @admin.route("/<model_id>/upload/", methods=["POST"])
 @auth.token_validation()
 async def file_upload(request: Request, model_id: Text):
@@ -230,8 +205,8 @@ async def file_upload(request: Request, model_id: Text):
         os.makedirs(cfg.upload_dir)
     upload_file = request.files.get("file_names")
     if not upload_file:
-        request["flash"]("No file chosen to Upload", "error")
-        return response.redirect(f"/admin/{model_id}")
+        flash_message = ("No file chosen to Upload", "error")
+        return await model_view_table(request, model_id, flash_message)
     file_name = utils.secure_filename(upload_file.name)
     if not utils.valid_file_size(upload_file.body, cfg.max_file_size):
         return response.redirect("/?error=invalid_file_size")
@@ -239,7 +214,7 @@ async def file_upload(request: Request, model_id: Text):
         file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
         await utils.write_file(file_path, upload_file.body)
         request, code = await insert_data_from_csv(file_path, model_id, request)
-        return await render_model_view(request, model_id)
+        return await model_view_table(request, model_id, request["flash_messages"])
 
 
 @admin.route("/sql_run", methods=["GET"])

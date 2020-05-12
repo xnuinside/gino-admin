@@ -1,23 +1,24 @@
 [tool.poetry]
-name = "gino_admin"
-version = "0.0.7"
-description = "Admin Panel for PostgreSQL DB with Gino ORM and Sanic"
+name = "gino-admin"
+version = "0.0.8"
+description = "Admin Panel for PostgreSQL DB with Gino ORM"
 authors = ["xnuinside <xnuinside@gmail.com>"]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://github.com/xnuinside/gino_admin"
-repository = "https://github.com/xnuinside/gino_admin"
+homepage = "https://github.com/xnuinside/gino-admin"
+repository = "https://github.com/xnuinside/gino-admin"
 
 [tool.poetry.dependencies]
 python = "^3.7"
 sanic-auth = "^0.2.0"
 Sanic = "^19.12.2"
-gino = "^0.8.7"
 Sanic-Jinja2 = "^0.7.5"
 passlib = "^1.7.2"
 aiofiles = "^0.5.0"
 expiring_dict = "^1.1.0"
 PyYAML = "^5.3.1"
+gino = "^1.0.0"
+gino-sanic = "^0.1.0"
 SQLAlchemy-Utils = "0.36.5"
 
 [tool.poetry.dev-dependencies]

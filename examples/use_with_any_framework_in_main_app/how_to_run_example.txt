@@ -1,0 +1,46 @@
+For example, your application use Fast API as a main Framework, but you use Gino as ORM
+and PostgreSQL as DB and you need Admin panel for maintenance data in DB.
+
+So all that you need to do it is just add 'if' in step where you define 'db'.
+
+Check src/db.py
+
+But pay attention, that you need to run admin panel and main app in different venvs or docker containers because other way variable
+
+Gino-Admin is up and run as separate web application, so it does not matter on that writen your main App
+
+
+
+All steps please do inside virtualenv.
+
+Be aware:
+
+    if you run before some other examples - remove 'data/' folder before run postgres, to clean up DB that was created for previous example
+
+First of all run instance of PostgreSQL - use for this example-docker-compose.yml (from base 'examples/' folder:
+
+    docker-compose -f example-docker-compose.yml up --build postgres
+
+Do:
+
+    pip install -r requirements.txt
+
+After in new window run example/src/app.py:
+
+    python src/db.py  # to init DB
+
+To run main Fast API application (to check that all okay):
+
+    uvicorn main:app --port 5050
+
+To run Gino Admin Panel:
+
+    python src/admin.py
+
+It will run admin panel on http://0.0.0.0:5000/admin/
+
+
+Use password and login to enter admin panel:
+
+    login: admin
+    password: 1234

@@ -34,11 +34,17 @@ def token_validation():
 
 def validate_login(request, config):
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        # for demonstration purpose only, you should use more robust method
-        admin_user = config["ADMIN_USER"]
-        admin_password = config["ADMIN_PASSWORD"]
+        username = str(request.form.get("username"))
+        password = str(request.form.get("password"))
+        admin_user = str(config["ADMIN_USER"])
+        admin_password = str(config["ADMIN_PASSWORD"])
         if username == admin_user and password == admin_password:
             return True
     return False
+
+
+def logout_user(request):
+    if request.cookies["auth-token"] in cfg.sessions:
+        del cfg.sessions[request.cookies["auth-token"]]
+    request.cookies["auth-token"] = None
+    return request

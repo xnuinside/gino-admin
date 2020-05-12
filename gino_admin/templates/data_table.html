@@ -14,12 +14,14 @@
     {% for row in model_data %}
         <tr class="full-width">
             <!-- columns with data -->
+
+            {% set loop_index=loop.index-1 %}
             {% for key, field in row.items() %}
                 <td class="three wide">{{field}}</td>
             {% endfor %}
 
             <!-- column controls(edit, delete and etc.) -->
-            <td class="two wide">
+            <td class="one wide">
                 {% include 'table_control_items.html' %}
             </td>
         </tr>

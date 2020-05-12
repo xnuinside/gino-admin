@@ -1,0 +1,4 @@
+psycopg2-binary
+gino
+gino-sanic
+gino-admin

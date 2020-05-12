@@ -59,13 +59,16 @@ def serialize_dict(container: Dict) -> Dict:
     return container
 
 
-def reverse_hash_names(hashed_indexes: List, columns_names: List, request_params: Dict):
-    for hashed_index in hashed_indexes:
-        if columns_names[hashed_index] in request_params:
-            request_params[columns_names[hashed_index] + "_hash"] = cfg.hash_method(
-                request_params[columns_names[hashed_index]]
+def reverse_hash_names(model_id: Text, request_params: Dict):
+    model_data = cfg.models[model_id]
+    for hashed_index in model_data["hashed_indexes"]:
+        if model_data["columns_names"][hashed_index] in request_params:
+            request_params[
+                model_data["columns_names"][hashed_index] + "_hash"
+            ] = cfg.hash_method(
+                request_params[model_data["columns_names"][hashed_index]]
             )
-            del request_params[columns_names[hashed_index]]
+            del request_params[model_data["columns_names"][hashed_index]]
     return request_params
 
 
@@ -113,12 +116,18 @@ async def write_file(path, body):
         f.close()
 
 
+class CompositeType:
+    pass
+
+
 def correct_types(params: Dict, columns_data: Dict):
     to_del = []
     for param in params:
         if not params[param]:
             # mean None
             to_del.append(param)
+            continue
+        if isinstance(param, CompositeType):
             continue
         if "_hash" not in param and not isinstance(
             params[param], columns_data[param]["type"]
@@ -143,29 +152,9 @@ def extract_datetime(datetime_str: Text):
     for str_format in cfg.datetime_str_formats:
         try:
             datetime_object = datetime.datetime.strptime(datetime_str, str_format)
+            return datetime_object
         except ValueError:
             continue
-    return datetime_object
-
-
-def extract_columns_data(model_id: Text):
-    _hash = "_hash"
-    column_names = {}
-    hashed_indexes = []
-    for num, column in enumerate(cfg.app.db.tables[model_id].columns):
-        if _hash in column.name:
-            column_names[column.name.split(_hash)[0]] = {
-                "type": "HASH",
-                "nullable": column.nullable,
-            }
-            hashed_indexes.append(num)
-        else:
-            db_type = str(column.type).split("(")[0]
-            column_names[column.name] = {
-                "type": types_map.get(db_type, str),
-                "nullable": column.nullable,
-            }
-    return column_names, hashed_indexes
 
 
 def generate_token(ip: Text):
@@ -179,6 +168,7 @@ def read_yaml(preset_file):
 
 
 def get_presets():
+    """ get presets data from yml configs from presets folder"""
     presets = []
     if not os.path.isdir(cfg.presets_folder):
         if os.path.isfile(cfg.presets_folder):
@@ -192,3 +182,12 @@ def get_presets():
                 preset_definition = read_yaml(file_path)
                 presets.append(preset_definition)
     return presets
+
+
+def get_settings():
+    """ gino admin settings '"""
+    settings = {}
+    settings_list = ["presets_folder", "composite_csv_settings"]
+    for setting in settings_list:
+        settings[setting] = getattr(cfg, setting)
+    return settings

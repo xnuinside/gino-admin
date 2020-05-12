@@ -11,7 +11,15 @@
     </div>
 </div>
 
+{% if not presets %}
 
+Presets folder <b>'/{{ presets_folder }}'</b> is empty.
+<br>
+To create Presets you need to define '.yml' configs and put them in Presets Folder.
+<br><br>
+Check <a href="https://github.com/xnuinside/gino-admin">documentation</a>  and examples to get more info .
+
+{% endif %}
 <div class="ui three cards">{% for preset in presets %}
 
 
