@@ -108,7 +108,8 @@ def add_admin_panel(
 
     extract_models_metadata(db, db_models)
     cfg.presets_folder = presets_folder
-    cfg.composite_csv_settings = composite_csv_settings
+    if composite_csv_settings:
+        cfg.composite_csv_settings = composite_csv_settings
     app.blueprint(admin)
     if custom_hash_method:
         cfg.hash_method = custom_hash_method

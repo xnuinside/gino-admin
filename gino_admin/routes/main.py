@@ -192,7 +192,8 @@ async def presets_use(request: Request):
             request, code = await insert_data_from_csv(
                 os.path.join(cfg.presets_folder, file_path), model_id.lower(), request
             )
-        request["flash"](f"Preset {preset['name']} was loaded", "success")
+        for message in request["flash_messages"]:
+            request["flash"](*message)
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
     return jinja.render(

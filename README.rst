@@ -291,7 +291,9 @@ So, now let's define **composite_csv_settings**
 
 .. code-block:: python
 
-    composite_csv_settings = {(Place, Education, Camp): {'alias': 'area', 'type_column': 'type'}}
+    composite_csv_settings={
+        "area": {"models": (Place, Education, Camp), "type_column": "type"}
+    }
 
 This mean, when we see in CSV-header 'area' this is data for one of this 3 models, to identify which of this 3 models - check column with header 'area:type'.
 In type column values must be same 1-to-1 as table names.

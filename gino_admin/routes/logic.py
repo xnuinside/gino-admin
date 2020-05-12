@@ -94,7 +94,11 @@ def extract_tables_from_header(header: List, request: Request):
                 ),
             )
 
-            if _column_name == cfg.composite_csv_settings[table_name]["type_column"]:
+            if (
+                "type_column" in cfg.composite_csv_settings[table_name]
+                and _column_name
+                == cfg.composite_csv_settings[table_name]["type_column"]
+            ):
                 column["column"] = CompositeType()
         else:
             request["flash_messages"].append(
@@ -111,10 +115,12 @@ def extract_tables_from_header(header: List, request: Request):
             tables_indexes[table_name]["end"] = num
         else:
             tables_indexes[table_name]["end"] = num
+
         if not column["column"]:
             # if we don't set it as CompositeType()
             column["column"] = _column_name
         header_columns.append(column)
+
     return None, header_columns, tables_indexes
 
 
@@ -132,6 +138,7 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
         try:
             errors = []
             unique_keys = {}
+            stack = []
             for num, row in enumerate(csv_reader):
                 # row variable is a list that represents a row in csv
                 if num == 0:
@@ -173,14 +180,23 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                         table_row_data = deepcopy(row)[
                             indexes["start"] : indexes["end"] + 1  # noqa E203
                         ]
-
                         if not any(table_row_data):
-                            previous_table_name = table_name
+                            if (
+                                table_header[0]["table"][0]
+                                == table_header[0]["table"][1]
+                            ):
+                                previous_table_name = table_name
+                            else:
+                                for elem in stack[::-1]:
+
+                                    print("We are here")
+                                    if elem in table_header[0]["table"][1]:
+                                        previous_table_name = elem
+                                        break
                             table_num += 1
                             continue
                         if table_header[0]["table"][0] == table_header[0]["table"][1]:
                             model_id = table_name
-
                             columns_data = cfg.models[model_id]["columns_data"]
                         else:
                             model_id = None
@@ -190,9 +206,15 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                                     model_id = table_row_data[index]
                                     table_row_data.pop(index)
                                     break
-                            table_header.pop(index)
+                            if model_id:
+                                table_header.pop(index)
+                            else:
+                                model_id = cfg.composite_csv_settings[table_name][
+                                    "pattern"
+                                ].replace("*", previous_table_name)
 
                             columns_data = cfg.models[model_id]["columns_data"]
+
                             for index, value in enumerate(table_header):
                                 if value["column"] not in columns_data:
                                     # column not in this table
@@ -209,6 +231,7 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                             table_row = reverse_hash_names(model_id, table_row)
                             table_row = correct_types(table_row, columns_data)
                             if table_num > 0:
+                                print(model_id)
                                 column, target_column = cfg.models[model_id][
                                     "foreign_keys"
                                 ][previous_table_name]
@@ -217,18 +240,24 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                                     target_column
                                 ]
                                 table_row[column] = foreing_column_value
+                            print("new obj")
+                            print(model_id)
                             new_obj = (
                                 await cfg.models[model_id]["model"].create(**table_row)
                             ).to_dict()
                             # todo: add support to multi unique values
+                            if indexes["start"] == 0:
+                                unique_keys = {}
                             unique_keys[model_id] = new_obj
-                            previous_table_name = table_name
+                            stack.append(model_id)
+                            previous_table_name = model_id
                             table_num += 1
                         except Exception as e:
                             errors.append((num, table_row, e))
                             # TODO: right now just abort if error during composite file upload
+                            print(errors)
+                            raise e
                             return request, False
-
                         id_added.append(new_obj[cfg.models[model_id]["key"]])
 
             if errors:
@@ -245,6 +274,9 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                 )
             )
         except ValueError as e:
+
+            print(e)
+            raise e
             request["flash_messages"].append((e.args, "error"))
         except asyncpg.exceptions.ForeignKeyViolationError as e:
             request["flash_messages"].append((e.args, "error"))
@@ -260,6 +292,8 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
             request["flash_messages"].append(
                 (f"Field {column} cannot be null", "error")
             )
+
+        print(request["flash_messages"])
         return request, True
 
 
