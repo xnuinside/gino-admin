@@ -113,10 +113,12 @@ How to run example in: examples/use_with_any_framework_in_main_app/how_to_run_ex
 1. In module where you define DB add 'if block'.
 We will use Fast API as main App in our example.
 
-We have db.py where we import Gino as:
+We have db.py where we import Gino as
 
 .. code-block:: python
+
     from gino.ext.starlette import Gino
+
     db = Gino(
         dsn='postgresql://gino:gino@localhost:5432/gino'
     )
@@ -136,9 +138,7 @@ To get this, we will add some flag and based on this flag module will init db in
         db = Gino()
     else:
         from gino.ext.starlette import Gino
-        db = Gino(
-            dsn='postgresql://gino:gino@localhost:5432/gino'
-        )
+        db = Gino(dsn='postgresql://gino:gino@localhost:5432/gino')
 
 So, if now 'db' used by Gino Admin - we use init for Sanic apps, if not - we use for our Main application Framework
 
@@ -280,9 +280,9 @@ Config Gino Admin
 You can define in config:
 
 * presets_folder: path where stored predefined DB presets
-* custom_hash_method: method that used to hash passwords and other data, that stored as *_hash columns in DB,
-    by default used pbkdf2_sha256.encrypt
+* custom_hash_method: method that used to hash passwords and other data, that stored as '_hash' columns in DB, by default used pbkdf2_sha256.encrypt
 * composite_csv_settings: describe some rules how to parse and load Composite CSV files
+
 
 composite_csv_settings
 ######################
@@ -315,6 +315,7 @@ You also can define table name as 'pattern':
     composite_csv_settings={
         "area": {"models": (SomeModel, SomeModel2, SomeModel3), "pattern": "*_postfix"}
     }
+
 This mean - to understand that this is a DB - take previous table from CSV in row and add '_postfix' at the end.
 
 
@@ -435,7 +436,7 @@ or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
 
 
 Developer guide
-_______________
+---------------
 
 Project use pre-commit hooks, so you need setup them
 
