@@ -23,9 +23,11 @@ class Config:
     allowed_file_types = ["csv"]
     datetime_str_formats = [
         "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%d %H:%M:%S.%f",
         "%m-%d-%yT%H:%M:%S.%f",
         "%m-%d-%y %H:%M:%S",
+        "%m-%d-%yT%H:%M:%S",
     ]
     presets_folder = "presets"
     composite_csv_settings = {}

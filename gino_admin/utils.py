@@ -152,9 +152,9 @@ def extract_datetime(datetime_str: Text):
     for str_format in cfg.datetime_str_formats:
         try:
             datetime_object = datetime.datetime.strptime(datetime_str, str_format)
+            return datetime_object
         except ValueError:
             continue
-    return datetime_object
 
 
 def generate_token(ip: Text):
@@ -168,6 +168,7 @@ def read_yaml(preset_file):
 
 
 def get_presets():
+    """ get presets data from yml configs from presets folder"""
     presets = []
     if not os.path.isdir(cfg.presets_folder):
         if os.path.isfile(cfg.presets_folder):
@@ -184,6 +185,7 @@ def get_presets():
 
 
 def get_settings():
+    """ gino admin settings '"""
     settings = {}
     settings_list = ["presets_folder", "composite_csv_settings"]
     for setting in settings_list:

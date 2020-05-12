@@ -3,13 +3,15 @@ from collections import defaultdict
 from copy import deepcopy
 from csv import reader
 from random import randint
-from typing import Dict, List, Text
+from typing import List, Optional, Text
 
 import asyncpg
 from gino.declarative import Model
 from sanic.log import logger
 from sanic.request import Request
 from sanic.response import HTTPResponse
+from sqlalchemy.sql.schema import Column
+from sqlalchemy_utils.functions import identity
 
 from gino_admin.core import cfg, jinja
 from gino_admin.utils import (CompositeType, correct_types, reverse_hash_names,
@@ -44,7 +46,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
 
 def process_csv_header(model_id, row, request):
     composite = False
-    header = [x.strip().replace("\ufeff", "") for x in row]
+    header = [x.lower().strip().replace("\ufeff", "") for x in row]
     if ":" in header[0]:
         composite = True
     if not composite:
@@ -192,8 +194,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                                 previous_table_name = table_name
                             else:
                                 for elem in stack[::-1]:
-
-                                    print("We are here")
                                     if elem in table_header[0]["table"][1]:
                                         previous_table_name = elem
                                         break
@@ -235,7 +235,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                             table_row = reverse_hash_names(model_id, table_row)
                             table_row = correct_types(table_row, columns_data)
                             if table_num > 0:
-                                print(model_id)
                                 column, target_column = cfg.models[model_id][
                                     "foreign_keys"
                                 ][previous_table_name]
@@ -244,8 +243,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                                     target_column
                                 ]
                                 table_row[column] = foreing_column_value
-                            print("new obj")
-                            print(model_id)
                             new_obj = (
                                 await cfg.models[model_id]["model"].create(**table_row)
                             ).to_dict()
@@ -259,8 +256,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                         except Exception as e:
                             errors.append((num, table_row, e))
                             # TODO: right now just abort if error during composite file upload
-                            print(errors)
-                            raise e
                             return request, False
                         id_added.append(new_obj[cfg.models[model_id]["key"]])
 
@@ -278,9 +273,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                 )
             )
         except ValueError as e:
-
-            print(e)
-            raise e
             request["flash_messages"].append((e.args, "error"))
         except asyncpg.exceptions.ForeignKeyViolationError as e:
             request["flash_messages"].append((e.args, "error"))
@@ -296,8 +288,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
             request["flash_messages"].append(
                 (f"Field {column} cannot be null", "error")
             )
-
-        print(request["flash_messages"])
         return request, True
 
 
@@ -346,26 +336,84 @@ async def count_elements_in_db():
 
 
 async def create_object_copy(
-    base_obj: Dict, model: Model, columns_data: Dict, hashed_indexes: List[int]
+    model_id: Text,
+    base_object_key: Text,
+    fk_column: Column = None,
+    new_fk_link_id: Text = None,
 ) -> str:
-    logger.debug(f"creating object copy of {base_obj} of model {model}")
-    object_id = base_obj["id"]
+    model_data = cfg.models[model_id]
+    columns_data = model_data["columns_data"]
+    key = model_data["key"]
+    base_object_key = columns_data[key]["type"](base_object_key)
+    model = cfg.models[model_id]["model"]
     # id can be str or int
-    if isinstance(object_id, str):
-        new_obj_id = object_id + "_copy_" + uuid.uuid1().hex[5:10]
+    # todo: need fix for several unique columns
+    if isinstance(base_object_key, str):
+        new_obj_key = (
+            base_object_key
+            + f"{'_' if not base_object_key.endswith('_') else ''}"
+            + uuid.uuid1().hex[5:10]
+        )
+        len_ = model_data["columns_data"][key]["len"]
+        if len_:
+            if new_obj_key[:len_] == base_object_key:
+                # if we spend all id previous
+                new_obj_key = new_obj_key[
+                    len_ : len_ + len_  # noqa E203
+                ]  # auto format from black
+            else:
+                new_obj_key = new_obj_key[:len_]
     else:
-        new_obj_id = object_id + randint(0, 10000000000)
-    base_obj["id"] = new_obj_id
-    required = [
-        key for key, value in columns_data.items() if value["nullable"] is False
-    ]
-    for item in required:
+        # todo: need to check ints with max size
+        new_obj_key = base_object_key + randint(0, 10000000000)
+
+    bas_obj = (await model.get(base_object_key)).to_dict()
+
+    bas_obj[key] = new_obj_key
+
+    if new_fk_link_id and fk_column is not None:
+        bas_obj[fk_column.name] = new_fk_link_id
+
+    for item in model_data["required_columns"]:
         # todo: need to document this behaviour in copy step
-        if (item in base_obj and not base_obj[item]) or item not in base_obj:
-            base_obj[item] = base_obj["id"]
+        if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
+            bas_obj[item] = bas_obj[key]
             if columns_data[item]["type"] == "HASH":
-                base_obj[item] = cfg.hash_method(base_obj["id"])
-    columns_names = list(columns_data.keys())
-    bas_obj = reverse_hash_names(hashed_indexes, columns_names, base_obj)
-    await model.create(**bas_obj)
-    return new_obj_id
+                bas_obj[item] = cfg.hash_method(bas_obj[key])
+    new_obj = reverse_hash_names(model_id, bas_obj)
+    await model.create(**new_obj)
+    return new_obj_key
+
+
+async def deepcopy_recursive(
+    model: Model,
+    object_id: str,
+    new_fk_link_id: Optional[str] = None,
+    fk_column: Optional[Column] = None,
+):
+    logger.debug(
+        f"Making a deepcopy of {model} with id {object_id} linking to foreign key"
+        f" {fk_column} with id {new_fk_link_id}"
+    )
+    new_obj_key = await create_object_copy(
+        model.__tablename__, object_id, fk_column, new_fk_link_id
+    )
+    primary_key_col = identity(model)[0]
+    dependent_models = {}
+    # TODO(ehborisov): check how it works in the case of composite key
+    for m_id, data in cfg.models.items():
+        for column in cfg.app.db.tables[m_id].columns:
+            if column.references(primary_key_col):
+                dependent_models[data["model"]] = column
+    for dep_model in dependent_models:
+        fk_column = dependent_models[dep_model]
+        all_referencing_instance_ids = (
+            await dep_model.select(identity(dep_model)[0].name)
+            .where(fk_column == object_id)
+            .gino.all()
+        )
+        # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
+        for inst_id in all_referencing_instance_ids:
+            await deepcopy_recursive(dep_model, inst_id[0], new_obj_key, fk_column)
+    logger.debug(f"Finished copying, returning newly created object's id {new_obj_key}")
+    return new_obj_key

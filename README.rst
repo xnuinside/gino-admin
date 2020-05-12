@@ -54,7 +54,7 @@ Check more information in example and doc's section **Config**
 4.3 Example with CSVs samples added to
 5. Fixed issue with Logout.
 6. Added page 'Settings' to check that Settings are used in admin panel. Display now composite_csv param & presets folder.
-
+7. Added New Feature "Deepcopy" - recursive copy object and all objects, that depend on it.
 
 
 Usage example
@@ -247,6 +247,12 @@ And XLS-table sample in Google Sheets:
 
 https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
 
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/composite_csv.png
+  :width: 250
+  :alt: Load Presets
+
+
 Click - Download -> CSV and you will get result, that can be found in **examples/composite_csv_example/src/csv_to_upload**
 
 
@@ -302,6 +308,14 @@ Check source code with example: examples/composite_csv_example
 
 And table sample for it: https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
 
+You also can define table name as 'pattern':
+
+.. code-block:: python
+
+    composite_csv_settings={
+        "area": {"models": (SomeModel, SomeModel2, SomeModel3), "pattern": "*_postfix"}
+    }
+This mean - to understand that this is a DB - take previous table from CSV in row and add '_postfix' at the end.
 
 
 Drop DB
@@ -392,14 +406,15 @@ Supported operations
 - Copy existed element (data table row)
 - Edit existed data (table row)
 - SQL-Runner (execute SQL-queries)
-- Load DB Presets (bunch of CSV)
+- Presets: Define order and Load to DB bunch of CSV-files
 - Drop DB (Full clean up behavior: Drop tables & Recreate)
+- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
+- Composite CSV: Load multiple relative tables in one CSV-file
 
 
 TODO:
 
 - Select multiple for delete/copy
-- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
 - Edit multiple items (?)
 - Roles & User store in DB
 - Filters in Table's columns
