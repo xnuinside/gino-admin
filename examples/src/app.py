@@ -1,6 +1,6 @@
 import os
 
-from db import City, Country, GiftCard, Place, User, db
+from db import City, Country, GiftCard, Item, Place, User, db
 from passlib.hash import pbkdf2_sha256
 from sanic import Sanic, response
 
@@ -35,7 +35,7 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 add_admin_panel(
     app,
     db,
-    [User, Place, City, GiftCard, Country],
+    [User, Place, City, GiftCard, Country, Item],
     custom_hash_method=custom_hash_method,
     presets_folder=os.path.join(current_path, "csv_to_upload"),
 )

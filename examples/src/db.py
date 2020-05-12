@@ -37,6 +37,17 @@ class Place(db.Model):
     id = db.Column(db.String(24), unique=True, primary_key=True)
     title = db.Column(db.String())
     description = db.Column(db.String())
+    owner = db.Column(db.String(24), db.ForeignKey("users.id"))
+
+
+class Item(db.Model):
+
+    __tablename__ = "items"
+
+    id = db.Column(db.String(24), unique=True, primary_key=True)
+    name = db.Column(db.String)
+    description = db.Column(db.String())
+    place = db.Column(db.String(24), db.ForeignKey("places.id"))
 
 
 class Country(db.Model):
