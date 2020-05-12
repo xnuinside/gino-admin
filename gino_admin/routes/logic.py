@@ -71,7 +71,6 @@ def extract_tables_from_header(header: List, request: Request):
         column = {"table": None, "column": None}
         splitted_name = column_name.split(":")
         if ":" not in column_name or len(splitted_name) == 1:
-            print(splitted_name)
             request["flash_messages"].append(
                 (
                     f"Errors: Wrong Header in Composite CSV File. "
@@ -107,7 +106,6 @@ def extract_tables_from_header(header: List, request: Request):
                     "error",
                 )
             )
-            print(request["flash_messages"])
             return request, None, None
         if tables_indexes[table_name]["start"] is None:
             tables_indexes[table_name]["start"] = num
@@ -134,7 +132,6 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
             errors = []
             unique_keys = {}
             for num, row in enumerate(csv_reader):
-                print(row)
                 # row variable is a list that represents a row in csv
                 if num == 0:
                     error_request, header, composite = process_csv_header(
@@ -171,47 +168,43 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                         table_header = deepcopy(header)[
                             indexes["start"] : indexes["end"] + 1  # noqa E203
                         ]
-                        print(table_header)
-                        print(row)
                         table_row_data = deepcopy(row)[
                             indexes["start"] : indexes["end"] + 1  # noqa E203
                         ]
-                        print(table_row_data)
+
+                        if not any(table_row_data):
+                            previous_table_name = table_name
+                            table_num += 1
+                            print("ANY")
+                            continue
+                        print(unique_keys)
                         if table_header[0]["table"][0] == table_header[0]["table"][1]:
                             model_id = table_name
 
                             columns_data = cfg.models[model_id]["columns_data"]
                         else:
-                            print("we are here")
                             model_id = None
                             columns_indexes_remove = []
                             for index, field_value in enumerate(table_header):
-                                print(field_value)
                                 if isinstance(field_value["column"], CompositeType):
                                     model_id = table_row_data[index]
-                                    print(model_id)
-                                    print(model_id)
                                     table_row_data.pop(index)
+                                    break
                             table_header.pop(index)
 
                             columns_data = cfg.models[model_id]["columns_data"]
-                            print(columns_data)
-                            for index, field_value in enumerate(table_header):
-                                print(field_value)
-                                key, value = field_value
-                                if value not in columns_data:
+                            for index, value in enumerate(table_header):
+                                if value["column"] not in columns_data:
                                     # column not in this table
                                     columns_indexes_remove.append(index)
                             for num, index in enumerate(columns_indexes_remove):
                                 table_header.pop(index - num)
                                 table_row_data.pop(index - num)
-                        print(table_row_data)
-                        print(table_header)
+
                         table_row = {
                             table_header[num]["column"]: value
                             for num, value in enumerate(table_row_data)
                         }
-
                         try:
                             table_row = reverse_hash_names(model_id, table_row)
                             table_row = correct_types(table_row, columns_data)
@@ -228,14 +221,13 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                                 await cfg.models[model_id]["model"].create(**table_row)
                             ).to_dict()
                             # todo: add support to multi unique values
-                            unique_keys = {table_name: new_obj}
+                            unique_keys[model_id] = new_obj
                             previous_table_name = table_name
                             table_num += 1
                         except Exception as e:
+                            raise e
                             errors.append((num, table_row, e))
                             # TODO: right now just abort if error during composite file upload
-                            print(errors)
-                            raise e
                             return request, False
 
                         id_added.append(new_obj[cfg.models[model_id]["key"]])
@@ -254,6 +246,7 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                 )
             )
         except ValueError as e:
+
             raise e
             request["flash_messages"].append((e.args, "error"))
         except asyncpg.exceptions.ForeignKeyViolationError as e:

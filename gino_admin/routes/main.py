@@ -225,6 +225,8 @@ async def file_upload(request: Request, model_id: Text):
         file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
         await utils.write_file(file_path, upload_file.body)
         request, code = await insert_data_from_csv(file_path, model_id, request)
+
+        print(request["flash_messages"])
         return await model_view_table(request, model_id, request["flash_messages"])
 
 

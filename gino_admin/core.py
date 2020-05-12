@@ -55,9 +55,6 @@ def extract_column_data(model_id: Text) -> Dict:
     unique = [key for key, value in columns_data.items() if value["unique"] is True]
     foreign_keys = {}
     for column_name, data in columns_data.items():
-        print(columns_data)
-
-        print("key33")
         for key in data["foreign_keys"]:
             foreign_keys[key._colspec.split(".")[0]] = (
                 column_name,
