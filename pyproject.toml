@@ -19,6 +19,7 @@ expiring_dict = "^1.1.0"
 PyYAML = "^5.3.1"
 gino = "^1.0.0"
 gino-sanic = "^0.1.0"
+SQLAlchemy-Utils = "0.36.5"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.3.0"

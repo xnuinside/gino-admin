@@ -3,18 +3,22 @@ import uuid
 from ast import literal_eval
 from datetime import datetime
 from random import randint
-from typing import Text
+from typing import Optional, Text
 
 import asyncpg
+from gino.declarative import Model
 from sanic import response
+from sanic.log import logger
 from sanic.request import Request
+from sqlalchemy.sql.schema import Column
+from sqlalchemy_utils.functions import identity
 
 from gino_admin import auth, utils
 from gino_admin.core import admin, jinja
 from gino_admin.routes.crud import model_view_table
-from gino_admin.routes.logic import (count_elements_in_db,
+from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      drop_and_recreate_all_tables,
-                                     insert_data_from_csv)
+                                     insert_data_from_csv, render_model_view)
 from gino_admin.utils import cfg
 
 
@@ -63,8 +67,71 @@ async def login(request):
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
 @auth.token_validation()
 async def model_deepcopy(request, model_id):
-    # TODO:
-    ...
+    """
+    Recursively creates copies for the whole chain of entities, referencing the given model and instance id through
+    the foreign keys.
+    :param request:
+    :param model_id:
+    :return:
+    """
+    request_params = {key: request.form[key][0] for key in request.form}
+    _columns_data = cfg.models[model_id]["columns_data"]
+    base_object_id = _columns_data["id"]["type"](request_params["id"])
+
+    async def _deepcopy_recursive(
+        model: Model,
+        object_id: str,
+        new_fk_link_id: Optional[str] = None,
+        fk_column: Optional[Column] = None,
+    ):
+        logger.debug(
+            f"Making a deepcopy of {model} with id {object_id} linking to foreign key"
+            f" {fk_column} with id {new_fk_link_id}"
+        )
+        base_object = utils.serialize_dict((await model.get(object_id)).to_dict())
+        if new_fk_link_id and fk_column is not None:
+            base_object[fk_column.name] = new_fk_link_id
+        new_obj_id = await create_object_copy(
+            base_object,
+            model,
+            cfg.models[model_id]["columns_data"],
+            cfg.models[model_id]["hashed_indexes"],
+        )
+        primary_key_col = identity(model)[0]
+        dependent_models = {}
+        # TODO(ehborisov): check how it works in the case of composite key
+        for m_id, model in cfg.models.items():
+            for column in cfg.app.db.tables[m_id].columns:
+                if column.references(primary_key_col):
+                    dependent_models[model] = column
+
+        for dep_model in dependent_models:
+            fk_column = dependent_models[dep_model]
+            all_referencing_instance_ids = (
+                await dep_model.select(identity(dep_model)[0].name)
+                .where(fk_column == object_id)
+                .gino.all()
+            )
+
+            # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
+            for inst_id in all_referencing_instance_ids:
+                await _deepcopy_recursive(dep_model, inst_id[0], new_obj_id, fk_column)
+        logger.debug(
+            f"Finished copying, returning newly created object's id {new_obj_id}"
+        )
+        return new_obj_id
+
+    try:
+        new_base_obj_id = await _deepcopy_recursive(
+            cfg.models[model_id], base_object_id
+        )
+        request["flash"](
+            f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}",
+            "success",
+        )
+    except asyncpg.exceptions.PostgresError as e:
+        request["flash"](e.args, "error")
+    return await render_model_view(request, model_id)
 
 
 @admin.route("/<model_id>/copy", methods=["POST"])
