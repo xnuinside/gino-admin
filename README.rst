@@ -95,6 +95,8 @@ Command in cli:
         gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
 
 
+
+
 Version 0.0.8 Updates:
 ----------------------
 1. Added more possibilities to use Gino Admin with applications in different frameworks (Fast API, or aiohttp, or any others)
