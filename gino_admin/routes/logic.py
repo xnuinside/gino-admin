@@ -13,9 +13,8 @@ from sanic.response import HTTPResponse
 from sqlalchemy.sql.schema import Column
 from sqlalchemy_utils.functions import identity
 
-from gino_admin.core import cfg, jinja
-from gino_admin.utils import (CompositeType, correct_types, reverse_hash_names,
-                              serialize_dict)
+from gino_admin.utils import (CompositeType, cfg, correct_types,
+                              reverse_hash_names, serialize_dict)
 
 
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
@@ -31,7 +30,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
             row[columns_names[index]] = "*************"
         output.append(row)
     output = output[::-1]
-    _response = jinja.render(
+    _response = cfg.jinja.render(
         "model_view.html",
         request,
         model=model_id,
@@ -294,7 +293,11 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
 async def drop_and_recreate_all_tables():
     for model_id in cfg.models:
         sql_query = f"DROP TABLE {model_id} CASCADE"
-        await cfg.app.db.status(cfg.app.db.text(sql_query))
+        try:
+            await cfg.app.db.status(cfg.app.db.text(sql_query))
+        except asyncpg.exceptions.UndefinedTableError:
+            # if table not exist just ignore it
+            pass
     await cfg.app.db.gino.create_all()
 
 
@@ -311,7 +314,7 @@ async def render_add_or_edit_form(
     else:
         obj = {}
         add = True
-    return jinja.render(
+    return cfg.jinja.render(
         "add_form.html",
         request,
         model=model_id,

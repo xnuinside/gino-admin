@@ -23,8 +23,83 @@ How to install
 
 .. code-block:: python
     
-    pip install gino-admin==0.0.8
+    pip install gino-admin==0.0.9
     
+
+Version 0.0.9 Updates:
+----------------------
+
+1. Added New feature: REST API to load DB Presets with token auth.
+1.1 POST: admin/api/auth
+
+    Auth required to use API endpoints
+
+    To get auth JWT token:
+
+    In request header Authorization provide Basic b64decode login:password stroke
+
+        for user admin:1234
+        headers={"Authorization":"Basic YWRtaW46MTIzNA=="}
+
+    Not recommended:
+        For fast and easy POC development also allowed provide plain text login:password stroke in Authorization header
+        headers={"Authorization":"admin:1234"}
+
+    Response:
+
+.. code-block:: python
+
+        {
+            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE1ODkzNzI1MzZ9.IJZG9DV8ZCna7pjK7osUn9veI0Gc47d0Ts5pyGvu6JE"
+        }
+
+
+1.2 POST: admin/api/presets
+
+    protected: True (need to provide JWT token in Authorization header)
+    Content-type: application/json
+
+    Request body:
+        - preset: must contain path to preset '.yml' file
+        - drop: flag to Drop DB before upload preset (optional)
+
+Purposes: easy call from tests env when need to drop/create DB from some tests datasets
+
+1.3 POST: admin/api/drop_db
+
+    protected: True (need to provide JWT token in Authorization header)
+    Empty request without body.
+    Purposes: Clean up & recreate tables
+
+2. New feature: Base Cli interface.
+
+Command in cli:
+
+    **Run Admin Panel from cli**
+
+    gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+
+.. code-block:: python
+
+    Optional params:
+        -d --db
+            Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+            Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
+            Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
+        -h --host
+        -p --port
+        -c --config
+        --no-auth  Run Admin Panel without Auth in UI
+        -u --user Admin User login & password
+            Expected format: login:password
+            Example: admin:1234
+            Notice: user also can be defined from env variable - check Auth section
+
+Example how to use:
+
+.. code-block:: python
+
+        gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
 
 
 Version 0.0.8 Updates:
@@ -78,6 +153,38 @@ Full example placed in 'examples' folder:
 
 How to use
 ----------
+
+Run Admin Panel from Command line
+#################################
+
+**Run Admin Panel from cli**
+
+.. code-block:: python
+
+    gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+
+    Optional params:
+        -d --db
+            Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+            Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
+            Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
+        -h --host
+        -p --port
+        -c --config Example:  -c "presets_folder=examples/base_example/src/csv_to_upload;some_property=1"
+                    Notice: all fields that not supported in config will be ignored, like 'some_property' in example
+        --no-auth  Run Admin Panel without Auth in UI
+        -u --user Admin User login & password
+            Expected format: login:password
+            Example: admin:1234
+            Notice: user also can be defined from env variable with 'SANIC_' prefix - check Auth section example
+
+Example:
+
+.. code-block:: python
+
+    gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
+
+
 Add Admin Panel to existed Sanic application as '/admin' route
 ##############################################################
 
@@ -187,7 +294,6 @@ Now, we need to create **admin.py** to run admin panel:
 
 
 All environment variables you can move to define in docker or .env files as you wish, they not needed to be define in '.py', this is just for example shortness.
-
 
 
 Presets

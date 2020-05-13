@@ -37,9 +37,9 @@ async def model_edit_post(request, model_id, obj_id):
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
     }
-    request_params = utils.correct_types(request_params, model_data["columns_data"])
     if model_data["hashed_indexes"]:
         request_params = utils.reverse_hash_names(model_id, request_params)
+    request_params = utils.correct_types(request_params, model_data["columns_data"])
     try:
         await obj.update(**request_params).apply()
         request["flash"]("Changes was saved", "success")
