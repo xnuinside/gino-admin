@@ -1,3 +1,4 @@
+id: first_presset
 name: First Preset
 description: "Init DB with minimal data"
 files:

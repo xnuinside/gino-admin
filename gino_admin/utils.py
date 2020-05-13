@@ -181,6 +181,7 @@ def get_presets():
                 file_path = os.path.join(cfg.presets_folder, file_name)
                 preset_definition = read_yaml(file_path)
                 presets.append(preset_definition)
+    print(presets)
     return presets
 
 
