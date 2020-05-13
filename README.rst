@@ -47,9 +47,12 @@ Version 0.0.9 Updates:
 
     Response:
 
+.. code-block:: python
+
         {
             "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE1ODkzNzI1MzZ9.IJZG9DV8ZCna7pjK7osUn9veI0Gc47d0Ts5pyGvu6JE"
         }
+
 
 1.2 POST: admin/api/presets
 
@@ -76,6 +79,8 @@ Command in cli:
 
     gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
 
+.. code-block:: python
+
     Optional params:
         -d --db
             Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
@@ -90,11 +95,11 @@ Command in cli:
             Example: admin:1234
             Notice: user also can be defined from env variable - check Auth section
 
-    Example how to use:
+Example how to use:
+
+.. code-block:: python
 
         gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
-
-
 
 
 Version 0.0.8 Updates:

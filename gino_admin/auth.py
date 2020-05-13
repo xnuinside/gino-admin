@@ -72,7 +72,7 @@ async def authenticate(request, *args, **kwargs):
     if password != password_in_cfg:
         raise exceptions.AuthenticationFailed("Password is incorrect.")
 
-    return username
+    return {"user_id": 1, "username": username}
 
 
 def user_credentials_from_the_token(token: Union[Text, bytes]) -> Union[Dict, Tuple]:
