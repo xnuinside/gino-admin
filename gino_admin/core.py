@@ -8,6 +8,7 @@ from sanic_jinja2 import SanicJinja2
 from sanic_jwt import Initialize
 
 from gino_admin.auth import authenticate
+from gino_admin.routes import rest
 from gino_admin.utils import cfg, logger, types_map
 
 loader = FileSystemLoader(
@@ -20,7 +21,6 @@ cfg.jinja = jinja
 
 
 admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
-api = Blueprint("api", url_prefix=f"{cfg.URL_PREFIX}/api")
 
 
 admin.static(
@@ -114,8 +114,9 @@ def add_admin_panel(
     if composite_csv_settings:
         cfg.composite_csv_settings = composite_csv_settings
     app.blueprint(admin)
-    app.blueprint(api)
-    Initialize(api, app=app, authenticate=authenticate)
+    app.blueprint(rest.api)
+    Initialize(app, authenticate=authenticate, url_prefix="admin/api/auth")
+    Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
     if custom_hash_method:
         cfg.hash_method = custom_hash_method
     jinja.init_app(app)

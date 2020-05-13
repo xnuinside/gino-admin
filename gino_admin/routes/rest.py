@@ -1,16 +1,19 @@
 import os
 
-from sanic import response
+from sanic import Blueprint, response
 from sanic.request import Request
+from sanic_jwt.decorators import protected
 
-from gino_admin.core import api
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
                                      insert_data_from_csv)
 from gino_admin.utils import cfg, get_presets, logger, read_yaml
 
+api = Blueprint("api", url_prefix=f"{cfg.URL_PREFIX}/api")
+
 
 @api.route("/presets", methods=["POST"])
-async def presets_use(request: Request):
+@protected(api)
+async def presets(request: Request):
     # json content/type expected
     preset_path = request.json.get("preset")
     preset_id = request.json.get("preset_id")
@@ -47,8 +50,15 @@ async def presets_use(request: Request):
             message = "DB was dropped & Preset was success loaded"
         else:
             message = "Preset was loaded"
-        result = response.json({"status": f"{message}"}, status=200,)
+        result = response.json({"status": f"{message}"}, status=200)
     except FileNotFoundError:
         answer = {"error": f"Wrong file path in Preset {preset['name']}."}
         result = response.json(answer, status=422)
     return result
+
+
+@api.route("/drop_db", methods=["POST"])
+@protected(api)
+async def drop(request: Request):
+    await drop_and_recreate_all_tables()
+    return response.json({"status": "DB was dropped. Tables re-created."}, status=200)

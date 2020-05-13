@@ -13,7 +13,6 @@ from sanic.response import HTTPResponse
 from sqlalchemy.sql.schema import Column
 from sqlalchemy_utils.functions import identity
 
-from gino_admin.core import jinja
 from gino_admin.utils import (CompositeType, cfg, correct_types,
                               reverse_hash_names, serialize_dict)
 
@@ -31,7 +30,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
             row[columns_names[index]] = "*************"
         output.append(row)
     output = output[::-1]
-    _response = jinja.render(
+    _response = cfg.jinja.render(
         "model_view.html",
         request,
         model=model_id,
@@ -315,7 +314,7 @@ async def render_add_or_edit_form(
     else:
         obj = {}
         add = True
-    return jinja.render(
+    return cfg.jinja.render(
         "add_form.html",
         request,
         model=model_id,
