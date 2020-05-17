@@ -11,6 +11,6 @@ RUN poetry config virtualenvs.create false \
 
 COPY gino_admin  /app/gino_admin
 
-COPY examples/composite_csv_example/src/csv_to_upload /app/csv_to_upload
+COPY examples/composite_csv_example/src /app
 COPY tests/integration_tests/wait_for.py /wait_for.py
 CMD python /wait_for.py && python app.py

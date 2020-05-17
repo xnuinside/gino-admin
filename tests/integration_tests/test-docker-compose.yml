@@ -52,7 +52,7 @@ services:
       - PORT=5020
     build:
       context: ../../
-      dockerfile: $PWD/docker/base_example/Dockerfile
+      dockerfile: $PWD/docker/composite_csv_example/Dockerfile
     ports:
       - "5020:5020"
     depends_on:
