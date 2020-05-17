@@ -9,7 +9,9 @@ if os.environ.get("GINO_ADMIN"):
 else:
     from gino.ext.starlette import Gino
 
-    db = Gino(dsn="postgresql://gino:gino@localhost:5432/gino")
+    db = Gino(
+        dsn=f"postgresql://gino:gino@{os.environ.get('DB_HOST','localhost')}:5432/gino"
+    )
 
 
 class GiftCard(db.Model):

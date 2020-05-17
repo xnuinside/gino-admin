@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  postgres:
+    image: "postgres:9.6"
+    environment:
+      - POSTGRES_USER=gino
+      - POSTGRES_PASSWORD=gino
+      - POSTGRES_DB=gino
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  fastapi_main_app_main:
+    environment:
+      - DB_HOST=postgres
+    build:
+      context: ../../
+      dockerfile: $PWD/docker/fastapi_as_main_app/Dockerfile
+    ports:
+      - "5050:5050"
+    depends_on:
+      - postgres
+
+  fastapi_main_app_admin:
+    environment:
+      - DB_HOST=postgres
+    build:
+      context: ../../
+      dockerfile: $PWD/docker/fastapi_as_main_app/Dockerfile-admin
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+
+  base_app:
+    environment:
+      - DB_HOST=postgres
+      - PORT=5010
+    build:
+      context: ../../
+      dockerfile: $PWD/docker/base_example/Dockerfile
+    ports:
+      - "5010:5010"
+    depends_on:
+      - postgres
+
+  composite_csv:
+    environment:
+      - DB_HOST=postgres
+      - PORT=5020
+    build:
+      context: ../../
+      dockerfile: $PWD/docker/composite_csv_example/Dockerfile
+    ports:
+      - "5020:5020"
+    depends_on:
+      - postgres

@@ -63,8 +63,8 @@ async def authenticate(request, *args, **kwargs):
     if not username or not password:
         raise exceptions.AuthenticationFailed("Missing username or password.")
 
-    user_in_cfg = cfg.app.config["ADMIN_USER"]
-    password_in_cfg = cfg.app.config["ADMIN_PASSWORD"]
+    user_in_cfg = str(cfg.app.config["ADMIN_USER"])
+    password_in_cfg = str(cfg.app.config["ADMIN_PASSWORD"])
 
     if username != user_in_cfg:
         raise exceptions.AuthenticationFailed("User not found.")

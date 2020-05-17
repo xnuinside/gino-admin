@@ -26,6 +26,8 @@ sanic-jwt = "^1.4.1"
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.3.0"
 flake8 = "^3.7.9"
+pytest-docker-compose = "^3.1.2"
+pytest = "^5.4.2"
 
 [tool.poetry.scripts]
 gino-admin = 'gino_admin.cli:cli'

@@ -10,7 +10,7 @@ app = Sanic()
 app.config["ADMIN_USER"] = "admin"
 app.config["ADMIN_PASSWORD"] = "1234"
 
-app.config["DB_HOST"] = "localhost"
+app.config["DB_HOST"] = os.environ.get("DB_HOST", "localhost")
 app.config["DB_DATABASE"] = "gino"
 app.config["DB_USER"] = "gino"
 app.config["DB_PASSWORD"] = "gino"
@@ -41,4 +41,4 @@ add_admin_panel(
 )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=os.getenv("PORT", 5000), debug=True)

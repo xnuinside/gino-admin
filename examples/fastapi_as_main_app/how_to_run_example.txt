@@ -33,6 +33,8 @@ To run main Fast API application (to check that all okay):
 
     uvicorn main:app --port 5050
 
+Check it on n http://0.0.0.0:5050/users/
+
 To run Gino Admin Panel:
 
     python src/admin.py

@@ -7,7 +7,7 @@ os.environ["GINO_ADMIN"] = "1"
 # gino admin uses Sanic as a framework, so you can define most params as environment variables with 'SANIC_' prefix
 # in example used this way to define DB credentials & login-password to admin panel
 
-os.environ["SANIC_DB_HOST"] = "localhost"
+os.environ["SANIC_DB_HOST"] = os.getenv("DB_HOST", "localhost")
 os.environ["SANIC_DB_DATABASE"] = "gino"
 os.environ["SANIC_DB_USER"] = "gino"
 os.environ["SANIC_DB_PASSWORD"] = "gino"
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # db_models - list of db.Models classes (tables) that you want to see in Admin Panel
     create_admin_app(
         host="0.0.0.0",
-        port=5000,
+        port=os.getenv("PORT", 5000),
         db=db.db,
         db_models=[db.User, db.City, db.GiftCard, db.Country],
         config={"presets_folder": os.path.join(current_path, "csv_to_upload")},

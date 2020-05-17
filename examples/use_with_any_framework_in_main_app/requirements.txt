@@ -1,6 +1,0 @@
-psycopg2-binary
-gino
-gino-starlette
-fastapi
-uvicorn
-gino_admin
