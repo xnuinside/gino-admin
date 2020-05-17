@@ -564,7 +564,8 @@ Just run:
 to install git hooks in your .git/ directory.
 
 How to run integration tests
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+############################
+
 Run integrations test from  tests/integration_tests/
 
 .. code-block:: console
