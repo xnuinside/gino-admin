@@ -11,12 +11,13 @@ import aiofiles
 import yaml
 from passlib.hash import pbkdf2_sha256
 
-from gino_admin.config import Config
+from gino_admin import config
 
+cfg = config.cfg
 logger = logging.getLogger("Gino Admin")
 
 salt = uuid4().hex
-cfg = Config
+
 
 _windows_device_files = (
     "CON",
@@ -170,8 +171,6 @@ def read_yaml(preset_file):
 
 def get_presets():
     """ return previous loaded, or re-read from disk """
-    if cfg.presets.get("loaded_at"):
-        print(cfg.presets["loaded_at"], os.path.getmtime(cfg.presets_folder))
     if not cfg.presets or (
         cfg.presets.get("loaded_at")
         and cfg.presets["loaded_at"] < os.path.getmtime(cfg.presets_folder)
@@ -181,7 +180,8 @@ def get_presets():
     return cfg.presets
 
 
-def get_preset_by_id(preset_id):
+def get_preset_by_id(preset_id: Text):
+    """ get preset by id """
     presets = get_presets()["presets"]
     for preset in presets:
         if preset_id == preset["id"]:

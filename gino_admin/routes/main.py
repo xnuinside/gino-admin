@@ -7,14 +7,16 @@ import asyncpg
 from sanic import response
 from sanic.request import Request
 
-from gino_admin import auth, utils
-from gino_admin.core import admin, jinja
+from gino_admin import auth, config, utils
+from gino_admin.core import admin
 from gino_admin.routes.crud import model_view_table
 from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      deepcopy_recursive,
                                      drop_and_recreate_all_tables,
                                      insert_data_from_csv, render_model_view)
-from gino_admin.utils import cfg
+
+cfg = config.cfg
+jinja = cfg.jinja
 
 
 @admin.route("/")
@@ -73,7 +75,6 @@ async def model_deepcopy(request, model_id):
             "success",
         )
     except asyncpg.exceptions.PostgresError as e:
-        raise e
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
 

@@ -7,7 +7,10 @@ from typing import Dict, Text, Tuple, Union
 from sanic import response as r
 from sanic_jwt import exceptions
 
-from gino_admin.utils import cfg, logger
+from gino_admin import config
+from gino_admin.utils import logger
+
+cfg = config.cfg
 
 
 def token_validation():

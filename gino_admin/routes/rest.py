@@ -4,9 +4,12 @@ from sanic import Blueprint, response
 from sanic.request import Request
 from sanic_jwt.decorators import protected
 
+from gino_admin import config
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
                                      insert_data_from_csv)
-from gino_admin.utils import cfg, get_preset_by_id, logger, read_yaml
+from gino_admin.utils import get_preset_by_id, logger, read_yaml
+
+cfg = config.cfg
 
 api = Blueprint("api", url_prefix=f"{cfg.URL_PREFIX}/api")
 

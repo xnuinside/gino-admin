@@ -2,43 +2,15 @@ import os
 from typing import Callable, Dict, List, Text
 
 from gino.ext.sanic import Gino
-from jinja2 import FileSystemLoader
 from sanic import Blueprint, Sanic, response
-from sanic.response import html
-from sanic_jinja2 import SanicJinja2
 from sanic_jwt import Initialize
 
+from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.routes import rest
-from gino_admin.utils import cfg, logger, types_map
+from gino_admin.utils import logger, types_map
 
-__version__ = "0.0.10"
-
-
-loader = FileSystemLoader(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-)
-
-
-def render_with_updated_context(
-    self, template, request, status=200, headers=None, **context
-):
-    context["admin_panel_title"] = cfg.admin_panel_title
-    context["objects"] = cfg.models
-    context["url_prefix"] = cfg.URL_PREFIX
-    context["admin_panel_version"] = __version__
-    return html(
-        self.render_string(template, request, **context),
-        status=status,
-        headers=headers,
-    )
-
-
-SanicJinja2.render = render_with_updated_context
-
-jinja = SanicJinja2(loader=loader)
-
-cfg.jinja = jinja
+cfg = config.cfg
 
 
 admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
@@ -140,7 +112,7 @@ def add_admin_panel(
     Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
     if custom_hash_method:
         cfg.hash_method = custom_hash_method
-    jinja.init_app(app)
+    cfg.jinja.init_app(app)
     cfg.app.config = app.config
 
 

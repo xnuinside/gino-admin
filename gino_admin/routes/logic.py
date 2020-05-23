@@ -13,8 +13,11 @@ from sanic.response import HTTPResponse
 from sqlalchemy.sql.schema import Column
 from sqlalchemy_utils.functions import identity
 
-from gino_admin.utils import (CompositeType, cfg, correct_types,
-                              reverse_hash_names, serialize_dict)
+from gino_admin import config
+from gino_admin.utils import (CompositeType, correct_types, reverse_hash_names,
+                              serialize_dict)
+
+cfg = config.cfg
 
 
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
