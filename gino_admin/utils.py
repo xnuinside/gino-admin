@@ -46,6 +46,10 @@ types_map = {
 }
 
 
+class GinoAdminError(Exception):
+    pass
+
+
 def serialize_obj(obj: Any) -> Any:
     """ method to serialise datetime obj """
     if isinstance(obj, (datetime.date, datetime.datetime)):
@@ -208,7 +212,6 @@ def load_presets():
 def get_settings():
     """ gino admin settings '"""
     settings = {}
-    settings_list = ["presets_folder", "composite_csv_settings", "admin_panel_title"]
-    for setting in settings_list:
+    for setting in cfg.displayable_setting:
         settings[setting] = getattr(cfg, setting)
     return settings

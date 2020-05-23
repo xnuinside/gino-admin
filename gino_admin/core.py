@@ -1,5 +1,6 @@
 import os
-from typing import Callable, Dict, List, Text
+from copy import deepcopy
+from typing import Dict, List, Text
 
 from gino.ext.sanic import Gino
 from sanic import Blueprint, Sanic, response
@@ -8,7 +9,7 @@ from sanic_jwt import Initialize
 from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.routes import rest
-from gino_admin.utils import logger, types_map
+from gino_admin.utils import GinoAdminError, logger, types_map
 
 cfg = config.cfg
 
@@ -90,28 +91,30 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
         del cfg.models[model_id]
 
 
-def add_admin_panel(
-    app: Sanic,
-    db: Gino,
-    db_models: List,
-    custom_hash_method: Callable = None,
-    presets_folder: Text = "presets",
-    composite_csv_settings: Dict = None,
-    *args,
-    **kwargs,
-):
+def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     """ init admin panel and configure """
+    if "custom_hash_method" in config_settings:
+        logger.warning(
+            f"'custom_hash_method' will be depricated in version 0.1.0. "
+            f" Please use 'hash_method' instead"
+        )
+        config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
+        del config_settings["custom_hash_method"]
+    for key in config_settings:
+        try:
+            setattr(cfg, key, config_settings[key])
+        except ValueError as e:
+            raise GinoAdminError(
+                "Error During Gino Admin Panel Initialisation. "
+                "You trying to set upWrong config parameters: "
+                f"{e}"
+            )
 
     extract_models_metadata(db, db_models)
-    cfg.presets_folder = presets_folder
-    if composite_csv_settings:
-        cfg.composite_csv_settings = composite_csv_settings
     app.blueprint(admin)
     app.blueprint(rest.api)
     Initialize(app, authenticate=authenticate, url_prefix="admin/api/auth")
     Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
-    if custom_hash_method:
-        cfg.hash_method = custom_hash_method
     cfg.jinja.init_app(app)
     cfg.app.config = app.config
 

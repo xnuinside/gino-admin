@@ -4,7 +4,7 @@ from typing import Callable, Dict, List
 from expiring_dict import ExpiringDict
 from jinja2 import FileSystemLoader
 from passlib.hash import pbkdf2_sha256
-from pydantic import BaseConfig, BaseModel
+from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
@@ -19,7 +19,7 @@ loader = FileSystemLoader(
 def render_with_updated_context(
     self, template, request, status=200, headers=None, **context
 ):
-    context["admin_panel_title"] = cfg.admin_panel_title
+    context["admin_panel_title"] = cfg.name
     context["objects"] = cfg.models
     context["url_prefix"] = cfg.URL_PREFIX
     context["admin_panel_version"] = __version__
@@ -75,7 +75,12 @@ class Config(BaseModel):
     history_table_name: str = "gino_admin_history"
     admin_users_table_name: str = "gino_admin_users"
     admin_roles_table_name: str = "gino_admin_roles"
-    admin_panel_title: str = "Sanic-Gino Admin Panel"
+    name: str = "Sanic-Gino Admin Panel"
+    displayable_setting: list = ["presets_folder", "composite_csv_settings", "name"]
+
+    @validator("displayable_setting")
+    def displayable_setting_cannot_be_changed(cls, value):
+        return ["presets_folder", "composite_csv_settings", "name"]
 
     class Config(BaseConfig):
         arbitrary_types_allowed = True
