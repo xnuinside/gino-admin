@@ -38,6 +38,7 @@ add_admin_panel(
     [User, Place, City, GiftCard, Country, Item],
     custom_hash_method=custom_hash_method,
     presets_folder=os.path.join(current_path, "csv_to_upload"),
+    name="Base Example Panel",
 )
 
 if __name__ == "__main__":

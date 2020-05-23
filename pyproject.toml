@@ -22,6 +22,7 @@ gino-sanic = "^0.1.0"
 SQLAlchemy-Utils = "0.36.5"
 click = "^7.1.2"
 sanic-jwt = "^1.4.1"
+requests_html = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.3.0"

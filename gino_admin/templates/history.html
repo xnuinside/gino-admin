@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}History{% endblock %}
+{% block body %}
+
+<div id="header_grid" class="ui grid">
+    <div class="ui ten wide column">
+<h1>History</h1><br> (Admin Panel Actions History)
+<!-- table for model view -->
+<table id="models_table" class="ui green padded compact sortable celled table">
+    <!-- header row -->
+    <thead class="full-width">
+        <tr>{% for column_name  in history_data_columns %}
+            <th class="two wide">{{column_name}}</th>
+            {% endfor %}
+            <th class="one wide"></th>
+        </tr>
+    </thead>
+
+    <!-- body with data rows -->
+    <tbody>
+    {% for row in history_data %}
+        <tr class="full-width">
+            <!-- columns with data -->
+
+            {% set loop_index=loop.index-1 %}
+            {% for key, field in row.items() %}
+                <td class="three wide">{{field}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+    </div>
+    </div>
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+{% endblock %}

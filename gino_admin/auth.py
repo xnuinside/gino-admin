@@ -55,24 +55,27 @@ def logout_user(request):
 
 
 async def authenticate(request, *args, **kwargs):
-    if "Basic" in request.token:
-        username, password = user_credentials_from_the_token(request.token)
+    if not os.getenv("ADMIN_AUTH_DISABLE") == "1":
+        if "Basic" in request.token:
+            username, password = user_credentials_from_the_token(request.token)
+        else:
+            username, password = request.token.split(":")
+
+        if not username or not password:
+            raise exceptions.AuthenticationFailed("Missing username or password.")
+
+        user_in_cfg = str(cfg.app.config["ADMIN_USER"])
+        password_in_cfg = str(cfg.app.config["ADMIN_PASSWORD"])
+
+        if username != user_in_cfg:
+            raise exceptions.AuthenticationFailed("User not found.")
+
+        if password != password_in_cfg:
+            raise exceptions.AuthenticationFailed("Password is incorrect.")
+
+        return {"user_id": 1, "username": username}
     else:
-        username, password = request.token.split(":")
-
-    if not username or not password:
-        raise exceptions.AuthenticationFailed("Missing username or password.")
-
-    user_in_cfg = str(cfg.app.config["ADMIN_USER"])
-    password_in_cfg = str(cfg.app.config["ADMIN_PASSWORD"])
-
-    if username != user_in_cfg:
-        raise exceptions.AuthenticationFailed("User not found.")
-
-    if password != password_in_cfg:
-        raise exceptions.AuthenticationFailed("Password is incorrect.")
-
-    return {"user_id": 1, "username": username}
+        return {"user_id": 1, "username": "admin_no_auth"}
 
 
 def user_credentials_from_the_token(token: Union[Text, bytes]) -> Union[Dict, Tuple]:

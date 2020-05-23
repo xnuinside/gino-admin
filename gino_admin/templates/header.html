@@ -1,7 +1,7 @@
 <div class="ui fixed inverted menu">
       <div class="ui container">
         <a href="/" class="header item">
-          Sanic-Gino Admin Panel
+          {{admin_panel_title}}
         </a>
         {% for key in objects %}
           {% if loop.index <= 4 %}
@@ -35,7 +35,8 @@
           <div class="menu">
                <a href="{{url_prefix}}/presets" class="item">DB Presets</a>
                <a href="{{url_prefix}}/db_drop" class="item">DB Drop</a>
-               <a href="{{url_prefix}}/settings" class="item">Settings</a>
+                <a href="{{url_prefix}}/settings" class="item">Settings</a>
+               <a href="{{url_prefix}}/settings" class="item disabled">History</a>
           </div>
 
      </div>

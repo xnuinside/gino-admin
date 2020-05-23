@@ -56,17 +56,17 @@ def run_command(module, host, port, config, gino_var, db, no_auth, user):
         click.echo(f"Cannot found {module}. Please path to python file with DB Models")
         exit(1)
     spec = importlib.util.spec_from_file_location("db", module)
-    foo = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(foo)
+    module_obj = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module_obj)
 
     db_models = []
 
-    for name in dir(foo):
+    for name in dir(module_obj):
         if name == gino_var:
-            gino_var = getattr(foo, name)
+            gino_var = getattr(module_obj, name)
             continue
         if not name.startswith("__"):
-            mod = getattr(foo, name)
+            mod = getattr(module_obj, name)
             if getattr(mod, "__tablename__", None):
                 db_models.append(mod)
     if db:

@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Text
 from gino.ext.sanic import Gino
 from jinja2 import FileSystemLoader
 from sanic import Blueprint, Sanic, response
+from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 from sanic_jwt import Initialize
 
@@ -11,9 +12,29 @@ from gino_admin.auth import authenticate
 from gino_admin.routes import rest
 from gino_admin.utils import cfg, logger, types_map
 
+__version__ = "0.0.10"
+
+
 loader = FileSystemLoader(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 )
+
+
+def render_with_updated_context(
+    self, template, request, status=200, headers=None, **context
+):
+    context["admin_panel_title"] = cfg.admin_panel_title
+    context["objects"] = cfg.models
+    context["url_prefix"] = cfg.URL_PREFIX
+    context["admin_panel_version"] = __version__
+    return html(
+        self.render_string(template, request, **context),
+        status=status,
+        headers=headers,
+    )
+
+
+SanicJinja2.render = render_with_updated_context
 
 jinja = SanicJinja2(loader=loader)
 

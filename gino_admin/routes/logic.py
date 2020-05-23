@@ -37,8 +37,6 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
         columns=columns_names,
         model_data=output,
         unique=cfg.models[model_id]["key"],
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
     )
     return _response
 
@@ -320,12 +318,10 @@ async def render_add_or_edit_form(
         model=model_id,
         add=add,
         obj=obj,
-        objects=cfg.models,
         columns={
             column_name: {"len": model_data["columns_data"][column_name]["len"]}
             for column_name in model_data["columns_names"]
         },
-        url_prefix=cfg.URL_PREFIX,
     )
 
 

@@ -19,19 +19,14 @@ from gino_admin.utils import cfg
 
 @admin.route("/")
 @auth.token_validation()
-@jinja.template("index.html")  # decorator method is staticmethod
 async def bp_root(request):
-    return jinja.render(
-        "index.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("index.html", request)
 
 
 @admin.route("/logout", methods=["GET"])
 async def logout(request: Request):
     request = auth.logout_user(request)
-    return jinja.render(
-        "login.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("login.html", request)
 
 
 @admin.route("/logout", methods=["POST"])
@@ -47,16 +42,12 @@ async def login(request):
         cfg.sessions[_token] = request.headers["User-Agent"]
         request.cookies["auth-token"] = _token
         request["session"] = {"_auth": True}
-        _response = jinja.render(
-            "index.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX
-        )
+        _response = jinja.render("index.html", request)
         _response.cookies["auth-token"] = _token
         return _response
     else:
         request["flash"]("Password or login is incorrect", "error")
-    return jinja.render(
-        "login.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("login.html", request)
 
 
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
@@ -114,13 +105,7 @@ async def model_copy(request, model_id):
 @admin.route("/db_drop", methods=["GET"])
 @auth.token_validation()
 async def db_drop_view(request: Request):
-    return jinja.render(
-        "db_drop.html",
-        request,
-        data=await count_elements_in_db(),
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("db_drop.html", request, data=await count_elements_in_db())
 
 
 @admin.route("/db_drop", methods=["POST"])
@@ -134,13 +119,7 @@ async def db_drop_run(request: Request):
     await drop_and_recreate_all_tables()
 
     request["flash"](f"{count} object was deleted", "success")
-    return jinja.render(
-        "db_drop.html",
-        request,
-        data=await count_elements_in_db(),
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("db_drop.html", request, data=await count_elements_in_db())
 
 
 @admin.route("/presets", methods=["GET"])
@@ -150,28 +129,20 @@ async def presets_view(request: Request):
         "presets.html",
         request,
         presets_folder=cfg.presets_folder,
-        presets=utils.get_presets(),
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
+        presets=utils.get_presets()["presets"],
     )
 
 
 @admin.route("/settings", methods=["GET"])
 @auth.token_validation()
 async def settings_view(request: Request):
-    return jinja.render(
-        "settings.html",
-        request,
-        settings=utils.get_settings(),
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("settings.html", request, settings=utils.get_settings())
 
 
 @admin.route("/presets/", methods=["POST"])
 @auth.token_validation()
 async def presets_use(request: Request):
-    preset = literal_eval(request.form["preset"][0])
+    preset = utils.get_preset_by_id(request.form["preset"][0])
     if "with_db" in request.form:
         await drop_and_recreate_all_tables()
         request["flash"](f"DB was successful Dropped", "success")
@@ -184,13 +155,7 @@ async def presets_use(request: Request):
             request["flash"](*message)
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
-    return jinja.render(
-        "presets.html",
-        request,
-        presets=utils.get_presets(),
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("presets.html", request, presets=utils.get_presets()["presets"])
 
 
 @admin.middleware("request")
@@ -220,9 +185,7 @@ async def file_upload(request: Request, model_id: Text):
 @admin.route("/sql_run", methods=["GET"])
 @auth.token_validation()
 async def sql_query_run_view(request):
-    return jinja.render(
-        "sql_runner.html", request, objects=cfg.models, url_prefix=cfg.URL_PREFIX,
-    )
+    return jinja.render("sql_runner.html", request)
 
 
 @admin.route("/sql_run", methods=["POST"])
@@ -237,11 +200,18 @@ async def sql_query_run(request):
             result = await cfg.app.db.status(cfg.app.db.text(sql_query))
         except asyncpg.exceptions.PostgresSyntaxError as e:
             request["flash"](f"{e.args}", "error")
+    return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
+
+
+@admin.route("/history", methods=["GET"])
+@auth.token_validation()
+async def history_display(request):
+    # todo: in next versions
+    history_data_columns = []
+    history_data = []
     return jinja.render(
-        "sql_runner.html",
+        "history.html",
         request,
-        columns=result[1],
-        result=result[1],
-        objects=cfg.models,
-        url_prefix=cfg.URL_PREFIX,
+        history_data_columns=history_data_columns,
+        history_data=history_data,
     )

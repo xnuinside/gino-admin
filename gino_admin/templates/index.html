@@ -8,11 +8,16 @@
 
 {% for key, value in objects.items() %}
 
-    <button class="ui labeled icon button">
-      <a href="{{url_prefix}}/{{key.lower()}}" class="item">
-      <i class="database icon"></i>
-      {{key.capitalize()}} model </a>
-    </button>
+   <div class="ui card">
+  <div class="content">
+    <div class="header">Cute Dog</div>
+    <div class="meta">
+      <span>2 days ago</span>
+      <a>Animals</a>
+    </div>
+    <p></p>
+  </div>
+</div>
         {% endfor %}
 
 {% endblock %}

@@ -30,4 +30,9 @@ class Config:
         "%m-%d-%yT%H:%M:%S",
     ]
     presets_folder = "presets"
+    presets = {}
     composite_csv_settings = {}
+    history_table_name = "gino_admin_history"
+    admin_users_table_name = "gino_admin_users"
+    admin_roles_table_name = "gino_admin_roles"
+    admin_panel_title = "Sanic-Gino Admin Panel"

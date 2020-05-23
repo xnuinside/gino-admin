@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import re
+import time
 from typing import Any, Dict, List, Text
 from unicodedata import normalize
 from uuid import uuid4
@@ -168,6 +169,26 @@ def read_yaml(preset_file):
 
 
 def get_presets():
+    """ return previous loaded, or re-read from disk """
+    if cfg.presets.get("loaded_at"):
+        print(cfg.presets["loaded_at"], os.path.getmtime(cfg.presets_folder))
+    if not cfg.presets or (
+        cfg.presets.get("loaded_at")
+        and cfg.presets["loaded_at"] < os.path.getmtime(cfg.presets_folder)
+    ):
+        cfg.presets = {"presets": load_presets(), "loaded_at": time.time()}
+
+    return cfg.presets
+
+
+def get_preset_by_id(preset_id):
+    presets = get_presets()["presets"]
+    for preset in presets:
+        if preset_id == preset["id"]:
+            return preset
+
+
+def load_presets():
     """ get presets data from yml configs from presets folder"""
     presets = []
     if not os.path.isdir(cfg.presets_folder):
@@ -181,14 +202,13 @@ def get_presets():
                 file_path = os.path.join(cfg.presets_folder, file_name)
                 preset_definition = read_yaml(file_path)
                 presets.append(preset_definition)
-    print(presets)
     return presets
 
 
 def get_settings():
     """ gino admin settings '"""
     settings = {}
-    settings_list = ["presets_folder", "composite_csv_settings"]
+    settings_list = ["presets_folder", "composite_csv_settings", "admin_panel_title"]
     for setting in settings_list:
         settings[setting] = getattr(cfg, setting)
     return settings
