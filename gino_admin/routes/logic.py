@@ -130,17 +130,132 @@ def extract_tables_from_header(header: List, request: Request):
     return None, header_columns, tables_indexes
 
 
+async def create_or_update(row, model_id):
+    print(row)
+    try:
+        await cfg.models[model_id]["model"].create(**row)
+    except asyncpg.exceptions.UniqueViolationError as e:
+        if cfg.csv_update_existed:
+            model_data = cfg.models[model_id]
+            obj_id = row[model_data["key"]]
+            obj = await model_data["model"].get(
+                model_data["columns_data"][model_data["key"]]["type"](obj_id)
+            )
+            await obj.update(**row).apply()
+            return None, row[model_data["key"]], None
+        else:
+            return None, None, (row[cfg.models[model_id]["key"]], e.args)
+    except Exception as e:
+        return None, None, (row[cfg.models[model_id]["key"]], e.args)
+    return row[cfg.models[model_id]["key"]], None, None
+
+
+async def upload_simple_csv_row(row, header, model_id):
+    columns_data = cfg.models[model_id]["columns_data"]
+    row = {header[index]: value for index, value in enumerate(row)}
+    row = reverse_hash_names(model_id, row)
+    row = correct_types(row, columns_data)
+    return await create_or_update(row, model_id)
+
+
+async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_keys):
+    # if composite header each column == {'table': {}, 'column': None}
+    # todo: refactor this huge code
+    table_num = 0
+    previous_table_name = None
+    for table_name, indexes in tables_indexes.items():
+        # {'start': None, 'end': None}
+
+        table_header = deepcopy(header)[
+            indexes["start"] : indexes["end"] + 1  # noqa E203
+        ]
+        table_row_data = deepcopy(row)[
+            indexes["start"] : indexes["end"] + 1  # noqa E203
+        ]
+        if not any(table_row_data):
+            if table_header[0]["table"][0] == table_header[0]["table"][1]:
+                previous_table_name = table_name
+            else:
+                for elem in stack[::-1]:
+                    if elem in table_header[0]["table"][1]:
+                        previous_table_name = elem
+                        break
+            table_num += 1
+            continue
+        if table_header[0]["table"][0] == table_header[0]["table"][1]:
+            model_id = table_name
+            columns_data = cfg.models[model_id]["columns_data"]
+        else:
+            model_id = None
+            columns_indexes_remove = []
+            for index, field_value in enumerate(table_header):
+                if isinstance(field_value["column"], CompositeType):
+                    model_id = table_row_data[index]
+                    table_row_data.pop(index)
+                    break
+            if model_id:
+                table_header.pop(index)
+            else:
+                model_id = cfg.composite_csv_settings[table_name]["pattern"].replace(
+                    "*", previous_table_name
+                )
+
+            columns_data = cfg.models[model_id]["columns_data"]
+
+            for index, value in enumerate(table_header):
+                if value["column"] not in columns_data:
+                    # column not in this table
+                    columns_indexes_remove.append(index)
+            for num, index in enumerate(columns_indexes_remove):
+                table_header.pop(index - num)
+                table_row_data.pop(index - num)
+
+        table_row = {
+            table_header[num]["column"]: value
+            for num, value in enumerate(table_row_data)
+        }
+        try:
+            table_row = reverse_hash_names(model_id, table_row)
+            table_row = correct_types(table_row, columns_data)
+            if table_num > 0:
+                column, target_column = cfg.models[model_id]["foreign_keys"][
+                    previous_table_name
+                ]
+
+                foreing_column_value = unique_keys[previous_table_name][target_column]
+                table_row[column] = foreing_column_value
+            id_added, id_updated, error = await create_or_update(table_row, model_id)
+            if id_added or id_updated:
+                model_data = cfg.models[model_id]
+                new_obj = await model_data["model"].get(
+                    model_data["columns_data"][model_data["key"]]["type"](
+                        id_added or id_updated
+                    )
+                )
+                if indexes["start"] == 0:
+                    unique_keys = {}
+                unique_keys[model_id] = new_obj
+                stack.append(model_id)
+                previous_table_name = model_id
+                table_num += 1
+            else:
+                return None, id_updated, error, stack, unique_keys
+        except Exception as e:
+            raise e
+            return None, None, (table_row, e), stack, unique_keys
+            # TODO: right now just abort if error during composite file upload
+        return id_added, id_updated, None, stack, unique_keys
+
+
 async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request):
     """ file_path - path to csv file"""
-    if not model_id.startswith("composite"):
-        columns_data = cfg.models[model_id]["columns_data"]
-
     with open(file_path, "r") as read_obj:
         # pass the file object to reader() to get the reader object
         csv_reader = reader(read_obj)
         # Iterate over each row in the csv using reader object
         header = None
-        id_added = []
+        ids_added = []
+        ids_updated = []
         try:
             errors = []
             unique_keys = {}
@@ -163,102 +278,33 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                             return error_request, False
                     continue
                 if not composite:
-                    row = {header[index]: value for index, value in enumerate(row)}
-                    row = reverse_hash_names(model_id, row)
-                    row = correct_types(row, columns_data)
-                    try:
-                        await cfg.models[model_id]["model"].create(**row)
-                    except Exception as e:
-                        errors.append((num, row[cfg.models[model_id]["key"]], e.args))
+                    id_added, id_updated, error = await upload_simple_csv_row(
+                        row, header, model_id
+                    )
+                    if id_updated:
+                        ids_updated.append(id_updated)
+                    elif error:
+                        errors.append(error)
                         continue
-                    id_added.append(row[cfg.models[model_id]["key"]])
+                    elif id_added:
+                        ids_added.append(id_added)
                 else:
-                    # if composite header each column == {'table': {}, 'column': None}
-                    # todo: refactor this huge code
-                    table_num = 0
-                    previous_table_name = None
-                    for table_name, indexes in tables_indexes.items():
-                        # {'start': None, 'end': None}
-
-                        table_header = deepcopy(header)[
-                            indexes["start"] : indexes["end"] + 1  # noqa E203
-                        ]
-                        table_row_data = deepcopy(row)[
-                            indexes["start"] : indexes["end"] + 1  # noqa E203
-                        ]
-                        if not any(table_row_data):
-                            if (
-                                table_header[0]["table"][0]
-                                == table_header[0]["table"][1]
-                            ):
-                                previous_table_name = table_name
-                            else:
-                                for elem in stack[::-1]:
-                                    if elem in table_header[0]["table"][1]:
-                                        previous_table_name = elem
-                                        break
-                            table_num += 1
-                            continue
-                        if table_header[0]["table"][0] == table_header[0]["table"][1]:
-                            model_id = table_name
-                            columns_data = cfg.models[model_id]["columns_data"]
-                        else:
-                            model_id = None
-                            columns_indexes_remove = []
-                            for index, field_value in enumerate(table_header):
-                                if isinstance(field_value["column"], CompositeType):
-                                    model_id = table_row_data[index]
-                                    table_row_data.pop(index)
-                                    break
-                            if model_id:
-                                table_header.pop(index)
-                            else:
-                                model_id = cfg.composite_csv_settings[table_name][
-                                    "pattern"
-                                ].replace("*", previous_table_name)
-
-                            columns_data = cfg.models[model_id]["columns_data"]
-
-                            for index, value in enumerate(table_header):
-                                if value["column"] not in columns_data:
-                                    # column not in this table
-                                    columns_indexes_remove.append(index)
-                            for num, index in enumerate(columns_indexes_remove):
-                                table_header.pop(index - num)
-                                table_row_data.pop(index - num)
-
-                        table_row = {
-                            table_header[num]["column"]: value
-                            for num, value in enumerate(table_row_data)
-                        }
-                        try:
-                            table_row = reverse_hash_names(model_id, table_row)
-                            table_row = correct_types(table_row, columns_data)
-                            if table_num > 0:
-                                column, target_column = cfg.models[model_id][
-                                    "foreign_keys"
-                                ][previous_table_name]
-
-                                foreing_column_value = unique_keys[previous_table_name][
-                                    target_column
-                                ]
-                                table_row[column] = foreing_column_value
-                            new_obj = (
-                                await cfg.models[model_id]["model"].create(**table_row)
-                            ).to_dict()
-                            # todo: add support to multi unique values
-                            if indexes["start"] == 0:
-                                unique_keys = {}
-                            unique_keys[model_id] = new_obj
-                            stack.append(model_id)
-                            previous_table_name = model_id
-                            table_num += 1
-                        except Exception as e:
-                            errors.append((num, table_row, e))
-                            # TODO: right now just abort if error during composite file upload
-                            return request, False
-                        id_added.append(new_obj[cfg.models[model_id]["key"]])
-
+                    (
+                        id_added,
+                        id_updated,
+                        error,
+                        stack,
+                        unique_keys,
+                    ) = await upload_composite_csv_row(
+                        row, header, tables_indexes, stack, unique_keys
+                    )
+                    if errors:
+                        errors.append(error)
+                        return request, False
+                    if id_added:
+                        ids_added.append(id_added)
+                    if id_updated:
+                        ids_updated.append(id_updated)
             if errors:
                 request["flash_messages"].append(
                     (
@@ -266,23 +312,25 @@ async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request
                         "error",
                     )
                 )
-            request["flash_messages"].append(
-                (
-                    f"Objects with {cfg.models[model_id]['key']} {id_added} was added",
-                    "success",
-                )
+
+            base_msg = (
+                "Objects"
+                if composite
+                else f"Objects with {cfg.models[model_id]['key']}:"
             )
+            if ids_added:
+                request["flash_messages"].append(
+                    (f"{base_msg}{ids_added} was added", "success")
+                )
+            if ids_updated:
+                request["flash_messages"].append(
+                    (f" {base_msg}{ids_updated} was updated", "success")
+                )
         except ValueError as e:
+            raise e
             request["flash_messages"].append((e.args, "error"))
         except asyncpg.exceptions.ForeignKeyViolationError as e:
             request["flash_messages"].append((e.args, "error"))
-        except asyncpg.exceptions.UniqueViolationError:
-            request["flash_messages"].append(
-                (
-                    f"{model_id.capitalize()} with id '{table_row[cfg.models[model_id]['key']]}' already exists",
-                    "error",
-                )
-            )
         except asyncpg.exceptions.NotNullViolationError as e:
             column = e.args[0].split("column")[1].split("violates")[0]
             request["flash_messages"].append(
@@ -331,9 +379,12 @@ async def render_add_or_edit_form(
 async def count_elements_in_db():
     data = {}
     for model_id, value in cfg.models.items():
-        data[model_id] = await cfg.app.db.func.count(
-            getattr(value["model"], value["key"])
-        ).gino.scalar()
+        try:
+            data[model_id] = await cfg.app.db.func.count(
+                getattr(value["model"], value["key"])
+            ).gino.scalar()
+        except asyncpg.exceptions.UndefinedTableError:
+            data[model_id] = "Table does not exist"
     return data
 
 

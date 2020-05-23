@@ -30,6 +30,7 @@ pre-commit = "^2.3.0"
 flake8 = "^3.7.9"
 pytest-docker-compose = "^3.1.2"
 pytest = "^5.4.2"
+sphinx = "^3.0.3"
 
 [tool.poetry.scripts]
 gino-admin = 'gino_admin.cli:cli'

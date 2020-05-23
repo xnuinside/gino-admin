@@ -36,8 +36,10 @@ add_admin_panel(
     app,
     db,
     [User, Place, City, GiftCard, Country, Item],
+    # any Gino Admin Config params
     custom_hash_method=custom_hash_method,
     presets_folder=os.path.join(current_path, "csv_to_upload"),
+    name="Base Example",
 )
 
 if __name__ == "__main__":

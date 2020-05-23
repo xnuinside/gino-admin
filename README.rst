@@ -26,6 +26,40 @@ How to install
     pip install gino-admin==0.0.9
     
 
+
+Version 0.0.10 Updates:
+----------------------
+1. GinoAdmin Config moved to Pydantic.
+Added possible to send any properties to config with config dict. Example:
+.. code-block:: python
+
+    add_admin_panel(
+        app,
+        db,
+        [User, Place, City, GiftCard, Country, Item],
+        # any Gino Admin Config params you can pass as named params
+        custom_hash_method=custom_hash_method,
+        presets_folder=os.path.join(current_path, "csv_to_upload"),
+        name='Base Example'
+    )
+
+2. Added Config param 'name' - this is a name, that will be showed in header near menu.
+By Default it is display "Sanic-Gino Admin Panel", now you can change it to your header.
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/custom_header.png
+
+3. UI updates: Gino Admin Panel version now showed in UI footer, Login page now more presentable,
+changed index page of Admin Panel, now it presented main feature.
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/custom_header.png
+
+4. Initialised first project's docs
+
+5. Edit/Delete now take object's unique key as argument and stop fall if in key was '/' symbol
+6. Added param 'csv_update_existed' in Config. By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
+You can turn off it with set 'csv_update_existed = False'.
+
+
 Version 0.0.9 Updates:
 ----------------------
 
@@ -102,57 +136,11 @@ Example how to use:
         gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
 
 
-Version 0.0.8 Updates:
-----------------------
-1. Added more possibilities to use Gino Admin with applications in different frameworks (Fast API, or aiohttp, or any others)
-
-1.1 Added example how to Gino Admin if main application developed with different Framework (Fast API or smth else). 
-Example in **examples/use_with_any_framework_in_main_app**
-
-1.2 added **create_admin_app** method to full init admin app as separate server
-
-1.3 Old example moved to **base_example/** folder
-
-1.4 in method 'init_admin_app' argument 'gino_models' was renamed to 'db_models'
-
-2. Added support for Unique columns that used in models to identify data row.
-Previous, your model must have 'id' column for correct work copy/edit/delete methods, but now required ANY unique column in table
-
-Admin Panel checks 'unique' flag in the column. And first unique column will be used to define that row to delete/edit/or copy
-
-If model does not have 'unique' column - it will not showed in admin panel and you will see error message about it in logs as warning.
-
-3. Added display max len of fields in 'Add & Edit' forms
-
-4.  **New feature "Composite CSV upload"**
-
-4.1 Added **New Feature "Composite CSV data upload"** - possibility to define one CSV files, that contains several relative tables.
-
-Used special to prepare dataset for demo purposes or tests. When it more effective and fast to define relative data in one file.
-
-4.2 Added new config param **composite_csv_settings** that allow to describe some patterns how must be parsed Composite CSV files. Check more information in example and doc's section **Config**
-
-4.3 Example with CSVs samples added to **examples/composite_csv_example**
-
-5. Fixed issue with Logout.
-
-6. Added page 'Settings' to check that Settings are used in admin panel. Display now composite_csv param & presets folder.
-
-7. Added  **New Feature "Deepcopy"** - recursive copy object and all objects, that depend on it.
-
-
-Usage example
--------------
-
-Full example placed in 'examples' folder:
-
-.. code-block:: python
-    
-    examples/base_example/
-
-
 How to use
 ----------
+
+You can find several code examples in 'examples' folder.
+
 
 Run Admin Panel from Command line
 #################################
@@ -511,7 +499,7 @@ Or for model 'Country' it can be 'code'
         name = db.Column(db.String())
 
 
-Supported operations
+Supported features
 --------------------
 
 - Auth by login/pass with cookie check

@@ -76,7 +76,13 @@ class Config(BaseModel):
     admin_users_table_name: str = "gino_admin_users"
     admin_roles_table_name: str = "gino_admin_roles"
     name: str = "Sanic-Gino Admin Panel"
-    displayable_setting: list = ["presets_folder", "composite_csv_settings", "name"]
+    csv_update_existed: bool = True
+    displayable_setting: list = [
+        "presets_folder",
+        "composite_csv_settings",
+        "name",
+        "csv_update_existed",
+    ]
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

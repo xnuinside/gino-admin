@@ -116,7 +116,8 @@ async def db_drop_run(request: Request):
     data = literal_eval(request.form["data"][0])
     count = 0
     for _, value in data.items():
-        count += value
+        if isinstance(value, int):
+            count += value
     await drop_and_recreate_all_tables()
 
     request["flash"](f"{count} object was deleted", "success")

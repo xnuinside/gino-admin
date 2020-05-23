@@ -1,10 +1,10 @@
-.button.item {
-    background-color: Transparent;
-    background-repeat:no-repeat;
-    border: none;
-    cursor:pointer;
-    overflow: hidden;
-    outline:none;
+.index_cards {
+    color: black !important;
+}
+
+.index_cards:hover {
+    color: black !important;
+    text-decoration: underline !important;
 }
 
 .button.item:hover {

@@ -21,15 +21,17 @@ async def model_view_table(
     return await render_model_view(request, model_id)
 
 
-@admin.route("/<model_id>/<obj_id>/edit", methods=["GET"])
+@admin.route("/<model_id>/edit", methods=["GET"])
 @auth.token_validation()
-async def model_edit_view(request, model_id, obj_id):
-    return await render_add_or_edit_form(request, model_id, obj_id)
+async def model_edit_view(request, model_id):
+    _id = dict(request.query_args)["id"]
+    return await render_add_or_edit_form(request, model_id, _id)
 
 
-@admin.route("/<model_id>/<obj_id>/edit", methods=["POST"])
+@admin.route("/<model_id>/edit", methods=["POST"])
 @auth.token_validation()
-async def model_edit_post(request, model_id, obj_id):
+async def model_edit_post(request, model_id):
+    obj_id = dict(request.query_args)["id"]
     model_data = cfg.models[model_id]
     model = model_data["model"]
     obj = await model.get(model_data["columns_data"][model_data["key"]]["type"](obj_id))
