@@ -28,7 +28,7 @@ How to install
 
 
 Version 0.0.10 Updates:
-----------------------
+-----------------------
 1. GinoAdmin Config moved to Pydantic.
 Added possible to send any properties to config with config dict. Example:
 .. code-block:: python
@@ -40,8 +40,8 @@ Added possible to send any properties to config with config dict. Example:
         # any Gino Admin Config params you can pass as named params
         custom_hash_method=custom_hash_method,
         presets_folder=os.path.join(current_path, "csv_to_upload"),
-        name='Base Example'
-    )
+        name='Base Example')
+
 
 2. Added Config param 'name' - this is a name, that will be showed in header near menu.
 By Default it is display "Sanic-Gino Admin Panel", now you can change it to your header.
@@ -559,7 +559,7 @@ Run integrations test from  tests/integration_tests/
 
 .. code-block:: console
 
-cd test/integration_tests
+    cd test/integration_tests
 
 When 2 possible ways.
 
