@@ -4,9 +4,12 @@ from sanic import Blueprint, response
 from sanic.request import Request
 from sanic_jwt.decorators import protected
 
+from gino_admin import config
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
                                      insert_data_from_csv)
-from gino_admin.utils import cfg, get_presets, logger, read_yaml
+from gino_admin.utils import get_preset_by_id, logger, read_yaml
+
+cfg = config.cfg
 
 api = Blueprint("api", url_prefix=f"{cfg.URL_PREFIX}/api")
 
@@ -18,17 +21,13 @@ async def presets(request: Request):
     preset_path = request.json.get("preset")
     preset_id = request.json.get("preset_id")
     if preset_id:
-        presets = get_presets()
-        for preset in presets:
-            if preset_id == preset["id"]:
-                preset = preset
-                presets_folder = cfg.presets_folder
-                break
-        else:
+        preset = get_preset_by_id(preset_id)
+        if not preset:
             answer = {
                 "error": f"Could not find preset with id {preset_id} in presets folder {cfg.presets_folder}. "
             }
             return response.json(answer, status=422)
+        presets_folder = cfg.presets_folder
     else:
         if not preset_path:
             answer = {

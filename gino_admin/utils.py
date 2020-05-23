@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import re
+import time
 from typing import Any, Dict, List, Text
 from unicodedata import normalize
 from uuid import uuid4
@@ -10,12 +11,13 @@ import aiofiles
 import yaml
 from passlib.hash import pbkdf2_sha256
 
-from gino_admin.config import Config
+from gino_admin import config
 
+cfg = config.cfg
 logger = logging.getLogger("Gino Admin")
 
 salt = uuid4().hex
-cfg = Config
+
 
 _windows_device_files = (
     "CON",
@@ -42,6 +44,10 @@ types_map = {
     "DATE": datetime.datetime,
     "BOOLEAN": bool,
 }
+
+
+class GinoAdminError(Exception):
+    pass
 
 
 def serialize_obj(obj: Any) -> Any:
@@ -168,6 +174,25 @@ def read_yaml(preset_file):
 
 
 def get_presets():
+    """ return previous loaded, or re-read from disk """
+    if not cfg.presets or (
+        cfg.presets.get("loaded_at")
+        and cfg.presets["loaded_at"] < os.path.getmtime(cfg.presets_folder)
+    ):
+        cfg.presets = {"presets": load_presets(), "loaded_at": time.time()}
+
+    return cfg.presets
+
+
+def get_preset_by_id(preset_id: Text):
+    """ get preset by id """
+    presets = get_presets()["presets"]
+    for preset in presets:
+        if preset_id == preset["id"]:
+            return preset
+
+
+def load_presets():
     """ get presets data from yml configs from presets folder"""
     presets = []
     if not os.path.isdir(cfg.presets_folder):
@@ -181,14 +206,12 @@ def get_presets():
                 file_path = os.path.join(cfg.presets_folder, file_name)
                 preset_definition = read_yaml(file_path)
                 presets.append(preset_definition)
-    print(presets)
     return presets
 
 
 def get_settings():
     """ gino admin settings '"""
     settings = {}
-    settings_list = ["presets_folder", "composite_csv_settings"]
-    for setting in settings_list:
+    for setting in cfg.displayable_setting:
         settings[setting] = getattr(cfg, setting)
     return settings

@@ -3,16 +3,43 @@
 {% block title %}Index Page{% endblock %}
 
 {% block body %}
-<h1 class="ui header">Welcome to Sanic-Gino Admin Panel</h1>
+<div class="ui grid">
+<div class="item eleven wide column">
+<h1 class="ui header">Welcome to {{admin_panel_title}}</h1>
 <br><br>
+<h2 class="ui header">Features</h2>
+<div class="ui grid">
+<div class="item five wide column">
+   <div class="ui card">
+  <div class="content">
+      <div class="header"><a class="index_cards" style="" href="{{url_prefix}}/db_drop">DB Drop</a></div>
+    <div class="meta">
+      Will drop & recreate empty Tables
+    </div>
+  </div>
+   </div>
+</div>
+<div class="item five wide column"><div class="ui card"><div class="content">
+    <div class="header">
+        <a class="index_cards" style="" href="{{url_prefix}}/presets">Presets</a></div>
+    <div class="meta">
+      <span>Define list of CSV files to Upload to DB data</span>
+    </div>
+     </div>
 
-{% for key, value in objects.items() %}
+   </div>
 
-    <button class="ui labeled icon button">
-      <a href="{{url_prefix}}/{{key.lower()}}" class="item">
-      <i class="database icon"></i>
-      {{key.capitalize()}} model </a>
-    </button>
-        {% endfor %}
+</div>
+    <div class="item five wide column"><div class="ui card"><div class="content">
+    <div class="header">
+        <a class="index_cards" style="" href="{{url_prefix}}/sql_run">SQL-Runner</a></div>
+    <div class="meta">
+      <span>Run any SQL queries on your DB and get table output with CSV export.</span>
+    </div>
+    </div></div></div>
 
+</div>
+</div>
+    <div class="item seven wide column"></div>
+</div>
 {% endblock %}

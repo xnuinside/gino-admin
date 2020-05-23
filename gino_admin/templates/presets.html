@@ -47,7 +47,7 @@ Check <a href="https://github.com/xnuinside/gino-admin">documentation</a>  and e
   </div>
   <div class="extra content">
       <form action="{{url_prefix}}/presets" method="post">
-         <input type="hidden" name="preset" value="{{preset}}"/>
+         <input type="hidden" name="preset" value="{{preset['id']}}"/>
           <button id="with_db" class="ui red inverted button"
                   name="with_db" value="with_db" type="submit">Load with DB Drop</button>
         <button id="simple" class="ui green button" type="submit">Load Preset</button>

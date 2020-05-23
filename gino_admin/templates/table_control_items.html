@@ -1,7 +1,7 @@
 <div class="ui simple dropdown item">
        <i class="ellipsis vertical icon"></i>
           <div class="menu" style="margin-top: -10px;">
-        <a href="{{url_prefix}}/{{model.lower()}}/{{row[unique]}}/edit/" class="item">
+        <a href="{{url_prefix}}/{{model.lower()}}/edit?id={{row[unique]}}" class="item">
             <i class="pencil icon"></i> Edit
         </a>
         <a href="javascript:;" class="item" onclick="document.getElementById('copy_{{row[unique]}}').submit();">

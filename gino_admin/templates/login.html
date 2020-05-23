@@ -1,17 +1,42 @@
 {% extends 'base.html' %}
 
-{% block title %}Index Page{% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block body %}
 <div class="ui grid">
     <div class="six wide column">
-<h2>Please sign in, you can try:</h2>
 
-<form action="" class="ui form" method="POST">
-  <input class="field username" id="name" name="username"
-    placeholder="username" type="text" value=""><br><br>
+
+
+    <h2 class="ui image header">
+      <div class="content">
+        Please sign in:
+      </div>
+    </h2>
+    <form action="" class="ui form" method="POST">
+      <div class="ui stacked segment">
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="user icon"></i>
+               <input class="field username" id="name" name="username"
+    placeholder="username" type="text" value="">
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="lock icon"></i>
+
   <input class="password field" id="password" name="password"
-    placeholder="password" type="password" value=""><br><br>
-  <input id="submit"  class="ui button primary" name="submit" type="submit" value="Sign In">
-</form></div></div>
+    placeholder="password" type="password" value="">
+          </div>
+        </div>
+
+        <button id="submit"  class="ui fluid large green submit button" name="submit" type="submit">Login</button>
+      </div>
+
+    </form>
+
+    </div>
+</div>
 {% endblock %}

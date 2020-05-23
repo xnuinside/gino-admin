@@ -1,8 +1,10 @@
+Changelog
+=========
 
 Version 0.0.9 Updates:
 ----------------------
-1. Added New feature: REST API to load DB Presets with token auth.
-Routes: admin/api/auth, admin/api/presets, admin/api/drop_db
+1. Added New feature: REST API to load DB Presets with token auth. Routes: admin/api/auth, admin/api/presets, admin/api/drop_db
+
 2. New feature: Base Cli interface. Was added command `gino_admin run`
 
 Version 0.0.8 Updates:

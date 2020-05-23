@@ -1,23 +1,17 @@
 import os
-from typing import Callable, Dict, List, Text
+from copy import deepcopy
+from typing import Dict, List, Text
 
 from gino.ext.sanic import Gino
-from jinja2 import FileSystemLoader
 from sanic import Blueprint, Sanic, response
-from sanic_jinja2 import SanicJinja2
 from sanic_jwt import Initialize
 
+from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.routes import rest
-from gino_admin.utils import cfg, logger, types_map
+from gino_admin.utils import GinoAdminError, logger, types_map
 
-loader = FileSystemLoader(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-)
-
-jinja = SanicJinja2(loader=loader)
-
-cfg.jinja = jinja
+cfg = config.cfg
 
 
 admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
@@ -97,29 +91,31 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
         del cfg.models[model_id]
 
 
-def add_admin_panel(
-    app: Sanic,
-    db: Gino,
-    db_models: List,
-    custom_hash_method: Callable = None,
-    presets_folder: Text = "presets",
-    composite_csv_settings: Dict = None,
-    *args,
-    **kwargs,
-):
+def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     """ init admin panel and configure """
+    if "custom_hash_method" in config_settings:
+        logger.warning(
+            f"'custom_hash_method' will be depricated in version 0.1.0. "
+            f" Please use 'hash_method' instead"
+        )
+        config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
+        del config_settings["custom_hash_method"]
+    for key in config_settings:
+        try:
+            setattr(cfg, key, config_settings[key])
+        except ValueError as e:
+            raise GinoAdminError(
+                "Error During Gino Admin Panel Initialisation. "
+                "You trying to set upWrong config parameters: "
+                f"{e}"
+            )
 
     extract_models_metadata(db, db_models)
-    cfg.presets_folder = presets_folder
-    if composite_csv_settings:
-        cfg.composite_csv_settings = composite_csv_settings
     app.blueprint(admin)
     app.blueprint(rest.api)
     Initialize(app, authenticate=authenticate, url_prefix="admin/api/auth")
     Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
-    if custom_hash_method:
-        cfg.hash_method = custom_hash_method
-    jinja.init_app(app)
+    cfg.jinja.init_app(app)
     cfg.app.config = app.config
 
 
@@ -135,8 +131,6 @@ def create_admin_app(
         config = {}
     if db_models is None:
         db_models = []
-    if "debug" not in config:
-        config["debug"] = True
     return init_admin_app(host, port, db, db_models, config)
 
 
@@ -152,4 +146,4 @@ def init_admin_app(host, port, db, db_models, config):
 
     add_admin_panel(app, db, db_models, **config)
 
-    return app.run(host=host, port=port, debug=config["debug"])
+    return app.run(host=host, port=port, debug=cfg.debug)
