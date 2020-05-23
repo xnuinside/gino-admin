@@ -131,9 +131,8 @@ def extract_tables_from_header(header: List, request: Request):
 
 
 async def create_or_update(row, model_id):
-    print(row)
     try:
-        await cfg.models[model_id]["model"].create(**row)
+        obj = (await cfg.models[model_id]["model"].create(**row)).to_dict()
     except asyncpg.exceptions.UniqueViolationError as e:
         if cfg.csv_update_existed:
             model_data = cfg.models[model_id]
@@ -142,12 +141,12 @@ async def create_or_update(row, model_id):
                 model_data["columns_data"][model_data["key"]]["type"](obj_id)
             )
             await obj.update(**row).apply()
-            return None, row[model_data["key"]], None
+            return None, obj_id, None
         else:
-            return None, None, (row[cfg.models[model_id]["key"]], e.args)
+            return None, None, (row, e.args)
     except Exception as e:
-        return None, None, (row[cfg.models[model_id]["key"]], e.args)
-    return row[cfg.models[model_id]["key"]], None, None
+        return None, None, (row, e.args)
+    return obj[cfg.models[model_id]["key"]], None, None
 
 
 async def upload_simple_csv_row(row, header, model_id):
@@ -165,7 +164,6 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
     previous_table_name = None
     for table_name, indexes in tables_indexes.items():
         # {'start': None, 'end': None}
-
         table_header = deepcopy(header)[
             indexes["start"] : indexes["end"] + 1  # noqa E203
         ]
@@ -221,17 +219,18 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
                 column, target_column = cfg.models[model_id]["foreign_keys"][
                     previous_table_name
                 ]
-
                 foreing_column_value = unique_keys[previous_table_name][target_column]
                 table_row[column] = foreing_column_value
             id_added, id_updated, error = await create_or_update(table_row, model_id)
             if id_added or id_updated:
                 model_data = cfg.models[model_id]
-                new_obj = await model_data["model"].get(
-                    model_data["columns_data"][model_data["key"]]["type"](
-                        id_added or id_updated
+                new_obj = (
+                    await model_data["model"].get(
+                        model_data["columns_data"][model_data["key"]]["type"](
+                            id_added or id_updated
+                        )
                     )
-                )
+                ).to_dict()
                 if indexes["start"] == 0:
                     unique_keys = {}
                 unique_keys[model_id] = new_obj
@@ -241,10 +240,9 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
             else:
                 return None, id_updated, error, stack, unique_keys
         except Exception as e:
-            raise e
             return None, None, (table_row, e), stack, unique_keys
             # TODO: right now just abort if error during composite file upload
-        return id_added, id_updated, None, stack, unique_keys
+    return id_added, id_updated, None, stack, unique_keys
 
 
 async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request):
