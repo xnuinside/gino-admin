@@ -77,7 +77,9 @@ class Config(BaseModel):
     admin_roles_table_name: str = "gino_admin_roles"
     name: str = "Sanic-Gino Admin Panel"
     csv_update_existed: bool = True
+    debug: bool = True
     displayable_setting: list = [
+        "debug",
         "presets_folder",
         "composite_csv_settings",
         "name",

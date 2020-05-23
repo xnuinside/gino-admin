@@ -131,8 +131,6 @@ def create_admin_app(
         config = {}
     if db_models is None:
         db_models = []
-    if "debug" not in config:
-        config["debug"] = True
     return init_admin_app(host, port, db, db_models, config)
 
 
@@ -148,4 +146,4 @@ def init_admin_app(host, port, db, db_models, config):
 
     add_admin_panel(app, db, db_models, **config)
 
-    return app.run(host=host, port=port, debug=config["debug"])
+    return app.run(host=host, port=port, debug=cfg.debug)

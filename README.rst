@@ -56,6 +56,7 @@ changed index page of Admin Panel, now it presented main feature.
 4. Initialised first project's docs
 
 5. Edit/Delete now take object's unique key as argument and stop fall if in key was '/' symbol
+
 6. Added param 'csv_update_existed' in Config. By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
 You can turn off it with set 'csv_update_existed = False'.
 

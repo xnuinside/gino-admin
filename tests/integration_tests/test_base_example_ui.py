@@ -18,15 +18,11 @@ def test_login_form(base_app_url):
     response = result.text
     assert result.status_code == 200
     assert "<html>" in response
-    assert "<h2>Please sign in, you can try:</h2>" in response
-    assert 'placeholder="password" type="password" value=""><br><br>' in response
+    assert """Please sign in""" in response
+    assert 'placeholder="password" type="password"' in response
+    assert '<input class="field username" id="name" name="username"' in response
     assert (
-        """<input class="field username" id="name" name="username"
-    placeholder="username" type="text" value=""><br><br>"""
-        in response
-    )
-    assert (
-        '<input id="submit"  class="ui button primary" name="submit" type="submit" value="Sign In">'
+        '<button id="submit"  class="ui fluid large green submit button" name="submit" type="submit">Login</button>'
         in response
     )
 
