@@ -7,8 +7,7 @@ You can define in config:
 * custom_hash_method: method that used to hash passwords and other data, that stored as '_hash' columns in DB, by default used pbkdf2_sha256.encrypt
 * composite_csv_settings: describe some rules how to parse and load Composite CSV files
 * name: project name, that will be displayed in UI. By default it shows: "Sanic-Gino Admin Panel"
-* csv_update_existed: By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
-You can turn off it with set 'csv_update_existed = False'.
+* csv_update_existed: By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV. You can turn off it with set 'csv_update_existed = False'.
 
 
 composite_csv_settings
