@@ -1,5 +1,8 @@
 gino-admin
 ----------
+Docs in process: `Gino-Admin docs`_
+
+.. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
 
 |badge1| |badge3| |badge2| 
 
