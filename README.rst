@@ -46,12 +46,8 @@ Added possible to send any properties to config with config dict. Example:
 2. Added Config param 'name' - this is a name, that will be showed in header near menu.
 By Default it is display "Sanic-Gino Admin Panel", now you can change it to your header.
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/custom_header.png
-
 3. UI updates: Gino Admin Panel version now showed in UI footer, Login page now more presentable,
 changed index page of Admin Panel, now it presented main feature.
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/custom_header.png
 
 4. Initialised first project's docs
 
