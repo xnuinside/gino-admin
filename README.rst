@@ -23,7 +23,7 @@ How to install
 
 .. code-block:: python
     
-    pip install gino-admin==0.0.9
+    pip install gino-admin==0.0.10
     
 
 
