@@ -29,7 +29,7 @@ And XLS-table sample in Google Sheets: `table example`_
 .. _table example: https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
 
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/composite_csv.png
+.. image:: ../img/composite_csv.png
   :width: 250
   :alt: Load Presets
 
