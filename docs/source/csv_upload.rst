@@ -24,9 +24,9 @@ Composite CSV allow use CSV files with headers with pattern "table_name:column" 
 
 Check 'examples/composite_csv_example' code to check DB structure.
 
-And XLS-table sample in Google Sheets:
+And XLS-table sample in Google Sheets: `table example`_
 
-https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
+.. _table example: https://docs.google.com/spreadsheets/d/1ur63acwWExyjWouZ1WEkUxCX73vOcdXzCrEYc7cPhTg/edit?usp=sharing
 
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/composite_csv.png
