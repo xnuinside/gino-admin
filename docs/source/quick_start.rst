@@ -8,7 +8,7 @@ First of all you need to install Gino-Admin to your project environment
 
 .. code-block:: console
 
-    $ pip install gino-admin
+    $ pip install gino-admin==0.0.10
 
 
 How to use
@@ -23,6 +23,7 @@ Run Admin Panel from Command line
 **Run Admin Panel from cli**
 
 Check Page Command Line interface: :doc:`cli.rst`
+
 Add Admin Panel to existed Sanic application as '/admin' route
 ##############################################################
 
