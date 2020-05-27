@@ -8,7 +8,7 @@ from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.0.10"
+__version__ = "0.0.11(master)"
 
 
 loader = FileSystemLoader(
@@ -21,7 +21,7 @@ def render_with_updated_context(
 ):
     context["admin_panel_title"] = cfg.name
     context["objects"] = cfg.models
-    context["url_prefix"] = cfg.URL_PREFIX
+    context["url_prefix"] = cfg.route
     context["admin_panel_version"] = __version__
     return html(
         self.render_string(template, request, **context),
@@ -51,7 +51,7 @@ class App:
 class Config(BaseModel):
     """ Gino Admin Panel settings """
 
-    URL_PREFIX: str = "/admin"
+    route: str = "/admin"
     jinja: SanicJinja2 = None
     app: App = App
     hash_method: Callable = pbkdf2_sha256.encrypt

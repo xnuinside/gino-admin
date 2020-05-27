@@ -14,7 +14,7 @@ from gino_admin.utils import GinoAdminError, logger, types_map
 cfg = config.cfg
 
 
-admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
+admin = Blueprint("admin", url_prefix=cfg.route)
 
 
 admin.static(
@@ -111,9 +111,15 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
             )
 
     extract_models_metadata(db, db_models)
+    if config_settings.get("route"):
+        old_prefix = admin.url_prefix
+        admin.url_prefix = config_settings["route"]
+        rest.api.url_prefix = str(rest.api.url_prefix).replace(
+            old_prefix, config_settings["route"]
+        )
     app.blueprint(admin)
     app.blueprint(rest.api)
-    Initialize(app, authenticate=authenticate, url_prefix="admin/api/auth")
+    Initialize(app, authenticate=authenticate, url_prefix=f"{cfg.route}/api/auth")
     Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
     cfg.jinja.init_app(app)
     cfg.app.config = app.config

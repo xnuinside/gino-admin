@@ -27,7 +27,7 @@ def token_validation():
                         != request.headers["User-Agent"]
                     )
                 ):
-                    return r.redirect("/admin/login")
+                    return r.redirect(f"{cfg.route}/login")
                 else:
                     request["session"] = {"_auth": True}
                     return await route(request, *args, **kwargs)

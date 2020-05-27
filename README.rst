@@ -18,6 +18,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
   :width: 250
   :alt: Load Presets
 
+
 How to install
 --------------
 
@@ -25,6 +26,14 @@ How to install
     
     pip install gino-admin==0.0.10
     
+
+Version 0.0.11 Updates (current master, not released):
+-----------------------
+1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
+By default, used '/admin' route
+
+2. Added Demo Panel  - you can log in and play with it. Login & pass - admin / 1234
+If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
 
 
 Version 0.0.10 Updates:

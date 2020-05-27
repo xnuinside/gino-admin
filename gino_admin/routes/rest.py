@@ -11,7 +11,7 @@ from gino_admin.utils import get_preset_by_id, logger, read_yaml
 
 cfg = config.cfg
 
-api = Blueprint("api", url_prefix=f"{cfg.URL_PREFIX}/api")
+api = Blueprint("api", url_prefix=f"{cfg.route}/api")
 
 
 @api.route("/presets", methods=["POST"])

@@ -19,7 +19,7 @@ cfg = config.cfg
 jinja = cfg.jinja
 
 
-@admin.route("/")
+@admin.route(f"/")
 @auth.token_validation()
 async def bp_root(request):
     return jinja.render("index.html", request)
