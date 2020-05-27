@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Dict, List, Text
 
 from gino.ext.sanic import Gino
-from sanic import Blueprint, Sanic, response
+from sanic import Blueprint, Sanic, response, router
 from sanic_jwt import Initialize
 
 from gino_admin import config
@@ -119,9 +119,19 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         )
     app.blueprint(admin)
     app.blueprint(rest.api)
-    Initialize(app, authenticate=authenticate, url_prefix=f"{cfg.route}/api/auth")
-    Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
+    try:
+        Initialize(app, authenticate=authenticate, url_prefix=f"{cfg.route}/api/auth")
+        Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
+    except router.RouteExists:
+        pass
+    # to avoid re-write app Jinja2
+    if getattr(app, "extensions", None):
+        app_jinja = app.extensions["jinja2"]
+    else:
+        app_jinja = None
     cfg.jinja.init_app(app)
+    if app_jinja:
+        app_jinja.init_app(app)
     cfg.app.config = app.config
 
 

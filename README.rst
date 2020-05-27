@@ -34,7 +34,7 @@ How to install
     
 
 Version 0.0.11 Updates (current master, not released):
------------------------
+------------------------------------------------------
 1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
 By default, used '/admin' route
 
