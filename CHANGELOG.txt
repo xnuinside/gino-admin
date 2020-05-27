@@ -1,4 +1,23 @@
 
+Version 0.0.10 Updates:
+-----------------------
+1. GinoAdmin Config moved to Pydantic.
+Added possible to send any properties to config with config dict.
+
+2. Added Config param 'name' - this is a name, that will be showed in header near menu.
+By Default it is display "Sanic-Gino Admin Panel", now you can change it to your header.
+
+3. UI updates: Gino Admin Panel version now showed in UI footer, Login page now more presentable,
+changed index page of Admin Panel, now it presented main feature.
+
+4. Initialised first project's docs
+
+5. Edit/Delete now take object's unique key as argument and stop fall if in key was '/' symbol
+
+6. Added param 'csv_update_existed' in Config. By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
+You can turn off it with set 'csv_update_existed = False'.
+
+
 Version 0.0.9 Updates:
 ----------------------
 1. Added New feature: REST API to load DB Presets with token auth.

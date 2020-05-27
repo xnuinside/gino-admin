@@ -1,7 +1,6 @@
 import os
 
 from db import City, Country, GiftCard, Item, Place, User, db
-from passlib.hash import pbkdf2_sha256
 from sanic import Sanic, response
 
 from gino_admin import add_admin_panel
@@ -23,12 +22,6 @@ async def index(request):
     return response.redirect("/admin")
 
 
-# custom_hash_method you can define your own hash method to use it in backend and Admin
-def custom_hash_method(*args, **kwargs):
-    print("My custom hash method! Must return python callable object")
-    return pbkdf2_sha256.hash(*args, **kwargs)
-
-
 current_path = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -37,13 +30,10 @@ add_admin_panel(
     db,
     [User, Place, City, GiftCard, Country, Item],
     # any Gino Admin Config params
-    hash_method=custom_hash_method,
     presets_folder=os.path.join(current_path, "csv_to_upload"),
-    name="Base Example",
+    name="Demo Gino Admin Panel",
     route="/gino_admin_demo",
 )
 
 if __name__ == "__main__":
-    for handler, (rule, router) in app.router.routes_names.items():
-        print(rule)
     app.run(host="0.0.0.0", port=os.getenv("PORT", 5000), debug=True)
