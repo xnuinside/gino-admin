@@ -20,7 +20,7 @@ Project's github: https://github.com/xnuinside/gino-admin
 
 Play with Demo: `Gino-Admin demo`_
 
-.. _Gino-Admin demo: http://xnu-in.space/gino_admin_panel
+.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
 
 
 .. image:: ../img/demo.png

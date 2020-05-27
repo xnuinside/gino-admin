@@ -41,7 +41,7 @@ By default, used '/admin' route
 2. Added Demo Panel  `Gino-Admin demo`_ - you can log in and play with it. Login & pass - admin / 1234
 If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
 
-.. _Gino-Admin demo: http://xnu-in.space/gino_admin_panel
+.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
 
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/demo.png
   :width: 250
