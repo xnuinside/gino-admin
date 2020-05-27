@@ -2,7 +2,7 @@ gino-admin
 ----------
 Docs in process: `Gino-Admin docs`_
 
-Play with Demo: `Gino-Admin demo`_
+Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
 
 .. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
 
@@ -30,7 +30,7 @@ How to install
 
 .. code-block:: python
     
-    pip install gino-admin==0.0.10
+    pip install gino-admin==0.0.11a2
     
 
 Version 0.0.11 Updates (current master, not released):
