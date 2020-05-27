@@ -18,16 +18,25 @@ Project's github: https://github.com/xnuinside/gino-admin
 .. |badge2| image:: https://img.shields.io/pypi/l/gino_admin
 .. |badge3| image:: https://img.shields.io/pypi/pyversions/gino_admin
 
+Play with Demo: `Gino-Admin demo`_
 
-Admin Panel for PostgreSQL DB with Gino ORM and Sanic
+.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+
+.. image:: ../img/demo.png
   :width: 250
   :alt: Table view
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_presets.png
+Admin Panel for PostgreSQL DB with Gino ORM and Sanic
+
+.. image:: ../img/table_view_new.png
+  :width: 250
+  :alt: Table view
+
+.. image:: ../docs/img/db_presets.png
   :width: 250
   :alt: Load Presets
+
 
 Installation
 ------------

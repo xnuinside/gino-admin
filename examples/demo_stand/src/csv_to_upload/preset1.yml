@@ -1,0 +1,6 @@
+id: first_preset
+name: First Preset
+description: "Init DB with minimal data"
+files:
+  users: csv/preset_a/users.csv
+  gifts: csv/preset_a/gifts.csv

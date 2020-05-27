@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Dict, List, Text
 
 from gino.ext.sanic import Gino
-from sanic import Blueprint, Sanic, response
+from sanic import Blueprint, Sanic, response, router
 from sanic_jwt import Initialize
 
 from gino_admin import config
@@ -14,7 +14,7 @@ from gino_admin.utils import GinoAdminError, logger, types_map
 cfg = config.cfg
 
 
-admin = Blueprint("admin", url_prefix=cfg.URL_PREFIX)
+admin = Blueprint("admin", url_prefix=cfg.route)
 
 
 admin.static(
@@ -111,11 +111,27 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
             )
 
     extract_models_metadata(db, db_models)
+    if config_settings.get("route"):
+        old_prefix = admin.url_prefix
+        admin.url_prefix = config_settings["route"]
+        rest.api.url_prefix = str(rest.api.url_prefix).replace(
+            old_prefix, config_settings["route"]
+        )
     app.blueprint(admin)
     app.blueprint(rest.api)
-    Initialize(app, authenticate=authenticate, url_prefix="admin/api/auth")
-    Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
+    try:
+        Initialize(app, authenticate=authenticate, url_prefix=f"{cfg.route}/api/auth")
+        Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
+    except router.RouteExists:
+        pass
+    # to avoid re-write app Jinja2
+    if getattr(app, "extensions", None):
+        app_jinja = app.extensions["jinja2"]
+    else:
+        app_jinja = None
     cfg.jinja.init_app(app)
+    if app_jinja:
+        app_jinja.init_app(app)
     cfg.app.config = app.config
 
 

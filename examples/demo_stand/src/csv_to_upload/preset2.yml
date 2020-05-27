@@ -1,0 +1,6 @@
+id: second_preset
+name: Second preset
+description: "Special Demo Preset"
+files:
+  users: csv/preset_b/users.csv
+  gifts: csv/preset_b/gifts.csv

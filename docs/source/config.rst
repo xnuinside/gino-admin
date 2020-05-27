@@ -8,7 +8,7 @@ You can define in config:
 * composite_csv_settings: describe some rules how to parse and load Composite CSV files
 * name: project name, that will be displayed in UI. By default it shows: "Sanic-Gino Admin Panel"
 * csv_update_existed: By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV. You can turn off it with set 'csv_update_existed = False'.
-
+* route: Route where will be served (that will be used to access) Admin panel. By default, used '/admin' route
 
 composite_csv_settings
 ######################

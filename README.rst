@@ -2,7 +2,10 @@ gino-admin
 ----------
 Docs in process: `Gino-Admin docs`_
 
+Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
+
 .. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
+
 
 |badge1| |badge3| |badge2| 
 
@@ -21,14 +24,28 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
   :width: 250
   :alt: Load Presets
 
+
 How to install
 --------------
 
 .. code-block:: python
     
-    pip install gino-admin==0.0.10
+    pip install gino-admin==0.0.11a2
     
 
+Version 0.0.11 Updates (current master, not released):
+------------------------------------------------------
+1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
+By default, used '/admin' route
+
+2. Added Demo Panel  `Gino-Admin demo`_ - you can log in and play with it. Login & pass - admin / 1234
+If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
+
+.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/demo.png
+  :width: 250
+  :alt: Load Presets
 
 Version 0.0.10 Updates:
 -----------------------
@@ -58,82 +75,6 @@ changed index page of Admin Panel, now it presented main feature.
 
 6. Added param 'csv_update_existed' in Config. By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
 You can turn off it with set 'csv_update_existed = False'.
-
-
-Version 0.0.9 Updates:
-----------------------
-
-1. Added New feature: REST API to load DB Presets with token auth.
-1.1 POST: admin/api/auth
-
-    Auth required to use API endpoints
-
-    To get auth JWT token:
-
-    In request header Authorization provide Basic b64decode login:password stroke
-
-        for user admin:1234
-        headers={"Authorization":"Basic YWRtaW46MTIzNA=="}
-
-    Not recommended:
-        For fast and easy POC development also allowed provide plain text login:password stroke in Authorization header
-        headers={"Authorization":"admin:1234"}
-
-    Response:
-
-.. code-block:: python
-
-        {
-            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE1ODkzNzI1MzZ9.IJZG9DV8ZCna7pjK7osUn9veI0Gc47d0Ts5pyGvu6JE"
-        }
-
-
-1.2 POST: admin/api/presets
-
-    protected: True (need to provide JWT token in Authorization header)
-    Content-type: application/json
-
-    Request body:
-        - preset: must contain path to preset '.yml' file
-        - drop: flag to Drop DB before upload preset (optional)
-
-Purposes: easy call from tests env when need to drop/create DB from some tests datasets
-
-1.3 POST: admin/api/drop_db
-
-    protected: True (need to provide JWT token in Authorization header)
-    Empty request without body.
-    Purposes: Clean up & recreate tables
-
-2. New feature: Base Cli interface.
-
-Command in cli:
-
-    **Run Admin Panel from cli**
-
-    gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
-
-.. code-block:: python
-
-    Optional params:
-        -d --db
-            Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
-            Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
-            Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
-        -h --host
-        -p --port
-        -c --config
-        --no-auth  Run Admin Panel without Auth in UI
-        -u --user Admin User login & password
-            Expected format: login:password
-            Example: admin:1234
-            Notice: user also can be defined from env variable - check Auth section
-
-Example how to use:
-
-.. code-block:: python
-
-        gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
 
 
 How to use
