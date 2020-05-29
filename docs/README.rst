@@ -25,6 +25,33 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
   :alt: Load Presets
 
 
+Supported features
+--------------------
+
+- Auth by login/pass with cookie check
+- Create(Add new) item by one for the Model
+- Search/sort in tables
+- Upload/export data from/to CSV
+- Delete all rows/per element
+- Copy existed element (data table row)
+- Edit existed data (table row)
+- SQL-Runner (execute SQL-queries)
+- Presets: Define order and Load to DB bunch of CSV-files
+- Drop DB (Full clean up behavior: Drop tables & Recreate)
+- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
+- Composite CSV: Load multiple relative tables in one CSV-file
+
+
+TODO:
+
+- Select multiple for delete/copy
+- Edit multiple items (?)
+- Roles & User store in DB
+- Filters in Table's columns
+- History logs on changes (log for admin panel actions)
+- Add possible to add new Presets from GUI
+
+
 How to install
 --------------
 
@@ -32,6 +59,7 @@ How to install
     
     pip install gino-admin==0.0.11a2
     
+
 
 Version 0.0.11 Updates (current master, not released):
 ------------------------------------------------------
@@ -43,11 +71,10 @@ If you don't see any data in UI maybe somebody before you cleaned it - go to Pre
 
 .. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/demo.png
-  :width: 250
-  :alt: Load Presets
-
 3. Fixed minors issues: floats now displayed with fixed number of symbols. Parameter can be changed with config param `round_number=`,
+
+4. Updated docs
+
 
 Version 0.0.10 Updates:
 -----------------------
@@ -371,101 +398,30 @@ Drop DB
 Drop DB feature used for doing full clean up DB - it drop all tables & create them after Drop for all models in Admin Panel.
 
 
-
 Upload from CSV
 ---------------
 
 Files-samples for example project can be found here: **examples/base_example/src/csv_to_upload**
 
 
-Authentication
+Authorization
 --------------
 
-1. To disable authorisation:
+Read in doc : `Authorization`_
 
-Set environment variable 'ADMIN_AUTH_DISABLE=1'
-
-.. code-block:: python
-
-    os.environ['ADMIN_AUTH_DISABLE'] = '1'
-
-or from shell:
-
-.. code-block:: python
-
-        export ADMIN_AUTH_DISABLE=1
-
-
-2. To define admin user & password:
-
-check example/ folder to get code snippets
-
-
-.. code-block:: python
-
-    app = Sanic()
-
-    app.config["ADMIN_USER"] = "admin"
-    app.config["ADMIN_PASSWORD"] = "1234"
+.. _Authorization: https://gino-admin.readthedocs.io/en/latest/authorization.html
 
 
 Limitations
 -----------
 
-For correct work of Admin Panel all models MUST contain at least one unique and primary_key Column (field).
+Read in doc : `Limitations`_
 
-This column used to identify row (one element) for Copy & Edit & Delete operations.
-Name of unique and primary_key column and type does not matter.
+.. _Limitations: https://gino-admin.readthedocs.io/en/latest/limitations.html
 
-So if you define model, for example, User, you can have column **user_id** as unique and primary_key:
+UI Screens
+----------
 
-.. code-block:: python
+In Docs : `UI Screens`_
 
-    class User(db.Model):
-
-        __tablename__ = "users"
-
-        user_id = db.Column(db.String(), unique=True, primary_key=True)
-
-
-
-
-Or for model 'Country' it can be 'code'
-
-.. code-block:: python
-
-    class Country(db.Model):
-
-        __tablename__ = "countries"
-
-        code = db.Column(db.String(8), unique=True, primary_key=True)
-        name = db.Column(db.String())
-
-
-Supported features
---------------------
-
-- Auth by login/pass with cookie check
-- Create(Add new) item by one for the Model
-- Search/sort in tables
-- Upload/export data from/to CSV
-- Delete all rows/per element
-- Copy existed element (data table row)
-- Edit existed data (table row)
-- SQL-Runner (execute SQL-queries)
-- Presets: Define order and Load to DB bunch of CSV-files
-- Drop DB (Full clean up behavior: Drop tables & Recreate)
-- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
-- Composite CSV: Load multiple relative tables in one CSV-file
-
-
-TODO:
-
-- Select multiple for delete/copy
-- Edit multiple items (?)
-- Roles & User store in DB
-- Filters in Table's columns
-- History logs on changes (log for admin panel actions)
-- Add possible to add new Presets from GUI
-
-
+.. _UI Screens: https://gino-admin.readthedocs.io/en/latest/ui_screens.html

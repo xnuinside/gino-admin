@@ -65,6 +65,7 @@ Version 0.0.11 Updates:
    :caption: Contents:
 
    quick_start
+   authorization
    cli
    examples
    config

@@ -10,3 +10,4 @@
    csv_upload.rst
    changelog.rst
    ui_screens.rst
+   authorization.rst
