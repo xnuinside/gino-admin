@@ -17,7 +17,7 @@
 
             {% set loop_index=loop.index-1 %}
             {% for key, field in row.items() %}
-                <td class="three wide">{{field}}</td>
+                <td class="three wide">{% if field|float %} {{field|round(round_number)}}  {% else %} {{field}} {% endif %}</td>
             {% endfor %}
 
             <!-- column controls(edit, delete and etc.) -->
@@ -28,5 +28,4 @@
     {% endfor %}
     </tbody>
 </table>
-<br>
 

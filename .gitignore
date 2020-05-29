@@ -1,6 +1,7 @@
 dist/
 gino_admin.egg-info/
 gino_admin/__pycache__
+
 *.pyc
 .idea/
 examples/data

@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "gino-admin"
-version = "0.0.11-alpha.2"
+version = "0.0.11-alpha.4"
 description = "Admin Panel for PostgreSQL DB with Gino ORM"
 authors = ["xnuinside <xnuinside@gmail.com>"]
 license = "MIT"
-readme = "README.rst"
+readme = "docs/README.rst"
 homepage = "https://github.com/xnuinside/gino-admin"
 repository = "https://github.com/xnuinside/gino-admin"
 

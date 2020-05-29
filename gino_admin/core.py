@@ -16,10 +16,10 @@ cfg = config.cfg
 
 admin = Blueprint("admin", url_prefix=cfg.route)
 
+STATIC_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
-admin.static(
-    "/static", os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-)
+admin.static("/static", STATIC_FOLDER)
+admin.static("/favicon.ico", os.path.join(STATIC_FOLDER, "favicon.ico"))
 
 
 def extract_column_data(model_id: Text) -> Dict:

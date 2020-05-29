@@ -16,11 +16,11 @@ Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
 
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
+.. image:: docs/img/table_view_new.png
   :width: 250
   :alt: Table view
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_presets.png
+.. image:: docs/img/db_presets.png
   :width: 250
   :alt: Load Presets
 
@@ -46,6 +46,8 @@ If you don't see any data in UI maybe somebody before you cleaned it - go to Pre
 .. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/demo.png
   :width: 250
   :alt: Load Presets
+
+3. Fixed minors issues: floats now displayed with fixed number of symbols. Parameter can be changed with config param `round_number=`,
 
 Version 0.0.10 Updates:
 -----------------------
@@ -465,95 +467,5 @@ TODO:
 - Filters in Table's columns
 - History logs on changes (log for admin panel actions)
 - Add possible to add new Presets from GUI
-
-
-
-Contributions
----------------
-
-Contributions and feature requests are very welcome!
-
-
-If you have time and want to fix:
-Please open issues with that you want to add
-or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
-
-
-Developer guide
----------------
-
-Project use pre-commit hooks, so you need setup them
-
-Just run:
-
-.. code-block:: python
-
-    pre-commit install
-
-to install git hooks in your .git/ directory.
-
-How to run integration tests
-############################
-
-Run integrations test from  tests/integration_tests/
-
-.. code-block:: console
-
-    cd test/integration_tests
-
-When 2 possible ways.
-
-First way.
-
-.. code-block:: console
-
-    pytest . --docker-compose=test-docker-compose.yml -v
-
-    # will build and run docker compose & execute the tests
-
-
-Second way (reduce time in process of tests creating/debuggind)
-
-.. code-block:: console
-
-    docker-compose -f test-docker-compose.yml up --build
-
-    # build & run test cluster
-
-    # when in new terminal window:
-
-    pytest . --docker-compose=test-docker-compose.yml --docker-compose-no-build --use-running-containers -v
-
-
-Screens:
---------
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
-  :width: 250
-  :alt: Table view
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
-  :width: 250
-  :alt: Features per row
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/sql_runner.png
-  :width: 250
-  :alt: SQL-runner
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
-  :width: 250
-  :alt: Add item
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
-  :width: 250
-  :alt: Simple auth
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/display_errors_on_upload_from_csv.png
-  :width: 250
-  :alt: Display errors on upload data from CSV
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_clean_up.png
-  :width: 250
-  :alt: DB Drop
 
 

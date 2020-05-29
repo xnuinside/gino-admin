@@ -23,21 +23,6 @@ Play with Demo: `Gino-Admin demo`_
 .. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
 
 
-.. image:: ../img/demo.png
-  :width: 250
-  :alt: Table view
-
-Admin Panel for PostgreSQL DB with Gino ORM and Sanic
-
-.. image:: ../img/table_view_new.png
-  :width: 250
-  :alt: Table view
-
-.. image:: ../docs/img/db_presets.png
-  :width: 250
-  :alt: Load Presets
-
-
 Installation
 ------------
 
@@ -46,40 +31,33 @@ Installation
     $ pip install gino-admin==0.0.10
 
 
+.. image:: ../img/demo.png
+  :width: 500
+  :alt: Table view
+
+Admin Panel for PostgreSQL DB with Gino ORM and Sanic
+
+.. image:: ../img/table_view_new.png
+  :width: 500
+  :alt: Table view
+
+.. image:: ../img/db_presets.png
+  :width: 500
+  :alt: Load Presets
+
+
 Quick start
 -----------
 
-Check in :doc:`quick_start.rst`
+Check in `Quick Start`_
+
+.. _Quick Start: https://gino-admin.readthedocs.io/en/latest/quick_start.html
 
 
-Version 0.0.10 Updates:
+
+Version 0.0.11 Updates:
 -----------------------
-1. GinoAdmin Config moved to Pydantic.
-Added possible to send any properties to config with config dict. Example:
-.. code-block:: python
 
-    add_admin_panel(
-        app,
-        db,
-        [User, Place, City, GiftCard, Country, Item],
-        # any Gino Admin Config params you can pass as named params
-        custom_hash_method=custom_hash_method,
-        presets_folder=os.path.join(current_path, "csv_to_upload"),
-        name='Base Example')
-
-
-2. Added Config param 'name' - this is a name, that will be showed in header near menu.
-By Default it is display "Sanic-Gino Admin Panel", now you can change it to your header.
-
-3. UI updates: Gino Admin Panel version now showed in UI footer, Login page now more presentable,
-changed index page of Admin Panel, now it presented main feature.
-
-4. Initialised first project's docs
-
-5. Edit/Delete now take object's unique key as argument and stop fall if in key was '/' symbol
-
-6. Added param 'csv_update_existed' in Config. By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
-You can turn off it with set 'csv_update_existed = False'.
 
 
 .. toctree::
@@ -96,6 +74,7 @@ You can turn off it with set 'csv_update_existed = False'.
    csv_upload
    changelog
    ui_screens
+   contributing
 
 Indices and tables
 ==================
