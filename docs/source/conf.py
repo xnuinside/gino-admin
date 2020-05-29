@@ -53,6 +53,6 @@ html_theme = "alabaster"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_logo = "../img/vertical_logo.png"
+html_logo = "../img/logo/logo.svg"
 
 html_favicon = "../img/favicon.ico"

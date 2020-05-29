@@ -20,7 +20,13 @@
 
 <!-- delete modal -->
 {% set modal_url = model.lower() + '/delete_all/' %}
+
 {% include 'modals/delete_modal.html' %}
+
+<div id="grid_footer" class="ui grid right aligned content">
+    <div class="three column " id="grid_footer_row">
+    </div>
+</div>
 <!-- end of modal -->
 {% for cat, msg in get_flashed_messages(with_categories=true) %}
       <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
@@ -32,6 +38,10 @@
 
     <button id="delete_all" class="ui left floated small red inverted labeled icon button" type="button">
     <i class="trash icon"></i>Delete all {{model}}</button>
+
+
+{% include 'modals/deepcopy_modal.html' %}
+
 <script>
 $(document).ready( function () {
     $('#models_table').DataTable({
@@ -82,18 +92,22 @@ $(function(){
 	});
 });
 
-const button = document.querySelector('.modal-button')
-button.addEventListener('click', toggleModal)
 
-const overlay = document.querySelector('.modal-overlay')
-overlay.addEventListener('click', toggleModal)
-
-
-function toggleModal () {
-	const modal = document.querySelector('#modal')
-  modal.classList.toggle('opacity-0')
-  modal.classList.toggle('pointer-events-none')
-}
+$(function(){
+	$(".deepcopy_href").click(function(){
+        $("#obj_id").html(this.dataset.id);
+        var prefix = Math.random().toString(36).slice(2)
+        $("#id").val(this.dataset.id);
+        $("#new_id").val(this.dataset.id + '_' + prefix);
+		$(".deepcopy").modal('show');
+	});
+	$(".deepcopy").modal({
+		closable: true
+	});
+	$("#deepcopy_cancel").click(function(){
+		$(".deepcopy").modal('hide');
+	});
+});
 
 </script>
 

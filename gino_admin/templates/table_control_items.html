@@ -8,18 +8,13 @@
         <a href="javascript:;" class="item" onclick="document.getElementById('copy_{{row[unique]}}').submit();">
            <i class="copy icon"></i>  Copy
         </a>
-        <a href="javascript:;" class="item"  id="deepcopy" onclick="openModal({{row[unique]}})">
-
+        <a class="item deepcopy_href"  id="deepcopy" data-id="{{row[unique]}}">
             <i class="clone icon"></i> Deepcopy
         </a>
          <a href="javascript:;" class="item" onclick="document.getElementById('delete_{{row[unique]}}').submit();">
              <i class="trash icon"></i> Delete
          </a>
-<div class="flex items-center justify-center h-64">
-  <button class="modal-button bg-teal-200 p-3 rounded-lg text-teal-900 hover:bg-teal-300">
-    Blast off
-  </button>
-</div>
+
 <form id="delete_{{row[unique]}}" action="{{url_prefix}}/{{model.lower()}}/delete/" method="post" >
     {% set current_row=model_data[loop_index]%}
     {% for field, value in current_row.items() %}
@@ -29,9 +24,5 @@
 <form id="copy_{{row[unique]}}" action="{{url_prefix}}/{{model.lower()}}/copy/" method="post" >
     <input type="hidden" name="{{unique}}" value="{{row[unique]}}">
 </form>
-<form id="deepcopy_{{row[unique]}}" action="{{url_prefix}}/{{model.lower()}}/deepcopy/" method="post" >
-    <input type="hidden" name="{{unique}}" value="{{row[unique]}}">
-</form>
     </div>
           </div>
-

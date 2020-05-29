@@ -20,7 +20,8 @@ def token_validation():
             if not os.getenv("ADMIN_AUTH_DISABLE") == "1":
                 if (
                     not request.cookies
-                    or request.cookies["auth-token"] not in cfg.sessions
+                    or not request.cookies.get("auth-token")
+                    or request.cookies.get("auth-token") not in cfg.sessions
                     or (
                         request.cookies["auth-token"] in cfg.sessions
                         and cfg.sessions[request.cookies["auth-token"]]

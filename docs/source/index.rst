@@ -28,7 +28,7 @@ Installation
 
 .. code-block:: console
 
-    $ pip install gino-admin==0.0.10
+    $ pip install gino-admin==0.0.11
 
 
 .. image:: ../img/demo.png
@@ -55,9 +55,29 @@ Check in `Quick Start`_
 
 
 
-Version 0.0.11 Updates:
------------------------
+Version 0.0.11 Updates
+----------------------
 
+1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
+By default, used '/admin' route
+
+2. Added Demo Panel  `Gino-Admin demo`_ - you can log in and play with it. Login & pass - admin / 1234
+If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
+
+.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
+
+.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/logo/demo.png
+  :width: 250
+  :alt: Load Presets
+
+3. Fixed minors issues: 1)floats now displayed with fixed number of symbols. Parameter can be changed with config param `round_number=`.
+2) now file upload fill not raise error if no file was chosen
+
+4. Deepcopy now ask id - you can use auto-generated or define own id to 'deepcopy object'
+
+![Table view](docs/img/deepcopy.png)
+
+Full changelog for all versions see in [CHANGELOG.txt](CHANGELOG.txt)
 
 
 .. toctree::
