@@ -273,5 +273,5 @@ Or for model 'Country' it can be 'code'
 
 ### Screens:
 
-Check in docs: [Authorization](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
+Check in docs: [UI Screens](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 

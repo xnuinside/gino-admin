@@ -2,7 +2,7 @@ gino-admin
 ----------
 Docs in process: `Gino-Admin docs`_
 
-Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
+Play with Demo (current master 0.0.11a2): `>>>> Gino-Admin demo <<<<`_
 
 .. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
 
@@ -16,13 +16,9 @@ Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
 
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
-.. image:: docs/img/table_view_new.png
-  :width: 250
+.. image:: https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/table_view_new.png
+  :width: 500
   :alt: Table view
-
-.. image:: docs/img/db_presets.png
-  :width: 250
-  :alt: Load Presets
 
 
 Supported features
@@ -66,10 +62,10 @@ Version 0.0.11 Updates (current master, not released):
 1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
 By default, used '/admin' route
 
-2. Added Demo Panel  `Gino-Admin demo`_ - you can log in and play with it. Login & pass - admin / 1234
+2. Added Demo Panel  `>>>> Gino-Admin demo <<<<`_ - you can log in and play with it. Login & pass - admin / 1234
 If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
 
-.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
+.. _>>>> Gino-Admin demo <<<<: http://xnu-in.space/gino_admin_demo
 
 3. Fixed minors issues: floats now displayed with fixed number of symbols. Parameter can be changed with config param `round_number=`,
 
