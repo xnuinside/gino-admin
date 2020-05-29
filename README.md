@@ -1,6 +1,6 @@
 ## Gino-Admin
 
-![Gino-Admin Logo](docs/img/github_gino_admin_logo.png) 
+![Gino-Admin Logo](docs/img/logo/github_gino_admin_logo.png) 
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
