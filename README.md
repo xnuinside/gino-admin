@@ -48,7 +48,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 .. code-block:: python
     
-    pip install gino-admin==0.0.11a2
+    pip install gino-admin==0.0.11
     
 
 ### Updates
