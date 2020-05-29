@@ -1,8 +1,6 @@
-import uuid
 from collections import defaultdict
 from copy import deepcopy
 from csv import reader
-from random import randint
 from typing import List, Optional, Text
 
 import asyncpg
@@ -14,8 +12,8 @@ from sqlalchemy.sql.schema import Column
 from sqlalchemy_utils.functions import identity
 
 from gino_admin import config
-from gino_admin.utils import (CompositeType, correct_types, reverse_hash_names,
-                              serialize_dict)
+from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
+                              reverse_hash_names, serialize_dict)
 
 cfg = config.cfg
 
@@ -391,6 +389,7 @@ async def create_object_copy(
     base_object_key: Text,
     fk_column: Column = None,
     new_fk_link_id: Text = None,
+    new_id: Optional[Text] = None,
 ) -> str:
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
@@ -399,25 +398,10 @@ async def create_object_copy(
     model = cfg.models[model_id]["model"]
     # id can be str or int
     # todo: need fix for several unique columns
-    if isinstance(base_object_key, str):
-        new_obj_key = (
-            base_object_key
-            + f"{'_' if not base_object_key.endswith('_') else ''}"
-            + uuid.uuid1().hex[5:10]
-        )
-        len_ = model_data["columns_data"][key]["len"]
-        if len_:
-            if new_obj_key[:len_] == base_object_key:
-                # if we spend all id previous
-                new_obj_key = new_obj_key[
-                    len_ : len_ + len_  # noqa E203
-                ]  # auto format from black
-            else:
-                new_obj_key = new_obj_key[:len_]
+    if not new_id:
+        new_obj_key = generate_new_id(base_object_key, model_data)
     else:
-        # todo: need to check ints with max size
-        new_obj_key = base_object_key + randint(0, 10000000000)
-
+        new_obj_key = new_id
     bas_obj = (await model.get(base_object_key)).to_dict()
 
     bas_obj[key] = new_obj_key
@@ -441,13 +425,14 @@ async def deepcopy_recursive(
     object_id: str,
     new_fk_link_id: Optional[str] = None,
     fk_column: Optional[Column] = None,
+    new_id: Optional[str] = None,
 ):
     logger.debug(
         f"Making a deepcopy of {model} with id {object_id} linking to foreign key"
         f" {fk_column} with id {new_fk_link_id}"
     )
     new_obj_key = await create_object_copy(
-        model.__tablename__, object_id, fk_column, new_fk_link_id
+        model.__tablename__, object_id, fk_column, new_fk_link_id, new_id=new_id
     )
     primary_key_col = identity(model)[0]
     dependent_models = {}

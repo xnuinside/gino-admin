@@ -1,11 +1,29 @@
-<div id="modal" class="flex items-center justify-center h-64">
-  <button class="modal-button bg-teal-200 p-3 rounded-lg text-teal-900 hover:bg-teal-300">
-    Blast off
-  </button>
+<div class="ui tiny modal deepcopy" style="width: 400px; margin: 0 0 0 -250px;">
+    <div class="header">
+        Deepcopy {{model.lower()}} '<span id="obj_id"></span>' as
+    </div>
+
+    <div class="content">
+        <div class="ui grid  center aligned">
+     <form id="deepcopy" class="ui form" action="{{url_prefix}}/{{model.lower()}}/deepcopy/" method="post" >
+         <div class="two wide column"></div>
+  <br><br>
+         <div class="six wide column">
+             <input hidden class="field" type="text" id="id" name="id"></div>
+             <input class="field" type="text" id="new_id" name="new_id"></div>
+<br><br>
+    <div class="actions">
+
+      <button type="submit" class="ui positive right floated  labeled icon button">
+        Deepcopy
+        <i class="checkmark icon"></i>
+      </button>
+      <button type="button"  id="deepcopy_cancel" class="ui right floated red inverted labeled icon button">
+        <i class="close icon"></i> Cancel
+      </button>
+    </div>
+
+<br><br>
+     </form></div>
 </div>
-<div class="modal opacity-0 pointer-events-none absolute w-full h-full top-0 left-0 flex items-center justify-center">
-  <div class="modal-overlay absolute w-full h-full bg-black opacity-25 top-0 left-0 cursor-pointer"></div>
-  <div class="absolute w-1/2 h-32 bg-white rounded-sm shadow-lg flex items-center justify-center text-2xl">
-    🚀
-  </div>
-</div>
+

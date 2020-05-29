@@ -3,9 +3,10 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Text
+import uuid
+from random import randint
+from typing import Any, Dict, List, Text, Union
 from unicodedata import normalize
-from uuid import uuid4
 
 import aiofiles
 import yaml
@@ -16,7 +17,7 @@ from gino_admin import config
 cfg = config.cfg
 logger = logging.getLogger("Gino Admin")
 
-salt = uuid4().hex
+salt = uuid.uuid4().hex
 
 
 _windows_device_files = (
@@ -215,3 +216,26 @@ def get_settings():
     for setting in cfg.displayable_setting:
         settings[setting] = getattr(cfg, setting)
     return settings
+
+
+def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
+    key = model_data["key"]
+    if isinstance(base_key, str):
+        new_obj_key = (
+            base_key
+            + f"{'_' if not base_key.endswith('_') else ''}"
+            + uuid.uuid1().hex[5:10]
+        )
+        len_ = model_data["columns_data"][key]["len"]
+        if len_:
+            if new_obj_key[:len_] == base_key:
+                # if we spend all id previous
+                new_obj_key = new_obj_key[
+                    len_ : len_ + len_  # noqa E203
+                ]  # auto format from black
+            else:
+                new_obj_key = new_obj_key[:len_]
+    else:
+        # todo: need to check ints with max size
+        new_obj_key = base_key + randint(0, 10000000000)
+    return new_obj_key

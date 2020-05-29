@@ -68,7 +68,9 @@ async def model_deepcopy(request, model_id):
 
     try:
         new_base_obj_id = await deepcopy_recursive(
-            cfg.models[model_id]["model"], base_object_id
+            cfg.models[model_id]["model"],
+            base_object_id,
+            new_id=request_params["new_id"],
         )
         request["flash"](
             f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}",

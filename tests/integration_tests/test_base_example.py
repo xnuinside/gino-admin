@@ -21,6 +21,7 @@ def initdb(base_app_url, admin_auth_headers):
         headers=admin_auth_headers,
     )
     assert result.status_code == 200
+    return True
 
 
 def test_main_service_run(base_app_url):
@@ -33,3 +34,7 @@ def test_admin_service_drop(admin_auth_headers, base_app_url):
         f"{base_app_url}/admin/api/drop_db", headers=admin_auth_headers
     )
     assert result.status_code == 200
+
+
+def test_presets_was_loaded(initdb):
+    assert initdb
