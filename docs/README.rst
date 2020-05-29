@@ -17,7 +17,7 @@ Play with Demo (current master 0.0.11a2): `>>>> Gino-Admin demo <<<<`_
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 .. image:: https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/table_view_new.png
-  :width: 500
+  :width: 600
   :alt: Table view
 
 

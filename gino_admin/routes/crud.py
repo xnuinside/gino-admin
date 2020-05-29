@@ -45,6 +45,14 @@ async def model_edit_post(request, model_id):
     try:
         await obj.update(**request_params).apply()
         request["flash"]("Changes was saved", "success")
+    except asyncpg.exceptions.ForeignKeyViolationError:
+        request["flash"](
+            f"ForeignKey error. "
+            f"Impossible to edit {model_data['key']} field for row {obj_id}, "
+            f"because exists objects that depend on it. ",
+            "error",
+        )
+        request_params[model_data["key"]] = obj_id
     except asyncpg.exceptions.UniqueViolationError:
         request["flash"](
             f"{model_id.capitalize()} with such id already exists", "error"
