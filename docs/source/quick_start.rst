@@ -22,7 +22,9 @@ Run Admin Panel from Command line
 
 **Run Admin Panel from cli**
 
-Check Page Command Line interface: :doc:`cli.rst`
+Check Page Command Line interface: `Cli`_
+
+.. _Cli: https://gino-admin.readthedocs.io/en/latest/cli.html
 
 Add Admin Panel to existed Sanic application as '/admin' route
 ##############################################################

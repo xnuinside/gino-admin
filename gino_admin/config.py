@@ -24,6 +24,7 @@ def render_with_updated_context(self):
         context["objects"] = cfg.models
         context["url_prefix"] = cfg.route
         context["admin_panel_version"] = __version__
+        context["round_number"] = cfg.round_number
         return html(
             self.render_string(template, request, **context),
             status=status,
@@ -87,6 +88,7 @@ class Config(BaseModel):
         "name",
         "csv_update_existed",
     ]
+    round_number: float = 3
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

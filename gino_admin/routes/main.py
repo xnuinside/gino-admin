@@ -171,10 +171,11 @@ async def file_upload(request: Request, model_id: Text):
     if not os.path.exists(cfg.upload_dir):
         os.makedirs(cfg.upload_dir)
     upload_file = request.files.get("file_names")
-    if not upload_file:
+
+    file_name = utils.secure_filename(upload_file.name)
+    if not upload_file or not file_name:
         flash_message = ("No file chosen to Upload", "error")
         return await model_view_table(request, model_id, flash_message)
-    file_name = utils.secure_filename(upload_file.name)
     if not utils.valid_file_size(upload_file.body, cfg.max_file_size):
         return response.redirect("/?error=invalid_file_size")
     else:

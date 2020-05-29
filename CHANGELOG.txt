@@ -1,4 +1,3 @@
-
 Version 0.0.10 Updates:
 -----------------------
 1. GinoAdmin Config moved to Pydantic.

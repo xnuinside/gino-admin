@@ -2,7 +2,7 @@ gino-admin
 ----------
 Docs in process: `Gino-Admin docs`_
 
-Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
+Play with Demo (current master 0.0.11a2): `>>>> Gino-Admin demo <<<<`_
 
 .. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
 
@@ -16,13 +16,36 @@ Play with Demo (current master 0.0.11a2): `Gino-Admin demo`_
 
 Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
-  :width: 250
+.. image:: https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/table_view_new.png
+  :width: 500
   :alt: Table view
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_presets.png
-  :width: 250
-  :alt: Load Presets
+
+Supported features
+--------------------
+
+- Auth by login/pass with cookie check
+- Create(Add new) item by one for the Model
+- Search/sort in tables
+- Upload/export data from/to CSV
+- Delete all rows/per element
+- Copy existed element (data table row)
+- Edit existed data (table row)
+- SQL-Runner (execute SQL-queries)
+- Presets: Define order and Load to DB bunch of CSV-files
+- Drop DB (Full clean up behavior: Drop tables & Recreate)
+- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
+- Composite CSV: Load multiple relative tables in one CSV-file
+
+
+TODO:
+
+- Select multiple for delete/copy
+- Edit multiple items (?)
+- Roles & User store in DB
+- Filters in Table's columns
+- History logs on changes (log for admin panel actions)
+- Add possible to add new Presets from GUI
 
 
 How to install
@@ -33,19 +56,21 @@ How to install
     pip install gino-admin==0.0.11a2
     
 
+
 Version 0.0.11 Updates (current master, not released):
 ------------------------------------------------------
 1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
 By default, used '/admin' route
 
-2. Added Demo Panel  `Gino-Admin demo`_ - you can log in and play with it. Login & pass - admin / 1234
+2. Added Demo Panel  `>>>> Gino-Admin demo <<<<`_ - you can log in and play with it. Login & pass - admin / 1234
 If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
 
-.. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
+.. _>>>> Gino-Admin demo <<<<: http://xnu-in.space/gino_admin_demo
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/demo.png
-  :width: 250
-  :alt: Load Presets
+3. Fixed minors issues: floats now displayed with fixed number of symbols. Parameter can be changed with config param `round_number=`,
+
+4. Updated docs
+
 
 Version 0.0.10 Updates:
 -----------------------
@@ -369,191 +394,30 @@ Drop DB
 Drop DB feature used for doing full clean up DB - it drop all tables & create them after Drop for all models in Admin Panel.
 
 
-
 Upload from CSV
 ---------------
 
 Files-samples for example project can be found here: **examples/base_example/src/csv_to_upload**
 
 
-Authentication
+Authorization
 --------------
 
-1. To disable authorisation:
+Read in doc : `Authorization`_
 
-Set environment variable 'ADMIN_AUTH_DISABLE=1'
-
-.. code-block:: python
-
-    os.environ['ADMIN_AUTH_DISABLE'] = '1'
-
-or from shell:
-
-.. code-block:: python
-
-        export ADMIN_AUTH_DISABLE=1
-
-
-2. To define admin user & password:
-
-check example/ folder to get code snippets
-
-
-.. code-block:: python
-
-    app = Sanic()
-
-    app.config["ADMIN_USER"] = "admin"
-    app.config["ADMIN_PASSWORD"] = "1234"
+.. _Authorization: https://gino-admin.readthedocs.io/en/latest/authorization.html
 
 
 Limitations
 -----------
 
-For correct work of Admin Panel all models MUST contain at least one unique and primary_key Column (field).
+Read in doc : `Limitations`_
 
-This column used to identify row (one element) for Copy & Edit & Delete operations.
-Name of unique and primary_key column and type does not matter.
+.. _Limitations: https://gino-admin.readthedocs.io/en/latest/limitations.html
 
-So if you define model, for example, User, you can have column **user_id** as unique and primary_key:
+UI Screens
+----------
 
-.. code-block:: python
+In Docs : `UI Screens`_
 
-    class User(db.Model):
-
-        __tablename__ = "users"
-
-        user_id = db.Column(db.String(), unique=True, primary_key=True)
-
-
-
-
-Or for model 'Country' it can be 'code'
-
-.. code-block:: python
-
-    class Country(db.Model):
-
-        __tablename__ = "countries"
-
-        code = db.Column(db.String(8), unique=True, primary_key=True)
-        name = db.Column(db.String())
-
-
-Supported features
---------------------
-
-- Auth by login/pass with cookie check
-- Create(Add new) item by one for the Model
-- Search/sort in tables
-- Upload/export data from/to CSV
-- Delete all rows/per element
-- Copy existed element (data table row)
-- Edit existed data (table row)
-- SQL-Runner (execute SQL-queries)
-- Presets: Define order and Load to DB bunch of CSV-files
-- Drop DB (Full clean up behavior: Drop tables & Recreate)
-- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
-- Composite CSV: Load multiple relative tables in one CSV-file
-
-
-TODO:
-
-- Select multiple for delete/copy
-- Edit multiple items (?)
-- Roles & User store in DB
-- Filters in Table's columns
-- History logs on changes (log for admin panel actions)
-- Add possible to add new Presets from GUI
-
-
-
-Contributions
----------------
-
-Contributions and feature requests are very welcome!
-
-
-If you have time and want to fix:
-Please open issues with that you want to add
-or write to me in Telegram: @xnuinside or mail: xnuinside@gmail.com
-
-
-Developer guide
----------------
-
-Project use pre-commit hooks, so you need setup them
-
-Just run:
-
-.. code-block:: python
-
-    pre-commit install
-
-to install git hooks in your .git/ directory.
-
-How to run integration tests
-############################
-
-Run integrations test from  tests/integration_tests/
-
-.. code-block:: console
-
-    cd test/integration_tests
-
-When 2 possible ways.
-
-First way.
-
-.. code-block:: console
-
-    pytest . --docker-compose=test-docker-compose.yml -v
-
-    # will build and run docker compose & execute the tests
-
-
-Second way (reduce time in process of tests creating/debuggind)
-
-.. code-block:: console
-
-    docker-compose -f test-docker-compose.yml up --build
-
-    # build & run test cluster
-
-    # when in new terminal window:
-
-    pytest . --docker-compose=test-docker-compose.yml --docker-compose-no-build --use-running-containers -v
-
-
-Screens:
---------
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/table_view_new.png
-  :width: 250
-  :alt: Table view
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/copy_item.png
-  :width: 250
-  :alt: Features per row
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/sql_runner.png
-  :width: 250
-  :alt: SQL-runner
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/add_item.png
-  :width: 250
-  :alt: Add item
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/auth.png
-  :width: 250
-  :alt: Simple auth
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/display_errors_on_upload_from_csv.png
-  :width: 250
-  :alt: Display errors on upload data from CSV
-
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/db_clean_up.png
-  :width: 250
-  :alt: DB Drop
-
-
+.. _UI Screens: https://gino-admin.readthedocs.io/en/latest/ui_screens.html

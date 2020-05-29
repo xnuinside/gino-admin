@@ -20,7 +20,7 @@
 
 <!-- delete modal -->
 {% set modal_url = model.lower() + '/delete_all/' %}
-{% include 'delete_modal.html' %}
+{% include 'modals/delete_modal.html' %}
 <!-- end of modal -->
 {% for cat, msg in get_flashed_messages(with_categories=true) %}
       <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
@@ -81,6 +81,20 @@ $(function(){
 		closable: true
 	});
 });
+
+const button = document.querySelector('.modal-button')
+button.addEventListener('click', toggleModal)
+
+const overlay = document.querySelector('.modal-overlay')
+overlay.addEventListener('click', toggleModal)
+
+
+function toggleModal () {
+	const modal = document.querySelector('#modal')
+  modal.classList.toggle('opacity-0')
+  modal.classList.toggle('pointer-events-none')
+}
+
 </script>
 
 {% endblock %}
