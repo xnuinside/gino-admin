@@ -4,7 +4,7 @@
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
-Play with Demo (current master 0.0.11a2) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
+Play with Demo (v.0.0.11) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
 
 
 ![badge1](https://img.shields.io/pypi/v/gino_admin) ![badge2](https://img.shields.io/pypi/l/gino_admin) ![badge3](https://img.shields.io/pypi/pyversions/gino_admin) 
