@@ -3,6 +3,7 @@ import os
 from db import City, Country, GiftCard, Item, Place, User, db
 from passlib.hash import pbkdf2_sha256
 from sanic import Sanic, response
+from sanic_jinja2 import SanicJinja2
 
 from gino_admin import add_admin_panel
 
@@ -17,10 +18,17 @@ app.config["DB_PASSWORD"] = "gino"
 
 db.init_app(app)
 
+jinja = SanicJinja2(app)
+
 
 @app.route("/")
 async def index(request):
     return response.redirect("/admin")
+
+
+@app.route("/ui")
+async def ui_test(request):
+    return jinja.render("index.html", request)
 
 
 # custom_hash_method you can define your own hash method to use it in backend and Admin

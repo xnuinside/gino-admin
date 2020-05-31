@@ -16,27 +16,24 @@ loader = FileSystemLoader(
 )
 
 
-def render_with_updated_context(self):
-    def render_with_updated_context_logic(
-        template, request, status=200, headers=None, **context
-    ):
-        context["admin_panel_title"] = cfg.name
-        context["objects"] = cfg.models
-        context["url_prefix"] = cfg.route
-        context["admin_panel_version"] = __version__
-        context["round_number"] = cfg.round_number
-        return html(
-            self.render_string(template, request, **context),
-            status=status,
-            headers=headers,
-        )
+def render_with_updated_context(
+    self, template, request, status=200, headers=None, **context
+):
+    context["admin_panel_title"] = cfg.name
+    context["objects"] = cfg.models
+    context["url_prefix"] = cfg.route
+    context["admin_panel_version"] = __version__
+    context["round_number"] = cfg.round_number
+    return html(
+        self.render_string(template, request, **context),
+        status=status,
+        headers=headers,
+    )
 
-    return render_with_updated_context_logic
 
+SanicJinja2.render = render_with_updated_context
 
 jinja = SanicJinja2(loader=loader)
-
-jinja.render = render_with_updated_context(jinja)
 
 
 class CompositeCsvSettings(BaseModel):

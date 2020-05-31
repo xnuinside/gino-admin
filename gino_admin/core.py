@@ -117,6 +117,7 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         rest.api.url_prefix = str(rest.api.url_prefix).replace(
             old_prefix, config_settings["route"]
         )
+
     app.blueprint(admin)
     app.blueprint(rest.api)
     try:
