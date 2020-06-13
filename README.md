@@ -30,6 +30,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 - Drop DB (Full clean up behavior: Drop tables & Recreate)
 - Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
 - [Composite CSV: Load multiple relative tables in one CSV-file](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload)
+- History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc) 
 
 
 ##### TODO:
@@ -38,17 +39,13 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 - Edit multiple items (?)
 - Roles & User store in DB
 - Filters in Table's columns
-- History logs on changes (log for admin panel actions)
 - Add possible to add new Presets from GUI
 - Other staff on [Gino Project Dashboard](https://github.com/xnuinside/gino-admin/projects/1)
 
 
 ### How to install
 
-
-.. code-block:: python
-    
-    pip install gino-admin==0.0.12
+```pip install gino-admin==0.0.12```
     
 
 ### Updates
