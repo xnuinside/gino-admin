@@ -64,8 +64,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 5. In UI added normal Display for Bool properties - with check boxes
 
 6. Added Calendar (date & time) pickers in UI for Datetime fields. 
-
-![Controls](docs/img/controls.png)
+<img src="https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/controls.png" height="300">
 
 
 ### How to use
