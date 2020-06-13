@@ -42,7 +42,7 @@ types_map = {
     "DECIMAL": float,
     "NUMERIC": float,
     "DATETIME": datetime.datetime,
-    "DATE": datetime.datetime,
+    "DATE": datetime.date,
     "BOOLEAN": bool,
 }
 
@@ -139,19 +139,20 @@ def correct_types(params: Dict, columns_data: Dict):
         if "_hash" not in param and not isinstance(
             params[param], columns_data[param]["type"]
         ):
-            if columns_data[param]["type"] is not datetime.datetime:
+            if columns_data[param]["type"] not in [datetime.datetime, datetime.date]:
                 params[param] = columns_data[param]["type"](params[param])
             else:
-                # todo for date
                 params[param] = extract_datetime(params[param])
     for param in to_del:
         del params[param]
+    for column in columns_data:
+        if columns_data[column]["type"] == bool and column not in params:
+            params[column] = False
     return params
 
 
 def extract_date(date_str: Text):
     date_object = datetime.datetime.strptime(date_str, "%m-%d-%y")
-
     return date_object
 
 
@@ -239,3 +240,15 @@ def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
         # todo: need to check ints with max size
         new_obj_key = base_key + randint(0, 10000000000)
     return new_obj_key
+
+
+def get_changes(old_obj: Dict, new_obj: Dict):
+    from_ = {}
+    to_ = {}
+    for key, value in new_obj.items():
+        if key not in old_obj:
+            to_[key] = value
+        elif old_obj[key] != value:
+            from_[key] = old_obj[key]
+            to_[key] = value
+    return {"from": from_, "to": to_}

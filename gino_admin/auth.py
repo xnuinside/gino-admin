@@ -24,7 +24,7 @@ def token_validation():
                     or request.cookies.get("auth-token") not in cfg.sessions
                     or (
                         request.cookies["auth-token"] in cfg.sessions
-                        and cfg.sessions[request.cookies["auth-token"]]
+                        and cfg.sessions[request.cookies["auth-token"]]["user_agent"]
                         != request.headers["User-Agent"]
                     )
                 ):
@@ -33,6 +33,7 @@ def token_validation():
                     request["session"] = {"_auth": True}
                     return await route(request, *args, **kwargs)
             else:
+                request["session"] = {"_auth": True}
                 return await route(request, *args, **kwargs)
 
         return validate
@@ -47,7 +48,7 @@ def validate_login(request, config):
         admin_user = str(config["ADMIN_USER"])
         admin_password = str(config["ADMIN_PASSWORD"])
         if username == admin_user and password == admin_password:
-            return True
+            return username
     return False
 
 

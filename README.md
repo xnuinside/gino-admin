@@ -52,6 +52,21 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
     
 
 ### Updates
+#### Version 0.0.12 (current master):
+1. Now menu in top menu are  hidden if you are not authorized
+
+2. Added History logging for actions in Admin panel (edit, delete, add, init_db, load presets and etc) and History page for displaying.
+![History](docs/img/history.png)
+3. Drop DB renamed in Init DB, that better describe feature
+
+4. Fixed deepcopy for models with Integer IDs + other minor issues
+
+5. In UI added normal Display for Bool properties - with check boxes
+
+6. Added Calendar (date & time) pickers in UI for Datetime fields. 
+
+![Controls](docs/img/controls.png)
+
 #### Version 0.0.11:
 1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
 By default, used '/admin' route
@@ -227,9 +242,9 @@ Read the docs: [Config](https://gino-admin.readthedocs.io/en/latest/config.html)
 
 
 
-### Drop DB (Init DB)
+### Init DB
 
-Drop DB feature used for doing full clean up DB - it drop all tables & create them after Drop for all models in Admin Panel.
+Init DB feature used for doing full clean up DB - it drop all tables & create them after Drop for all models in Admin Panel.
 
 
 

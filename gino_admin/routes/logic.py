@@ -20,10 +20,15 @@ cfg = config.cfg
 
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
-    columns_names = cfg.models[model_id]["columns_names"]
+    model_data = cfg.models[model_id]
+    columns_names = model_data["columns_names"]
     model = cfg.app.db.tables[model_id]
     query = cfg.app.db.select([model])
-    rows = await query.gino.all()
+    try:
+        rows = await query.gino.all()
+    except asyncpg.exceptions.UndefinedTableError:
+        await cfg.app.db.gino.create_all(tables=[model])
+        rows = await query.gino.all()
     output = []
     for row in rows:
         row = {columns_names[num]: field for num, field in enumerate(row)}
@@ -31,11 +36,18 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
             row[columns_names[index]] = "*************"
         output.append(row)
     output = output[::-1]
+    columns = {
+        column_name: {
+            "len": model_data["columns_data"][column_name]["len"],
+            "type": model_data["columns_data"][column_name]["type"].__name__,
+        }
+        for column_name in model_data["columns_names"]
+    }
     _response = cfg.jinja.render(
         "model_view.html",
         request,
         model=model_id,
-        columns=columns_names,
+        columns=columns,
         model_data=output,
         unique=cfg.models[model_id]["key"],
     )
@@ -359,16 +371,15 @@ async def render_add_or_edit_form(
     else:
         obj = {}
         add = True
+    columns = {
+        column_name: {
+            "len": model_data["columns_data"][column_name]["len"],
+            "type": model_data["columns_data"][column_name]["type"].__name__,
+        }
+        for column_name in model_data["columns_names"]
+    }
     return cfg.jinja.render(
-        "add_form.html",
-        request,
-        model=model_id,
-        add=add,
-        obj=obj,
-        columns={
-            column_name: {"len": model_data["columns_data"][column_name]["len"]}
-            for column_name in model_data["columns_names"]
-        },
+        "add_form.html", request, model=model_id, add=add, obj=obj, columns=columns,
     )
 
 

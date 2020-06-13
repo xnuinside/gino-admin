@@ -8,6 +8,7 @@ from sanic_jwt import Initialize
 
 from gino_admin import config
 from gino_admin.auth import authenticate
+from gino_admin.history import add_history_model
 from gino_admin.routes import rest
 from gino_admin.utils import GinoAdminError, logger, types_map
 
@@ -22,6 +23,10 @@ admin.static("/static", STATIC_FOLDER)
 admin.static("/favicon.ico", os.path.join(STATIC_FOLDER, "favicon.ico"))
 
 
+class HashColumn:
+    pass
+
+
 def extract_column_data(model_id: Text) -> Dict:
     """ extract data about column """
     _hash = "_hash"
@@ -30,7 +35,7 @@ def extract_column_data(model_id: Text) -> Dict:
 
         if _hash in column.name:
             name = column.name.split(_hash)[0]
-            type_ = "HASH"
+            type_ = HashColumn
             hashed_indexes.append(num)
         else:
             name = column.name
@@ -109,6 +114,8 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
                 "You trying to set upWrong config parameters: "
                 f"{e}"
             )
+
+    add_history_model(db)
 
     extract_models_metadata(db, db_models)
     if config_settings.get("route"):

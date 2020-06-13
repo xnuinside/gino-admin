@@ -71,5 +71,5 @@ def test_main_service_users(main_app_url, initdb):
 
 
 def test_admin_service_drop(admin_auth_headers, admin_url):
-    result = requests.post(f"{admin_url}/api/drop_db", headers=admin_auth_headers)
+    result = requests.post(f"{admin_url}/api/init_db", headers=admin_auth_headers)
     assert result.status_code == 200

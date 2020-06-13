@@ -5,6 +5,7 @@ from sanic.request import Request
 from sanic_jwt.decorators import protected
 
 from gino_admin import config
+from gino_admin.history import write_history_after_response
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
                                      insert_data_from_csv)
 from gino_admin.utils import get_preset_by_id, logger, read_yaml
@@ -12,6 +13,18 @@ from gino_admin.utils import get_preset_by_id, logger, read_yaml
 cfg = config.cfg
 
 api = Blueprint("api", url_prefix=f"{cfg.route}/api")
+
+
+@api.middleware("request")
+async def middleware_request(request):
+    request["flash_messages"] = []
+    request["history_action"] = {}
+
+
+@api.middleware("response")
+async def middleware_response(request, response):
+    if request.endpoint in cfg.track_history_endpoints and request.method == "POST":
+        await write_history_after_response(request)
 
 
 @api.route("/presets", methods=["POST"])
@@ -36,7 +49,8 @@ async def presets(request: Request):
             return response.json(answer, status=422)
         preset = read_yaml(preset_path)
         presets_folder = os.path.dirname(preset_path)
-    if "drop" in request.json:
+    with_drop = "drop" in request.json
+    if with_drop:
         await drop_and_recreate_all_tables()
     try:
         for model_id, file_path in preset["files"].items():
@@ -50,14 +64,22 @@ async def presets(request: Request):
         else:
             message = "Preset was loaded"
         result = response.json({"status": f"{message}"}, status=200)
+
+        request["history_action"]["log_message"] = (
+            f"Loaded preset {preset['id']}"
+            f"" + f"{' with DB drop' if with_drop else ''}"
+        )
+        request["history_action"]["object_id"] = "load_preset"
     except FileNotFoundError:
         answer = {"error": f"Wrong file path in Preset {preset['name']}."}
         result = response.json(answer, status=422)
     return result
 
 
-@api.route("/drop_db", methods=["POST"])
+@api.route("/init_db", methods=["POST"])
 @protected(api)
 async def drop(request: Request):
     await drop_and_recreate_all_tables()
+    request["history_action"]["log_message"] = "DB was Init from Scratch"
+    request["history_action"]["object_id"] = "init_db"
     return response.json({"status": "DB was dropped. Tables re-created."}, status=200)
