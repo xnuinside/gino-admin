@@ -85,7 +85,7 @@ async def model_deepcopy(request, model_id):
     try:
         request_params["new_id"] = columns_data[key]["type"](request_params["new_id"])
     except ValueError:
-        request["flash"]("ID must be number", "error")
+        request["flash"](f"{columns_data[key]} must be number", "error")
         return await render_model_view(request, model_id)
     try:
         new_base_obj_id = await deepcopy_recursive(
