@@ -35,13 +35,13 @@ admin/api/presets
 
     Request body:
         - preset: must contain path to preset '.yml' file
-        - drop: flag to Drop DB before upload preset (optional)
+        - drop: flag to Drop & recreate tables in DB before upload preset (optional)
 
 Purposes: easy call from tests env when need to drop/create DB from some tests datasets
 
-admin/api/drop_db
+admin/api/init_db
 ^^^^^^^^^^^^^^^^^
-1.3 POST: admin/api/drop_db
+1.3 POST: admin/api/init_db
 
     protected: True (need to provide JWT token in Authorization header)
     Empty request without body.

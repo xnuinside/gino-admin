@@ -33,7 +33,7 @@ Upload data from CSV
   :width: 250
   :alt: Display errors on upload data from CSV
 
-DP Drop (drop + recreate tables)
+Init DB (drop + recreate tables)
 ``````````````````````````````````````````
 .. image:: ../img/db_clean_up.png
   :width: 250

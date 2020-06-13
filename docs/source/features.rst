@@ -12,7 +12,7 @@ Supported Features
 - Edit existed data (table row)
 - SQL-Runner (execute SQL-queries)
 - Presets: Define order and Load to DB bunch of CSV-files
-- Drop DB (Full clean up behavior: Drop tables & Recreate)
+- Init DB (Full clean up behavior: Drop tables & Recreate)
 - Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
 - Composite CSV: Load multiple relative tables in one CSV-file
 

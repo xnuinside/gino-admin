@@ -33,10 +33,10 @@ Supported features
 - Edit existed data (table row)
 - SQL-Runner (execute SQL-queries)
 - Presets: Define order and Load to DB bunch of CSV-files
-- Drop DB (Full clean up behavior: Drop tables & Recreate)
+- Init DB (Full clean up behavior: Drop tables & Recreate)
 - Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
 - Composite CSV: Load multiple relative tables in one CSV-file
-
+- History logs on changes (log for admin panel actions - edit, delete, add, init db and etc.)
 
 TODO:
 
@@ -44,8 +44,31 @@ TODO:
 - Edit multiple items (?)
 - Roles & User store in DB
 - Filters in Table's columns
-- History logs on changes (log for admin panel actions)
 - Add possible to add new Presets from GUI
+
+Version 0.0.12 Updates
+----------------------
+
+1. Now menu in top menu are  hidden if you are not authorized
+
+2. Added History logging for actions in Admin panel (edit, delete, add, init_db, load presets and etc) and History page for displaying.
+
+.. image:: https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/history.png
+   :width: 500
+   :alt: History (Logs) page
+
+3. Drop DB renamed in Init DB, that better describe feature
+
+4. Fixed deepcopy for models with Integer IDs + other minor issues
+
+5. In UI added normal Display for Bool properties - with check boxes
+
+6. Added Calendar (date & time) pickers in UI for Datetime fields.
+
+.. image:: https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/controls.png
+   :width: 500
+   :alt: Normal Controls
+
 
 Version 0.0.11 Updates
 ----------------------
@@ -58,7 +81,7 @@ If you don't see any data in UI maybe somebody before you cleaned it - go to Pre
 
 .. _Gino-Admin demo: http://xnu-in.space/gino_admin_demo
 
-.. image:: https://github.com/xnuinside/gino_admin/blob/master/docs/img/logo/demo.png
+.. image:: https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/demo.png
   :width: 250
   :alt: Load Presets
 
@@ -412,10 +435,10 @@ You also can define table name as 'pattern':
 This mean - to understand that this is a DB - take previous table from CSV in row and add '_postfix' at the end.
 
 
-Drop DB
+Init DB
 -------
 
-Drop DB feature used for doing full clean up DB - it drop all tables & create them after Drop for all models in Admin Panel.
+Init DB feature used for doing full clean up DB - it drop all tables & create them after the drop for all models in Admin Panel.
 
 
 Upload from CSV
