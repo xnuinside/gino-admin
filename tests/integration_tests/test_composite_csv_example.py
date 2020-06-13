@@ -45,7 +45,7 @@ def test_main_service_run(composite_app_url):
 
 def test_admin_service_drop(admin_auth_headers, composite_app_url):
     result = requests.post(
-        f"{composite_app_url}/admin/api/drop_db", headers=admin_auth_headers
+        f"{composite_app_url}/admin/api/init_db", headers=admin_auth_headers
     )
     assert result.status_code == 200
 

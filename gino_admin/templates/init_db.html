@@ -33,15 +33,15 @@
 
         <div class="six wide columns align center content">
 
-        <h3>Do you wanna Drop all Data in DB?</h3>
+        <h3>Do you wanna Drop all Data in DB & Init it form scratch?</h3>
 <br>
 
     <button id="delete_all" class="ui left floated small red labeled icon button" type="button">
-    <i class="database icon"></i>Delete all data from DB</button></div>
+    <i class="database icon"></i>Delete all data from DB & Init DB</button></div>
     </div>
 </div>
 {% set model = 'DB Data' %}
-{% set modal_url = 'db_drop' %}
+{% set modal_url = 'init_db' %}
 {% include 'modals/delete_modal.html' %}
 
 {% endblock %}

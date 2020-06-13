@@ -8,7 +8,7 @@
         <a href="javascript:;" class="item" onclick="document.getElementById('copy_{{row[unique]}}').submit();">
            <i class="copy icon"></i>  Copy
         </a>
-        <a class="item deepcopy_href"  id="deepcopy" data-id="{{row[unique]}}">
+        <a class="item deepcopy_href"  id="deepcopy" data-id="{{row[unique]}}" data-type="{{columns[unique]['type']}}">
             <i class="clone icon"></i> Deepcopy
         </a>
          <a href="javascript:;" class="item" onclick="document.getElementById('delete_{{row[unique]}}').submit();">

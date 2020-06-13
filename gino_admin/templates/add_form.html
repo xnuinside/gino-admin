@@ -2,6 +2,7 @@
 {% block title %}{{model}}{% endblock %}
 
 {% block body %}
+
 <div class="ui breadcrumb">
   <a class="section" href="{{url_prefix}}">Admin</a>
   <i class="right angle icon divider"></i>
@@ -19,10 +20,44 @@
         <span style="font-weight: normal;">(max length: {{ data['len'] }})</span>
       {% endif %}
     </label>
-    <input type="text" name="{{column}}" placeholder="{{column if add else obj.get(column)}}"
-           value="{{'' if add else '' if column == 'password' else obj.get(column)}}">
+    {% if data['type'] == 'bool' %}
+      <div class="field">
+        <div class="ui checkbox">
+        <input type="checkbox" name="{{column}}" tabindex="0" {{ "checked" if obj.get(column) }}>
+        <label>{{column}}</label>
+      </div>
+    </div>
+    {% elif data['type'] == 'datetime' or data['type'] == 'date' %}
+    <div class="ui calendar standard_calendar" id="standard_calendar">
+        <div class="ui input left icon">
+          <i class="calendar icon"></i>
+
+          <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
+                 {% else %}
+                 {% endif %}
+                 placeholder="{{ 'Date/Time' if columns[column]['type'] == 'datetime' else 'Date' }}">
+
+        </div>
+      </div>
+    {% else %}
+    {% if obj.get(column) is number | float %}
+      {% set value=obj.get(column)|round(round_number) %}
+    {% else %}
+      {% set value=obj.get(column) %}
+    {% endif %}
+    <input type="text" name="{{column}}" placeholder="{{column if add else value}}"
+           value="{{'' if add else '' if column == 'password' else value}}">
+
+    {% endif %}
   </div>
   {% endfor %}
-  <button class="ui button" type="submit">Submit</button>
+  <button class="ui button green" type="submit">Submit</button>
 </form>
+
+
+<script>
+
+  $('.standard_calendar').calendar()
+;
+</script>
 {% endblock %}

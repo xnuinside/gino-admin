@@ -93,12 +93,19 @@ $(function(){
 });
 
 
-$(function(){
+$(function() {
 	$(".deepcopy_href").click(function(){
         $("#obj_id").html(this.dataset.id);
-        var prefix = Math.random().toString(36).slice(2)
+        var type = this.dataset.type;
+        if (type == 'int') {
+            var prefix = Math.floor(Math.random() * 100);
+            $("#new_id").val(this.dataset.id + prefix);
+        }
+        else {
+            var prefix = Math.random().toString(36).slice(2)
+            $("#new_id").val(this.dataset.id + '_' + prefix);
+        };
         $("#id").val(this.dataset.id);
-        $("#new_id").val(this.dataset.id + '_' + prefix);
 		$(".deepcopy").modal('show');
 	});
 	$(".deepcopy").modal({

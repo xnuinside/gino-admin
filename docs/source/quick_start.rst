@@ -8,7 +8,7 @@ First of all you need to install Gino-Admin to your project environment
 
 .. code-block:: console
 
-    $ pip install gino-admin==0.0.11
+    $ pip install gino-admin==0.0.12
 
 
 How to use

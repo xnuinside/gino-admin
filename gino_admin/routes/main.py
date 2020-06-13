@@ -9,6 +9,7 @@ from sanic.request import Request
 
 from gino_admin import auth, config, utils
 from gino_admin.core import admin
+from gino_admin.history import write_history_after_response
 from gino_admin.routes.crud import model_view_table
 from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      deepcopy_recursive,
@@ -17,6 +18,18 @@ from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
 
 cfg = config.cfg
 jinja = cfg.jinja
+
+
+@admin.middleware("request")
+async def middleware_request(request):
+    request["flash_messages"] = []
+    request["history_action"] = {}
+
+
+@admin.middleware("response")
+async def middleware_response(request, response):
+    if request.endpoint in cfg.track_history_endpoints and request.method == "POST":
+        await write_history_after_response(request)
 
 
 @admin.route(f"/")
@@ -41,7 +54,10 @@ async def login(request):
     _login = auth.validate_login(request, cfg.app.config)
     if _login:
         _token = utils.generate_token(request.ip)
-        cfg.sessions[_token] = request.headers["User-Agent"]
+        cfg.sessions[_token] = {
+            "user_agent": request.headers["User-Agent"],
+            "user": _login,
+        }
         request.cookies["auth-token"] = _token
         request["session"] = {"_auth": True}
         _response = jinja.render("index.html", request)
@@ -64,18 +80,23 @@ async def model_deepcopy(request, model_id):
     """
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data = cfg.models[model_id]["columns_data"]
-    base_object_id = columns_data["id"]["type"](request_params["id"])
-
+    key = cfg.models[model_id]["key"]
+    base_object_id = columns_data[key]["type"](request_params["id"])
+    try:
+        request_params["new_id"] = columns_data[key]["type"](request_params["new_id"])
+    except ValueError:
+        request["flash"](f"{columns_data[key]} must be number", "error")
+        return await render_model_view(request, model_id)
     try:
         new_base_obj_id = await deepcopy_recursive(
             cfg.models[model_id]["model"],
             base_object_id,
             new_id=request_params["new_id"],
         )
-        request["flash"](
-            f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}",
-            "success",
-        )
+        message = f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}"
+        request["flash"](message, "success")
+        request["history_action"]["log_message"] = message
+        request["history_action"]["object_id"] = new_base_obj_id
     except asyncpg.exceptions.PostgresError as e:
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
@@ -90,10 +111,10 @@ async def model_copy(request, model_id):
     key = model_data["key"]
     try:
         new_obj_key = await create_object_copy(model_id, request_params[key])
-        flash_message = (
-            f"Object with {key} {request_params[key]} was copied with {key} {new_obj_key}",
-            "success",
-        )
+        message = f"Object with {key} {request_params[key]} was copied with {key} {new_obj_key}"
+        flash_message = (message, "success")
+        request["history_action"]["log_message"] = message
+        request["history_action"]["object_id"] = new_obj_key
     except asyncpg.exceptions.UniqueViolationError as e:
         flash_message = (
             f"Duplicate in Unique column Error during copy: {e.args}. \n"
@@ -105,15 +126,15 @@ async def model_copy(request, model_id):
     return await model_view_table(request, model_id, flash_message)
 
 
-@admin.route("/db_drop", methods=["GET"])
+@admin.route("/init_db", methods=["GET"])
 @auth.token_validation()
-async def db_drop_view(request: Request):
-    return jinja.render("db_drop.html", request, data=await count_elements_in_db())
+async def init_db_view(request: Request):
+    return jinja.render("init_db.html", request, data=await count_elements_in_db())
 
 
-@admin.route("/db_drop", methods=["POST"])
+@admin.route("/init_db", methods=["POST"])
 @auth.token_validation()
-async def db_drop_run(request: Request):
+async def init_db_run(request: Request):
 
     data = literal_eval(request.form["data"][0])
     count = 0
@@ -121,9 +142,11 @@ async def db_drop_run(request: Request):
         if isinstance(value, int):
             count += value
     await drop_and_recreate_all_tables()
-
-    request["flash"](f"{count} object was deleted", "success")
-    return jinja.render("db_drop.html", request, data=await count_elements_in_db())
+    message = f"{count} object was deleted. DB was Init from Scratch"
+    request["flash"](message, "success")
+    request["history_action"]["log_message"] = message
+    request["history_action"]["object_id"] = "init_db"
+    return jinja.render("init_db.html", request, data=await count_elements_in_db())
 
 
 @admin.route("/presets", methods=["GET"])
@@ -147,7 +170,8 @@ async def settings_view(request: Request):
 @auth.token_validation()
 async def presets_use(request: Request):
     preset = utils.get_preset_by_id(request.form["preset"][0])
-    if "with_db" in request.form:
+    with_drop = "with_db" in request.form
+    if with_drop:
         await drop_and_recreate_all_tables()
         request["flash"](f"DB was successful Dropped", "success")
     try:
@@ -157,14 +181,14 @@ async def presets_use(request: Request):
             )
         for message in request["flash_messages"]:
             request["flash"](*message)
+        request["history_action"]["log_message"] = (
+            f"Loaded preset {preset['id']}"
+            f"" + f"{' with DB drop' if with_drop else ''}"
+        )
+        request["history_action"]["object_id"] = "load_preset"
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
     return jinja.render("presets.html", request, presets=utils.get_presets()["presets"])
-
-
-@admin.middleware("request")
-async def middleware_request(request):
-    request["flash_messages"] = []
 
 
 @admin.route("/<model_id>/upload/", methods=["POST"])
@@ -184,6 +208,10 @@ async def file_upload(request: Request, model_id: Text):
         file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
         await utils.write_file(file_path, upload_file.body)
         request, code = await insert_data_from_csv(file_path, model_id, request)
+        request["history_action"][
+            "log_message"
+        ] = f"Upload data from CSV from file {file_name} to model {model_id}"
+        request["history_action"]["object_id"] = "upload_csv"
         return await model_view_table(request, model_id, request["flash_messages"])
 
 
@@ -203,6 +231,8 @@ async def sql_query_run(request):
         sql_query = request.form["sql_query"][0]
         try:
             result = await cfg.app.db.status(cfg.app.db.text(sql_query))
+            request["history_action"]["log_message"] = f"Query run '{sql_query}'"
+            request["history_action"]["object_id"] = "sql_run"
         except asyncpg.exceptions.PostgresSyntaxError as e:
             request["flash"](f"{e.args}", "error")
     return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
@@ -211,12 +241,20 @@ async def sql_query_run(request):
 @admin.route("/history", methods=["GET"])
 @auth.token_validation()
 async def history_display(request):
-    # todo: in next versions
-    history_data_columns = []
+    model = cfg.app.db.tables[cfg.history_table_name]
+    query = cfg.app.db.select([model])
+    try:
+        rows = await query.gino.all()
+    except asyncpg.exceptions.UndefinedTableError:
+        await cfg.app.db.gino.create_all(tables=[model])
+        rows = await query.gino.all()
     history_data = []
+    for row in rows:
+        row = {cfg.history_data_columns[num]: field for num, field in enumerate(row)}
+        history_data.append(row)
     return jinja.render(
         "history.html",
         request,
-        history_data_columns=history_data_columns,
+        history_data_columns=cfg.history_data_columns,
         history_data=history_data,
     )

@@ -8,7 +8,7 @@ from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 
 loader = FileSystemLoader(
@@ -62,6 +62,7 @@ class Config(BaseModel):
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
     datetime_str_formats: List[str] = [
+        "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
         "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%d %H:%M:%S.%f",
@@ -86,6 +87,18 @@ class Config(BaseModel):
         "csv_update_existed",
     ]
     round_number: float = 3
+    history_model: object = None
+    history_data_columns: List[str] = []
+    track_history_endpoints: List[str] = [
+        "app.admin.model_delete",
+        "app.admin.model_delete_all",
+        "app.admin.model_edit_post",
+        "app.admin.model_add",
+        "app.admin.presets_use",
+        "app.admin.init_db_run",
+        "app.admin.file_upload",
+        "app.admin.sql_query_run",
+    ]
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

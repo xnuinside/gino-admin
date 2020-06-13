@@ -35,6 +35,7 @@ async def model_edit_post(request, model_id):
     model_data = cfg.models[model_id]
     model = model_data["model"]
     obj = await model.get(model_data["columns_data"][model_data["key"]]["type"](obj_id))
+    old_obj = obj.to_dict()
     request_params = {
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
@@ -44,7 +45,11 @@ async def model_edit_post(request, model_id):
     request_params = utils.correct_types(request_params, model_data["columns_data"])
     try:
         await obj.update(**request_params).apply()
-        request["flash"]("Changes was saved", "success")
+        changes = utils.get_changes(old_obj, obj.to_dict())
+        message = f'Object with id {obj_id} was updated. Changes: from {changes["from"]} to {changes["to"]}'
+        request["flash"](message, "success")
+        request["history_action"]["log_message"] = message
+        request["history_action"]["object_id"] = obj_id
     except asyncpg.exceptions.ForeignKeyViolationError:
         request["flash"](
             f"ForeignKey error. "
@@ -87,8 +92,11 @@ async def model_add(request, model_id):
             request_params = utils.correct_types(
                 request_params, model_data["columns_data"]
             )
-            await model_data["model"].create(**request_params)
-            request["flash"]("Object was added", "success")
+            obj = await model_data["model"].create(**request_params)
+            message = f'Object with {model_data["key"]} {obj.to_dict()[model_data["key"]]} was added.'
+            request["flash"](message, "success")
+            request["history_action"]["log_message"] = message
+            request["history_action"]["object_id"] = obj.to_dict()[model_data["key"]]
         except (
             asyncpg.exceptions.StringDataRightTruncationError,
             ValueError,
@@ -117,16 +125,18 @@ async def model_delete(request, model_id):
     request_params[unique_cn] = model_data["columns_data"][unique_cn]["type"](
         request_params[unique_cn]
     )
+
     try:
         await model_data["model"].delete.where(
             getattr(model_data["model"], unique_cn) == request_params[unique_cn]
         ).gino.status()
-        flash_message = (
-            f"Object with {unique_cn} {request_params[unique_cn]} was deleted",
-            "success",
-        )
+        message = f"Object with {unique_cn} {request_params[unique_cn]} was deleted"
+        flash_message = (message, "success")
+        request["history_action"]["log_message"] = message
+        request["history_action"]["object_id"] = request_params[unique_cn]
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         flash_message = (str(e.args), "error")
+
     return await model_view_table(request, model_id, flash_message)
 
 
@@ -135,7 +145,10 @@ async def model_delete(request, model_id):
 async def model_delete_all(request, model_id):
     try:
         await cfg.models[model_id]["model"].delete.where(True).gino.status()
-        flash_message = ("All objects was deleted", "success")
+        message = f"All objects in {model_id} was deleted"
+        flash_message = (message, "success")
+        request["history_action"]["log_message"] = message
+        request["history_action"]["object_id"] = model_id
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         flash_message = (e.args, "error")
     return await model_view_table(request, model_id, flash_message)

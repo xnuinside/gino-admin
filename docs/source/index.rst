@@ -28,7 +28,7 @@ Installation
 
 .. code-block:: console
 
-    $ pip install gino-admin==0.0.11
+    $ pip install gino-admin==0.0.12
 
 
 .. image:: ../img/demo.png

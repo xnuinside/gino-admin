@@ -1,5 +1,52 @@
 Changelog
 =========
+Version 0.0.12 Updates
+----------------------
+
+1. Now menu in top menu are  hidden if you are not authorized
+
+2. Added History logging for actions in Admin panel (edit, delete, add, init_db, load presets and etc) and History page for displaying.
+
+3. Drop DB renamed in Init DB, that better describe feature
+
+4. Fixed deepcopy for models with Integer IDs + other minor issues
+
+5. In UI added normal Display for Bool properties - with check boxes
+
+6. Added Calendar (date & time) pickers in UI for Datetime fields.
+
+Version 0.0.11:
+---------------
+1. Added possibility to define custom route to Gino Admin Panel. With 'route=' config setting
+By default, used '/admin' route
+
+2. Added Demo Panel  `Gino-Admin demo`_ - you can log in and play with it. Login & pass - admin / 1234
+If you don't see any data in UI maybe somebody before you cleaned it - go to Presets and load one of the data presets.
+
+3. Fixed minors issues: 1)floats now displayed with fixed number of symbols. Parameter can be changed with config param `round_number=`.
+2) now file upload fill not raise error if no file was chosen
+
+4. Deepcopy now ask id - you can use auto-generated or define own id to 'deepcopy object'
+
+
+Version 0.0.10 Updates:
+-----------------------
+1. GinoAdmin Config moved to Pydantic.
+Added possible to send any properties to config with config dict.
+
+2. Added Config param 'name' - this is a name, that will be showed in header near menu.
+By Default it is display "Sanic-Gino Admin Panel", now you can change it to your header.
+
+3. UI updates: Gino Admin Panel version now showed in UI footer, Login page now more presentable,
+changed index page of Admin Panel, now it presented main feature.
+
+4. Initialised first project's docs
+
+5. Edit/Delete now take object's unique key as argument and stop fall if in key was '/' symbol
+
+6. Added param 'csv_update_existed' in Config. By default 'csv_update_existed = True'. This mean if you upload CSV with rows with unique keys, that already exist in DB - it will update all fields with values from CSV.
+You can turn off it with set 'csv_update_existed = False'.
+
 
 Version 0.0.9 Updates:
 ----------------------

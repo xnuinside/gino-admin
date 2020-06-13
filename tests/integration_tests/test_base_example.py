@@ -31,7 +31,7 @@ def test_main_service_run(base_app_url):
 
 def test_admin_service_drop(admin_auth_headers, base_app_url):
     result = requests.post(
-        f"{base_app_url}/admin/api/drop_db", headers=admin_auth_headers
+        f"{base_app_url}/admin/api/init_db", headers=admin_auth_headers
     )
     assert result.status_code == 200
 
