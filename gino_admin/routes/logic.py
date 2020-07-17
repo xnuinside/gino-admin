@@ -257,6 +257,7 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
 
 
 async def insert_data_from_csv_file(file_path: Text, model_id: Text, request: Request):
+    """ file_path - path to csv file in the filesystem"""
     with open(file_path, "r") as read_obj:
         return await insert_data_from_csv_rows(read_obj, model_id, request)
 
@@ -273,7 +274,7 @@ async def upload_from_csv_data(upload_file: File, file_name: Text, request: Requ
 
 
 async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Request):
-    """ file_path - path to csv file"""
+    """ process the data from the in-memory csv file object """
     # Iterate over each row in the csv using reader object
     csv_reader = reader(read_obj)
     header = None
