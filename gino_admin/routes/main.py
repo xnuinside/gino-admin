@@ -1,6 +1,5 @@
 import os
 from ast import literal_eval
-from datetime import datetime
 from typing import Text
 
 import asyncpg
@@ -14,7 +13,8 @@ from gino_admin.routes.crud import model_view_table
 from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      deepcopy_recursive,
                                      drop_and_recreate_all_tables,
-                                     insert_data_from_csv, render_model_view)
+                                     insert_data_from_csv_file, render_model_view,
+                                     upload_from_csv_data)
 
 cfg = config.cfg
 jinja = cfg.jinja
@@ -176,7 +176,7 @@ async def presets_use(request: Request):
         request["flash"](f"DB was successful Dropped", "success")
     try:
         for model_id, file_path in preset["files"].items():
-            request, code = await insert_data_from_csv(
+            request, is_success = await insert_data_from_csv_file(
                 os.path.join(cfg.presets_folder, file_path), model_id.lower(), request
             )
         for message in request["flash_messages"]:
@@ -194,10 +194,7 @@ async def presets_use(request: Request):
 @admin.route("/<model_id>/upload/", methods=["POST"])
 @auth.token_validation()
 async def file_upload(request: Request, model_id: Text):
-    if not os.path.exists(cfg.upload_dir):
-        os.makedirs(cfg.upload_dir)
     upload_file = request.files.get("file_names")
-
     file_name = utils.secure_filename(upload_file.name)
     if not upload_file or not file_name:
         flash_message = ("No file chosen to Upload", "error")
@@ -205,13 +202,7 @@ async def file_upload(request: Request, model_id: Text):
     if not utils.valid_file_size(upload_file.body, cfg.max_file_size):
         return response.redirect("/?error=invalid_file_size")
     else:
-        file_path = f"{cfg.upload_dir}/{file_name}_{datetime.now().isoformat()}.{upload_file.type.split('/')[1]}"
-        await utils.write_file(file_path, upload_file.body)
-        request, code = await insert_data_from_csv(file_path, model_id, request)
-        request["history_action"][
-            "log_message"
-        ] = f"Upload data from CSV from file {file_name} to model {model_id}"
-        request["history_action"]["object_id"] = "upload_csv"
+        request, is_success = await upload_from_csv_data(upload_file, file_name, request, model_id)
         return await model_view_table(request, model_id, request["flash_messages"])
 
 

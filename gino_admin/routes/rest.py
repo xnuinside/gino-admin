@@ -4,10 +4,10 @@ from sanic import Blueprint, response
 from sanic.request import Request
 from sanic_jwt.decorators import protected
 
-from gino_admin import config
+from gino_admin import config, utils
 from gino_admin.history import write_history_after_response
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
-                                     insert_data_from_csv)
+                                     insert_data_from_csv_file, upload_from_csv_data)
 from gino_admin.utils import get_preset_by_id, logger, read_yaml
 
 cfg = config.cfg
@@ -55,7 +55,8 @@ async def presets(request: Request):
     try:
         for model_id, file_path in preset["files"].items():
             request["flash_messages"] = []
-            request, code = await insert_data_from_csv(
+            # TODO(ehborisov): handle is_success and errors properly?
+            request, is_success = await insert_data_from_csv_file(
                 os.path.join(presets_folder, file_path), model_id.lower(), request
             )
         logger.debug(str(request["flash_messages"]))
@@ -83,3 +84,28 @@ async def drop(request: Request):
     request["history_action"]["log_message"] = "DB was Init from Scratch"
     request["history_action"]["object_id"] = "init_db"
     return response.json({"status": "DB was dropped. Tables re-created."}, status=200)
+
+
+@api.route("/upload_csv", methods=["POST"])
+@protected(api)
+async def upload_csv(request: Request):
+    upload_file = request.files.get("file_names")
+    file_name = utils.secure_filename(upload_file.name)
+    model_id = request.json.get("model_id")
+    if not upload_file or not file_name:
+        return response.json({"error": f"No file is found in the request payload."}, status=422)
+    if not file_name.endswith('.csv') or upload_file.type != "text/csv":
+        return response.json({"error": f"CSV file of text/csv type is expected."}, status=422)
+    request, is_success = await upload_from_csv_data(
+        upload_file, file_name, request, model_id.lower()
+    )
+    if is_success:
+        result = response.json({"status": (
+            f"Successfully uploaded {f'model {model_id}' if model_id else 'composite'} data.")}, status=200)
+    else:
+        error = next([m[0] for m in request["flash_messages"] if m[1] == 'error'], None)
+        if error:
+            return response.json({"error": error}, status=422)
+        else:
+            return response.json({"error": "Unknown error on csv data upload"}, status=500)
+    return result
