@@ -1,12 +1,13 @@
 from collections import defaultdict
 from copy import deepcopy
 from csv import reader
-from typing import List, Optional, Text
+from typing import List, Optional, Text, Any
+from io import TextIOWrapper, BytesIO
 
 import asyncpg
 from gino.declarative import Model
 from sanic.log import logger
-from sanic.request import Request
+from sanic.request import Request, File
 from sanic.response import HTTPResponse
 from sqlalchemy.sql.schema import Column
 from sqlalchemy_utils.functions import identity
@@ -255,96 +256,111 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
     return id_added, id_updated, None, stack, unique_keys
 
 
-async def insert_data_from_csv(file_path: Text, model_id: Text, request: Request):
-    """ file_path - path to csv file"""
+async def insert_data_from_csv_file(file_path: Text, model_id: Text, request: Request):
+    """ file_path - path to csv file in the filesystem"""
     with open(file_path, "r") as read_obj:
-        # pass the file object to reader() to get the reader object
-        csv_reader = reader(read_obj)
-        # Iterate over each row in the csv using reader object
-        header = None
-        ids_added = []
-        ids_updated = []
-        try:
-            errors = []
-            unique_keys = {}
-            stack = []
-            for num, row in enumerate(csv_reader):
-                # row variable is a list that represents a row in csv
-                if num == 0:
-                    error_request, header, composite = process_csv_header(
-                        model_id, row, request
-                    )
+        return await insert_data_from_csv_rows(read_obj, model_id, request)
+
+
+async def upload_from_csv_data(upload_file: File, file_name: Text, request: Request, model_id: Text):
+    with TextIOWrapper(BytesIO(upload_file.body)) as read_obj:
+        request, is_success = await insert_data_from_csv_rows(read_obj, model_id, request)
+        if is_success:
+            request["history_action"][
+                "log_message"
+            ] = f"Upload data from CSV from file {file_name} to model {model_id}"
+            request["history_action"]["object_id"] = "upload_csv"
+        return request, is_success
+
+
+async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Request):
+    """ process the data from the in-memory csv file object """
+    # Iterate over each row in the csv using reader object
+    csv_reader = reader(read_obj)
+    header = None
+    ids_added = []
+    ids_updated = []
+    try:
+        errors = []
+        unique_keys = {}
+        stack = []
+        for num, row in enumerate(csv_reader):
+            # row variable is a list that represents a row in csv
+            if num == 0:
+                error_request, header, composite = process_csv_header(
+                    model_id, row, request
+                )
+                if error_request:
+                    return error_request, False
+                if composite:
+                    (
+                        error_request,
+                        header,
+                        tables_indexes,
+                    ) = extract_tables_from_header(header, request)
                     if error_request:
                         return error_request, False
-                    if composite:
-                        (
-                            error_request,
-                            header,
-                            tables_indexes,
-                        ) = extract_tables_from_header(header, request)
-                        if error_request:
-                            return error_request, False
+                continue
+            if not composite:
+                id_added, id_updated, error = await upload_simple_csv_row(
+                    row, header, model_id
+                )
+                if id_updated:
+                    ids_updated.append(id_updated)
+                elif error:
+                    errors.append(error)
                     continue
-                if not composite:
-                    id_added, id_updated, error = await upload_simple_csv_row(
-                        row, header, model_id
-                    )
-                    if id_updated:
-                        ids_updated.append(id_updated)
-                    elif error:
-                        errors.append(error)
-                        continue
-                    elif id_added:
-                        ids_added.append(id_added)
-                else:
-                    (
-                        id_added,
-                        id_updated,
-                        error,
-                        stack,
-                        unique_keys,
-                    ) = await upload_composite_csv_row(
-                        row, header, tables_indexes, stack, unique_keys
-                    )
-                    if errors:
-                        errors.append(error)
-                        return request, False
-                    if id_added:
-                        ids_added.append(id_added)
-                    if id_updated:
-                        ids_updated.append(id_updated)
-            if errors:
-                request["flash_messages"].append(
-                    (
-                        f"Errors: was not added  (row number, row {cfg.models[model_id]['key']}, error) : {errors}",
-                        "error",
-                    )
+                elif id_added:
+                    ids_added.append(id_added)
+            else:
+                (
+                    id_added,
+                    id_updated,
+                    error,
+                    stack,
+                    unique_keys,
+                ) = await upload_composite_csv_row(
+                    row, header, tables_indexes, stack, unique_keys
                 )
-
-            base_msg = (
-                "Objects"
-                if composite
-                else f"Objects with {cfg.models[model_id]['key']}:"
-            )
-            if ids_added:
-                request["flash_messages"].append(
-                    (f"{base_msg}{ids_added} was added", "success")
-                )
-            if ids_updated:
-                request["flash_messages"].append(
-                    (f" {base_msg}{ids_updated} was updated", "success")
-                )
-        except ValueError as e:
-            raise e
-            request["flash_messages"].append((e.args, "error"))
-        except asyncpg.exceptions.ForeignKeyViolationError as e:
-            request["flash_messages"].append((e.args, "error"))
-        except asyncpg.exceptions.NotNullViolationError as e:
-            column = e.args[0].split("column")[1].split("violates")[0]
+                if errors:
+                    errors.append(error)
+                    return request, False
+                if id_added:
+                    ids_added.append(id_added)
+                if id_updated:
+                    ids_updated.append(id_updated)
+        if errors:
             request["flash_messages"].append(
-                (f"Field {column} cannot be null", "error")
+                (
+                    f"Errors: was not added  (row number, row {cfg.models[model_id]['key']}, error) : {errors}",
+                    "error",
+                )
             )
-        return request, True
+
+        base_msg = (
+            "Objects"
+            if composite
+            else f"Objects with {cfg.models[model_id]['key']}:"
+        )
+        if ids_added:
+            request["flash_messages"].append(
+                (f"{base_msg}{ids_added} was added", "success")
+            )
+        if ids_updated:
+            request["flash_messages"].append(
+                (f" {base_msg}{ids_updated} was updated", "success")
+            )
+    except ValueError as e:
+        request["flash_messages"].append((e.args, "error"))
+        raise e
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
+        request["flash_messages"].append((e.args, "error"))
+    except asyncpg.exceptions.NotNullViolationError as e:
+        column = e.args[0].split("column")[1].split("violates")[0]
+        request["flash_messages"].append(
+            (f"Field {column} cannot be null", "error")
+        )
+    return request, True
 
 
 async def drop_and_recreate_all_tables():

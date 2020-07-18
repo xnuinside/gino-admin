@@ -31,3 +31,7 @@ def test_admin_service_drop(admin_auth_headers, base_app_url):
 
 def test_presets_was_loaded(initdb):
     b.test_presets_was_loaded(initdb)
+
+    
+def test_upload_csv_file(admin_auth_headers, base_app_url):
+    b.test_upload_csv_file(admin_auth_headers, base_app_url)
