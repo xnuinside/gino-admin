@@ -89,9 +89,9 @@ async def drop(request: Request):
 @api.route("/upload_csv", methods=["POST"])
 @protected(api)
 async def upload_csv(request: Request):
-    upload_file = request.files.get("file_names")
+    upload_file = request.files.get("upload_file")
     file_name = utils.secure_filename(upload_file.name)
-    model_id = request.json.get("model_id")
+    model_id = dict(request.query_args).get("model_id")
     if not upload_file or not file_name:
         return response.json({"error": f"No file is found in the request payload."}, status=422)
     if not file_name.endswith('.csv') or upload_file.type != "text/csv":

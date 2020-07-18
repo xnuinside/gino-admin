@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from csv import reader
 from typing import List, Optional, Text, Any
-from io import StringIO
+from io import TextIOWrapper, BytesIO
 
 import asyncpg
 from gino.declarative import Model
@@ -263,7 +263,7 @@ async def insert_data_from_csv_file(file_path: Text, model_id: Text, request: Re
 
 
 async def upload_from_csv_data(upload_file: File, file_name: Text, request: Request, model_id: Text):
-    with StringIO(upload_file.body) as read_obj:
+    with TextIOWrapper(BytesIO(upload_file.body)) as read_obj:
         request, is_success = await insert_data_from_csv_rows(read_obj, model_id, request)
         if is_success:
             request["history_action"][
