@@ -1,5 +1,12 @@
 import pytest
 import requests
+import tests_helpers as h
+
+
+@pytest.fixture(scope="module")
+def base_app_url(module_scoped_container_getter):
+    """ Wait for the api from fastapi_main_app_main to become responsive """
+    return h.get_app_url(module_scoped_container_getter, "base_app")
 
 
 @pytest.fixture(scope="module")
