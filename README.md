@@ -45,23 +45,13 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ### How to install
 
-```pip install gino-admin==0.0.12```
+```pip install gino-admin==0.1.0```
     
 
-### Updates
-#### Version 0.0.12 (current master):
-1. Now menu in top menu are  hidden if you are not authorized
+### Updates in version 0.1.0 (current master):
 
-2. Added History logging for actions in Admin panel (edit, delete, add, init_db, load presets and etc) and History page for displaying.
-![History](docs/img/history.png)
-3. Drop DB renamed in Init DB, that better describe feature
-
-4. Fixed deepcopy for models with Integer IDs + other minor issues
-
-5. In UI added normal Display for Bool properties - with check boxes
-
-6. Added Calendar (date & time) pickers in UI for Datetime fields. 
-<img src="https://raw.githubusercontent.com/xnuinside/gino-admin/master/docs/img/controls.png" height="300">
+1. Added REST endpoint to upload data from CSV file to DB.
+2. Cleaned up styles in UI.
 
 
 ### How to use

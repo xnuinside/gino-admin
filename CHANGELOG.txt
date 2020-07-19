@@ -1,3 +1,9 @@
+Version 0.1.0 (current master) Updates
+------------------------------------------
+1. Added REST endpoint to upload data from CSV file to DB.
+2. Cleaned up styles in UI.
+
+
 Version 0.0.12 Updates
 ----------------------
 

@@ -9,6 +9,7 @@ from sanic_jwt import Initialize
 from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
+# from gino_admin.users import add_users_model
 from gino_admin.routes import rest
 from gino_admin.utils import GinoAdminError, logger, types_map
 
@@ -116,6 +117,7 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
             )
 
     add_history_model(db)
+    # add_users_model(db)
 
     extract_models_metadata(db, db_models)
     if config_settings.get("route"):

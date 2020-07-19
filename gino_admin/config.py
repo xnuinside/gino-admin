@@ -8,7 +8,7 @@ from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.0.12"
+__version__ = "0.1.0"
 
 
 loader = FileSystemLoader(
@@ -88,7 +88,9 @@ class Config(BaseModel):
     ]
     round_number: float = 3
     history_model: object = None
+    users_model: object = None
     history_data_columns: List[str] = []
+    admin_users_data_columns: List[str] = []
     track_history_endpoints: List[str] = [
         "app.admin.model_delete",
         "app.admin.model_delete_all",
