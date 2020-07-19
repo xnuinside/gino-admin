@@ -4,6 +4,7 @@ Docs in process: `Gino-Admin docs`_
 
 Play with Demo (current master 0.1.0): `>>>> Gino-Admin demo <<<<`_
 
+.. _>>>> Gino-Admin demo <<<<: http://www.xnu-im.space/gino_admin_demo/login
 .. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
 
 
