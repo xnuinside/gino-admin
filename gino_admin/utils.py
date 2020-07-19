@@ -238,7 +238,7 @@ def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
                 new_obj_key = new_obj_key[:len_]
     else:
         # todo: need to check ints with max size
-        new_obj_key = base_key + randint(0, 10000000000)
+        new_obj_key = base_key + randint(0, 10000)
     return new_obj_key
 
 

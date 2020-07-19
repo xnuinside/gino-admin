@@ -41,12 +41,12 @@ def token_validation():
     return decorator
 
 
-def validate_login(request, config):
+def validate_login(request, _config):
     if request.method == "POST":
         username = str(request.form.get("username"))
         password = str(request.form.get("password"))
-        admin_user = str(config["ADMIN_USER"])
-        admin_password = str(config["ADMIN_PASSWORD"])
+        admin_user = str(_config["ADMIN_USER"])
+        admin_password = str(_config["ADMIN_PASSWORD"])
         if username == admin_user and password == admin_password:
             return username
     return False

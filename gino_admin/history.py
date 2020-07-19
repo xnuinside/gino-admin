@@ -12,12 +12,15 @@ cfg = config.cfg
 def add_history_model(db):
     if "gino_admin_history" not in db.tables:
 
-        class History(db.Model):
+        class GinoAdminHistory(db.Model):
 
             __tablename__ = cfg.history_table_name
 
             id = db.Column(
-                db.String(), db.Sequence("history"), unique=True, primary_key=True
+                db.String(),
+                db.Sequence("gino_admin_seq_history"),
+                unique=True,
+                primary_key=True,
             )
             datetime = db.Column(db.DateTime())
             user = db.Column(db.String())
@@ -25,7 +28,7 @@ def add_history_model(db):
             log_message = db.Column(db.String())
             object_id = db.Column(db.String())
 
-        cfg.history_model = History
+        cfg.history_model = GinoAdminHistory
         cfg.history_data_columns = [
             column.name
             for num, column in enumerate(db.tables[cfg.history_table_name].columns)
