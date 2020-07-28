@@ -81,9 +81,9 @@ async def presets(request: Request):
 @protected(api)
 async def drop(request: Request):
     await drop_and_recreate_all_tables()
-    request["history_action"]["log_message"] = "DB was Init from Scratch"
+    request["history_action"]["log_message"] = "Database has been initialized from scratch"
     request["history_action"]["object_id"] = "init_db"
-    return response.json({"status": "DB was dropped. Tables re-created."}, status=200)
+    return response.json({"status": "DB has been dropped. Tables re-created."}, status=200)
 
 
 @api.route("/upload_csv", methods=["POST"])
