@@ -51,6 +51,7 @@ def extract_column_data(model_id: Text) -> Dict:
             "nullable": column.nullable,
             "unique": column.unique,
             "foreign_keys": column.foreign_keys,
+            "db_type": column.type
         }
     required = [
         key for key, value in columns_data.items() if value["nullable"] is False
