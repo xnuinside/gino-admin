@@ -7,6 +7,7 @@ import uuid
 from random import randint
 from typing import Any, Dict, List, Text, Union
 from unicodedata import normalize
+from sqlalchemy.types import BigInteger
 
 import aiofiles
 import yaml
@@ -237,8 +238,10 @@ def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
             else:
                 new_obj_key = new_obj_key[:len_]
     else:
-        # todo: need to check ints with max size
-        new_obj_key = base_key + randint(0, 10000)
+        if isinstance(model_data["columns_data"][key]["db_type"], BigInteger):
+            new_obj_key = randint(0, 2 ** 63)
+        else:
+            new_obj_key = randint(0, 2 ** 31)
     return new_obj_key
 
 

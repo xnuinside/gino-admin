@@ -88,15 +88,17 @@ async def model_deepcopy(request, model_id):
         request["flash"](f"{columns_data[key]} must be number", "error")
         return await render_model_view(request, model_id)
     try:
-        new_base_obj_id = await deepcopy_recursive(
-            cfg.models[model_id]["model"],
-            base_object_id,
-            new_id=request_params["new_id"],
-        )
-        message = f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}"
-        request["flash"](message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = new_base_obj_id
+        async with cfg.app.db.acquire() as conn:
+            async with conn.transaction() as _:
+                new_base_obj_id = await deepcopy_recursive(
+                    cfg.models[model_id]["model"],
+                    base_object_id,
+                    new_id=request_params["new_id"],
+                )
+                message = f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}"
+                request["flash"](message, "success")
+                request["history_action"]["log_message"] = message
+                request["history_action"]["object_id"] = new_base_obj_id
     except asyncpg.exceptions.PostgresError as e:
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
