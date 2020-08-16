@@ -10,7 +10,7 @@ cfg = config.cfg
 
 
 def add_history_model(db):
-    if "gino_admin_history" not in db.tables:
+    if cfg.history_table_name not in db.tables:
 
         class GinoAdminHistory(db.Model):
 

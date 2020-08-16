@@ -45,13 +45,14 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ### How to install
 
-```pip install gino-admin==0.1.0```
+```pip install gino-admin==0.1.1```
     
 
-### Updates in version 0.1.0 (current master):
+### Updates in version 0.1.1 (current master):
 
-1. Added REST endpoint to upload data from CSV file to DB.
-2. Cleaned up styles in UI.
+1. Fixed annoying UI issues (with icons on buttons & with modal in Init DB page)
+2. Fixed some issues with uploading huge Composite CSV
+
 
 
 ### How to use
