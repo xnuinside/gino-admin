@@ -1,3 +1,9 @@
+Version 0.1.1 Updates
+------------------------------------------
+1. Fixed annoying UI issues (with icons on buttons & with modal in Init DB page)
+2. Fixed some issues with uploading huge Composite CSV
+
+
 Version 0.1.0 (current master) Updates
 ------------------------------------------
 1. Added REST endpoint to upload data from CSV file to DB.
@@ -8,7 +14,6 @@ Version 0.0.12 Updates
 ----------------------
 
 1. Now menu in top menu are  hidden if you are not authorized
-
 2. Added History logging for actions in Admin panel (edit, delete, add, init_db, load presets and etc) and History page for displaying.
 
 3. Drop DB renamed in Init DB, that better describe feature

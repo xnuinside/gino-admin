@@ -8,7 +8,7 @@ from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 loader = FileSystemLoader(

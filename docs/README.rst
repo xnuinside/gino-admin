@@ -2,7 +2,7 @@ gino-admin
 ----------
 Docs in process: `Gino-Admin docs`_
 
-Play with Demo (current master 0.1.0): `>>>> Gino-Admin demo <<<<`_
+Play with Demo (current master 0.1.1): `>>>> Gino-Admin demo <<<<`_
 
 .. _>>>> Gino-Admin demo <<<<: http://www.xnu-im.space/gino_admin_demo/login
 .. _Gino-Admin docs: https://gino-admin.readthedocs.io/en/latest/ui_screens.html
@@ -76,7 +76,7 @@ How to install
 
 .. code-block:: python
     
-    pip install gino-admin==0.1.0
+    pip install gino-admin==0.1.1
     
 
 
