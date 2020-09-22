@@ -27,11 +27,13 @@ def add_history_model(db):
             route = db.Column(db.String())
             log_message = db.Column(db.String())
             object_id = db.Column(db.String())
-
+        print(db.schema)
+        print(db.tables.keys())
+        schema = db.schema + '.' if db.schema else ''
         cfg.history_model = GinoAdminHistory
         cfg.history_data_columns = [
             column.name
-            for num, column in enumerate(db.tables[cfg.history_table_name].columns)
+            for num, column in enumerate(db.tables[schema+cfg.history_table_name].columns)
         ]
 
 

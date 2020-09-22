@@ -1,3 +1,4 @@
+
 <div class="ui fixed inverted menu">
       <div class="ui container">
         <a href="{{url_prefix}}" class="header item">
@@ -14,13 +15,13 @@
           {% if objects.items() | length > 4 %}
           <div class="ui simple dropdown item">
           More Models <i class="dropdown icon"></i>
-          <div class="menu">
-              {% for key in objects %}
-              {% if loop.index > 4 %}
-            <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
-              {% endif %}
-              {% endfor %}
-          </div>
+            <div class="menu" style="max-height: 500px; overflow-y: scroll;">
+                {% for key in objects %}
+                {% if loop.index > 4 %}
+              <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
+                {% endif %}
+                {% endfor %}
+            </div>
 
           </div>
         {% endif %}

@@ -15,7 +15,7 @@
 <form class="ui form" action="{{url}}" method="post">
 {% for column, data in columns.items() %}
   <div class="field">
-    <label>{{column}}
+    <label>{{column}} ( {{data['type']}})
       {% if data['len'] %}
         <span style="font-weight: normal;">(max length: {{ data['len'] }})</span>
       {% endif %}

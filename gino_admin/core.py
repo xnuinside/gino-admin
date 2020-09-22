@@ -32,15 +32,18 @@ def extract_column_data(model_id: Text) -> Dict:
     """ extract data about column """
     _hash = "_hash"
     columns_data, hashed_indexes = {}, []
+    model_id = model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id
     for num, column in enumerate(cfg.app.db.tables[model_id].columns):
-
         if _hash in column.name:
             name = column.name.split(_hash)[0]
             type_ = HashColumn
             hashed_indexes.append(num)
         else:
             name = column.name
-            type_ = types_map.get(str(column.type).split("(")[0], str)
+            type_ = types_map.get(str(column.type).split("(")[0])
+            if not type_:
+                logger.error(f"{column.type} was not found in types_map")
+                type_ = str
         if len(str(column.type).split("(")) > 1:
             len_ = int(str(column.type).split("(")[1].split(")")[0])
         else:
@@ -50,6 +53,7 @@ def extract_column_data(model_id: Text) -> Dict:
             "len": len_,
             "nullable": column.nullable,
             "unique": column.unique,
+            "primary": column.primary_key,
             "foreign_keys": column.foreign_keys,
             "db_type": column.type
         }
@@ -64,10 +68,13 @@ def extract_column_data(model_id: Text) -> Dict:
                 column_name,
                 key._colspec.split(".")[1],
             )
+    
+    primary_keys = [key for key, value in columns_data.items() if value["primary"] is True]
     columns_details = {
         "unique_columns": unique,
         "required_columns": required,
         "columns_data": columns_data,
+        "primary_keys": primary_keys,
         "columns_names": list(columns_data.keys()),
         "hashed_indexes": hashed_indexes,
         "foreign_keys": foreign_keys,
@@ -84,11 +91,14 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
 
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
-        if not column_details["unique_columns"]:
+        if not column_details["unique_columns"] and not column_details["primary_keys"]:
             models_to_remove.append(model_id)
         else:
             cfg.models[model_id].update(column_details)
-            cfg.models[model_id]["key"] = cfg.models[model_id]["unique_columns"][0]
+            if cfg.models[model_id]["unique_columns"]:
+                cfg.models[model_id]["key"] = cfg.models[model_id]["unique_columns"][0]
+            else:
+                cfg.models[model_id]["key"] = cfg.models[model_id]["primary_keys"][0]
 
     for model_id in models_to_remove:
         logger.warning(

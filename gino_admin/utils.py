@@ -38,10 +38,15 @@ _windows_device_files = (
 types_map = {
     "INTEGER": int,
     "BIGINT": int,
+    "VARCHAR[]": list,
+    "SMALLINT": int,
     "VARCHAR": str,
     "FLOAT": float,
     "DECIMAL": float,
     "NUMERIC": float,
+    "CHAR": str,
+    "TEXT": str,
+    "TIMESTAMP": datetime.datetime,
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
@@ -131,6 +136,7 @@ class CompositeType:
 def correct_types(params: Dict, columns_data: Dict):
     to_del = []
     for param in params:
+        print(param, columns_data[param]["type"])
         if not params[param]:
             # mean None
             to_del.append(param)
@@ -142,8 +148,10 @@ def correct_types(params: Dict, columns_data: Dict):
         ):
             if columns_data[param]["type"] not in [datetime.datetime, datetime.date]:
                 params[param] = columns_data[param]["type"](params[param])
+            elif columns_data[param]["type"] == list:
+                params[param] = params[param].split(",")
             else:
-                params[param] = extract_datetime(params[param])
+                params[param] = extract_datetime(params[param], columns_data[param]["type"])
     for param in to_del:
         del params[param]
     for column in columns_data:
@@ -157,11 +165,15 @@ def extract_date(date_str: Text):
     return date_object
 
 
-def extract_datetime(datetime_str: Text):
+def extract_datetime(datetime_str: Text, type_: Union[datetime.datetime, datetime.date]):
     for str_format in cfg.datetime_str_formats:
         try:
-            datetime_object = datetime.datetime.strptime(datetime_str, str_format)
-            return datetime_object
+            if type_ == datetime.datetime:
+                datetime_object = datetime.datetime.strptime(datetime_str, str_format)
+                return datetime_object
+            elif type_ == datetime.date:
+                date_object = datetime.datetime.strptime(datetime_str, str_format).date()
+                return date_object
         except ValueError:
             continue
 
@@ -171,7 +183,8 @@ def generate_token(ip: Text):
     return pbkdf2_sha256.encrypt(salt + ip)
 
 
-def read_yaml(preset_file):
+def read_yaml(preset_file: Text) -> Dict:
+    """ read preset yaml file"""
     with open(preset_file, "r") as preset_file:
         return yaml.safe_load(preset_file)
 

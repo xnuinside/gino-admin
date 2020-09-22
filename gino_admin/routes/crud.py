@@ -81,7 +81,6 @@ async def model_add_view(request, model_id):
 async def model_add(request, model_id):
     model_data = cfg.models[model_id]
     request_params = {key: request.form[key][0] for key in request.form}
-
     not_filled = [x for x in model_data["required_columns"] if x not in request_params]
     if not_filled:
         request["flash"](f"Fields {not_filled} required. Please fill it", "error")
@@ -92,6 +91,7 @@ async def model_add(request, model_id):
             request_params = utils.correct_types(
                 request_params, model_data["columns_data"]
             )
+            print(request_params, 'after format')
             obj = await model_data["model"].create(**request_params)
             message = f'Object with {model_data["key"]} {obj.to_dict()[model_data["key"]]} was added.'
             request["flash"](message, "success")

@@ -45,8 +45,10 @@
 <script>
 $(document).ready( function () {
     $('#models_table').DataTable({
-    dom: 'Blfrtip',
-
+    dom: 'rtiplfB',
+    orderCellsTop: true,
+      fixedHeader: true,
+    "scrollX": true,
     buttons: [
         {
             extend: 'csvHtml5',
@@ -82,7 +84,6 @@ initComplete: function () {
 }
 } );
 } );
-
 $(function(){
 	$("#delete_all").click(function(){
 		$(".ui.basic.modal").modal('show');

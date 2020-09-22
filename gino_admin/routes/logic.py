@@ -23,7 +23,8 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
     model_data = cfg.models[model_id]
     columns_names = model_data["columns_names"]
-    model = cfg.app.db.tables[model_id]
+    table_name = model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id
+    model = cfg.app.db.tables[table_name]
     query = cfg.app.db.select([model])
     try:
         rows = await query.gino.all()
@@ -208,7 +209,6 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
                 model_id = cfg.composite_csv_settings[table_name]["pattern"].replace(
                     "*", previous_table_name
                 )
-
             columns_data = cfg.models[model_id]["columns_data"]
 
             for index, value in enumerate(table_header):
@@ -377,7 +377,6 @@ async def drop_and_recreate_all_tables():
 async def render_add_or_edit_form(
     request: Request, model_id: Text, obj_id: Text = None
 ) -> HTTPResponse:
-
     model_data = cfg.models[model_id]
     model = cfg.models[model_id]["model"]
     if obj_id:
@@ -465,7 +464,8 @@ async def deepcopy_recursive(
     dependent_models = {}
     # TODO(ehborisov): check how it works in the case of composite key
     for m_id, data in cfg.models.items():
-        for column in cfg.app.db.tables[m_id].columns:
+        table_name = m_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id
+        for column in cfg.app.db.tables[table_name].columns:
             if column.references(primary_key_col):
                 dependent_models[data["model"]] = column
     for dep_model in dependent_models:

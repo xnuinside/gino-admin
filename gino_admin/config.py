@@ -62,6 +62,7 @@ class Config(BaseModel):
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
     datetime_str_formats: List[str] = [
+        "%Y-%m-%d",
         "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
         "%Y-%m-%dT%H:%M:%S",
