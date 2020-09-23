@@ -1,8 +1,8 @@
 from typing import List, Text, Tuple, Union
-
+from ast import literal_eval
 import asyncpg
 from sanic.request import Request
-
+import datetime
 from gino_admin import auth, utils
 from gino_admin.core import admin, cfg
 from gino_admin.routes.logic import render_add_or_edit_form, render_model_view
@@ -24,22 +24,27 @@ async def model_view_table(
 @admin.route("/<model_id>/edit", methods=["GET"])
 @auth.token_validation()
 async def model_edit_view(request, model_id):
-    _id = dict(request.query_args)["id"]
+    _id = dict(request.query_args)["_id"]
+    
+    print(_id)
+    _id = literal_eval(_id)
     return await render_add_or_edit_form(request, model_id, _id)
 
 
 @admin.route("/<model_id>/edit", methods=["POST"])
 @auth.token_validation()
 async def model_edit_post(request, model_id):
-    obj_id = dict(request.query_args)["id"]
     model_data = cfg.models[model_id]
     model = model_data["model"]
-    obj = await model.get(model_data["columns_data"][model_data["key"]]["type"](obj_id))
-    old_obj = obj.to_dict()
     request_params = {
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
     }
+    obj_id = utils.get_obj_id_from_row(model_data, request_params)
+    obj_id = utils.correct_types(obj_id, model_data["columns_data"])
+    print(obj_id)
+    obj = await model.get(**obj_id)
+    old_obj = obj.to_dict()
     if model_data["hashed_indexes"]:
         request_params = utils.reverse_hash_names(model_id, request_params)
     request_params = utils.correct_types(request_params, model_data["columns_data"])
@@ -57,7 +62,7 @@ async def model_edit_post(request, model_id):
             f"because exists objects that depend on it. ",
             "error",
         )
-        request_params[model_data["key"]] = obj_id
+        request_params.update(obj_id)
     except asyncpg.exceptions.UniqueViolationError:
         request["flash"](
             f"{model_id.capitalize()} with such id already exists", "error"
@@ -66,7 +71,7 @@ async def model_edit_post(request, model_id):
         column = e.args[0].split("column")[1].split("violates")[0]
         request["flash"](f"Field {column} cannot be null", "error")
     return await render_add_or_edit_form(
-        request, model_id, request_params[model_data["key"]]
+        request, model_id, obj_id
     )
 
 

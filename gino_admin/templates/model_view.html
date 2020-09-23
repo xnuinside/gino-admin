@@ -12,9 +12,22 @@
     </div>
     <div class="ui divider"></div>
 </div>
-<div id="grid" class="ui grid">
-    <div class="sixteen column row" id="row_filters">
+
+<div id="grid_footer" class="ui grid">
+
+    <div class="eight wide column left aligned content" id="grid_footer_left"><br>
     </div>
+    <div class="eight wide column right aligned content " id="grid_footer_row">
+    </div>
+</div>
+
+<div class="ui grid" id="row_filters">
+
+        <div class="ten wide column  left aligned content">
+        </div>
+        <div class="six wide column right aligned content" id="search">
+        </div>
+
 </div>
 {% include 'data_table.html' %}
 
@@ -23,8 +36,11 @@
 
 {% include 'modals/delete_modal.html' %}
 
-<div id="grid_footer" class="ui grid right aligned content">
-    <div class="three column " id="grid_footer_row">
+<div id="grid_footer" class="ui grid">
+
+    <div class="eight wide column left aligned content" id="grid_footer_left"><br>
+    </div>
+    <div class="eight wide column right aligned content " id="grid_footer_row">
     </div>
 </div>
 <!-- end of modal -->
@@ -47,7 +63,7 @@ $(document).ready( function () {
     $('#models_table').DataTable({
     dom: 'rtiplfB',
     orderCellsTop: true,
-      fixedHeader: true,
+    fixedHeader: true,
     "scrollX": true,
     buttons: [
         {
@@ -65,16 +81,19 @@ $(document).ready( function () {
     ],
 initComplete: function () {
     $('.buttons-csv').attr('id', 'buttons-csv')
-    $('#models_table_length').attr('class', 'dataTables_length twelve wide column')
-    $('#models_table_filter').attr('class','dataTables_filter ui form right aligned content four wide column')
+    $('#models_table_length').attr('class', 'dataTables_length ui form left aligned content four wide column')
+    $('#models_table_filter').attr('class','dataTables_filter ui form inline field')
      $("#grid").appendTo("#models_table_wrapper");
      $('#grid').insertBefore('#models_table');
     $('#buttons-csv').attr('class','ui right floated five wide small green labeled icon button')
     $('#buttons-csv').html('<i class="download icon"></i>Export to CSV')
 
     $('#buttons-csv').insertBefore('#add');
-    $("#models_table_length").appendTo("#row_filters");
-    $("#models_table_filter").appendTo("#row_filters");
+
+    $('#row_filters').insertAfter('#header_grid');
+    
+    $("#models_table_length").appendTo("#grid_footer_left");
+    $("#models_table_filter").appendTo("#search");
     $('#grid_footer').insertAfter('#models_table');
 
     $('#models_table_info').appendTo("#grid_footer_row");

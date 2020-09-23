@@ -27,8 +27,9 @@
         <label>{{column}}</label>
       </div>
     </div>
-    {% elif data['type'] == 'datetime' or data['type'] == 'date' %}
-    <div class="ui calendar standard_calendar" id="standard_calendar">
+    {% elif data['type'] == 'datetime' %}
+    <div class="ui calendar standard_calendar" 
+          id="standard_calendar">
         <div class="ui input left icon">
           <i class="calendar icon"></i>
 
@@ -39,6 +40,17 @@
 
         </div>
       </div>
+    
+    {% elif data['type'] == 'date' %}
+    <div class="ui calendar data_calendar">
+      <div class="ui input left icon">
+        <i class="calendar icon calendar"></i>
+        <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
+                 {% else %}
+                 {% endif %}
+                 placeholder="Date">
+      </div>
+    </div>
     {% else %}
     {% if obj.get(column) is number | float %}
       {% set value=obj.get(column)|round(round_number) %}
@@ -57,7 +69,8 @@
 
 <script>
 
-  $('.standard_calendar').calendar()
-;
+$('.data_calendar').calendar({
+  type: 'date'
+});
 </script>
 {% endblock %}

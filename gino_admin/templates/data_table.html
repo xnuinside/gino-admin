@@ -18,12 +18,14 @@
 
             {% set loop_index=loop.index-1 %}
             {% for key, field in row.items() %}
+                {% if key != '_id' %}
                 <td class="three wide">
                     {% if field is boolean %}
                         {{ field }}
                     {% elif field is number | float %}
                     {{field|round(round_number)}}
                     {% else %} {{field}} {% endif %}</td>
+                {% endif %}
             {% endfor %}
 
             <!-- column controls(edit, delete and etc.) -->

@@ -60,6 +60,10 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 - **Primary keys** to identify unique rows. Now Admin Panel don't expect only 'unique' key in model. Now it firstly works with Primary Keys and only if primary key not exist in model - use 'unique' fields to identify unique rows. Also it supports Composite Primary keys (2 and more fields) in all type of operations: delete/update/insert/deepcopy/copy.
 
+- **Schemas support**
+
+Now if you work using the custom "schema" name - it's okay and supported by Admin Panel.  
+
 3. **Fixed in types support**:
 
 - passing data as a string - now supported both Date & DateTime format (before correct work only DataTime format)

@@ -136,7 +136,6 @@ class CompositeType:
 def correct_types(params: Dict, columns_data: Dict):
     to_del = []
     for param in params:
-        print(param, columns_data[param]["type"])
         if not params[param]:
             # mean None
             to_del.append(param)
@@ -232,9 +231,26 @@ def get_settings():
         settings[setting] = getattr(cfg, setting)
     return settings
 
+def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
+    print(row)
+    result = {}
+    for x in model_data["identity"]:
+        print(x)
+        print(row[x])
+        print(model_data["columns_data"][x]["type"])
+        type_ = model_data["columns_data"][x]["type"]
+        if type_ in [datetime.datetime, datetime.date]:
+            if not isinstance(row[x], str):
+                result[x] = row[x].isoformat()
+            else:
+                result[x] = row[x]
+        else:
+            result[x] = model_data["columns_data"][x]["type"](row[x]) 
+    return result
+
 
 def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
-    key = model_data["key"]
+    keys_columns = model_data["identity"]
     if isinstance(base_key, str):
         new_obj_key = (
             base_key
@@ -268,3 +284,6 @@ def get_changes(old_obj: Dict, new_obj: Dict):
             from_[key] = old_obj[key]
             to_[key] = value
     return {"from": from_, "to": to_}
+
+def get_table_name(model_id: Text) -> Text:
+    return model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id

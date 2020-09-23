@@ -11,7 +11,7 @@ from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
 # from gino_admin.users import add_users_model
 from gino_admin.routes import rest
-from gino_admin.utils import GinoAdminError, logger, types_map
+from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name
 
 cfg = config.cfg
 
@@ -32,8 +32,8 @@ def extract_column_data(model_id: Text) -> Dict:
     """ extract data about column """
     _hash = "_hash"
     columns_data, hashed_indexes = {}, []
-    model_id = model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id
-    for num, column in enumerate(cfg.app.db.tables[model_id].columns):
+    table_name = get_table_name(model_id)
+    for num, column in enumerate(cfg.app.db.tables[table_name].columns):
         if _hash in column.name:
             name = column.name.split(_hash)[0]
             type_ = HashColumn
@@ -60,7 +60,7 @@ def extract_column_data(model_id: Text) -> Dict:
     required = [
         key for key, value in columns_data.items() if value["nullable"] is False
     ]
-    unique = [key for key, value in columns_data.items() if value["unique"] is True]
+    unique_keys = [key for key, value in columns_data.items() if value["unique"] is True]
     foreign_keys = {}
     for column_name, data in columns_data.items():
         for key in data["foreign_keys"]:
@@ -70,16 +70,18 @@ def extract_column_data(model_id: Text) -> Dict:
             )
     
     primary_keys = [key for key, value in columns_data.items() if value["primary"] is True]
-    columns_details = {
-        "unique_columns": unique,
+    table_details = {
+        "unique_columns": unique_keys,
         "required_columns": required,
         "columns_data": columns_data,
         "primary_keys": primary_keys,
         "columns_names": list(columns_data.keys()),
         "hashed_indexes": hashed_indexes,
         "foreign_keys": foreign_keys,
+        "identity": primary_keys if primary_keys else unique_keys
+        
     }
-    return columns_details
+    return table_details
 
 
 def extract_models_metadata(db: Gino, db_models: List) -> None:
@@ -91,14 +93,10 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
 
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
-        if not column_details["unique_columns"] and not column_details["primary_keys"]:
+        if not column_details["identity"]:
             models_to_remove.append(model_id)
         else:
             cfg.models[model_id].update(column_details)
-            if cfg.models[model_id]["unique_columns"]:
-                cfg.models[model_id]["key"] = cfg.models[model_id]["unique_columns"][0]
-            else:
-                cfg.models[model_id]["key"] = cfg.models[model_id]["primary_keys"][0]
 
     for model_id in models_to_remove:
         logger.warning(
