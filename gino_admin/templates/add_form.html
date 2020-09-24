@@ -28,15 +28,14 @@
       </div>
     </div>
     {% elif data['type'] == 'datetime' %}
-    <div class="ui calendar standard_calendar" 
-          id="standard_calendar">
+    <div class="ui calendar datetime_calendar">
         <div class="ui input left icon">
           <i class="calendar icon"></i>
 
           <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
                  {% else %}
                  {% endif %}
-                 placeholder="{{ 'Date/Time' if columns[column]['type'] == 'datetime' else 'Date' }}">
+                 placeholder="Date/Time">
 
         </div>
       </div>
@@ -69,8 +68,18 @@
 
 <script>
 
+$('.datetime_calendar').calendar();
 $('.data_calendar').calendar({
-  type: 'date'
+  type: 'date',
+  formatter: {
+    date: function (date, settings) {
+      if (!date) return '';
+      var day = date.getDate();
+      var month = date.getMonth() + 1;
+      var year = date.getFullYear();
+      return year + '-' + month + '-' + day;
+    }
+  }
 });
 </script>
 {% endblock %}

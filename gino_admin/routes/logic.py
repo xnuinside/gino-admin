@@ -14,7 +14,8 @@ from sqlalchemy_utils.functions import identity
 
 from gino_admin import config
 from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
-                              reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row)
+                              reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row, 
+                              create_obj_id_for_query)
 
 cfg = config.cfg
 
@@ -35,7 +36,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     output = []
     for row in rows:
         row = {columns_names[num]: field for num, field in enumerate(row)}
-        row['_id'] = get_obj_id_from_row(model_data, row)
+        row['_id'] = create_obj_id_for_query(get_obj_id_from_row(model_data, row))
         for index in cfg.models[model_id]["hashed_indexes"]:
             row[columns_names[index]] = "*************"
         output.append(row)
@@ -396,12 +397,11 @@ async def get_by_params(query_params: Dict, model):
 
 
 async def render_add_or_edit_form(
-    request: Request, model_id: Text, obj_id: Text = None
+    request: Request, model_id: Text, obj_id: Dict = None
 ) -> HTTPResponse:
     model_data = cfg.models[model_id]
     model = cfg.models[model_id]["model"]
     if obj_id:
-        obj_id = correct_types(obj_id, model_data["columns_data"])
         obj = serialize_dict((await get_by_params(obj_id, model)).to_dict())
         add = False
     else:
@@ -423,9 +423,7 @@ async def count_elements_in_db():
     data = {}
     for model_id, value in cfg.models.items():
         try:
-            data[model_id] = await cfg.app.db.func.count(
-                getattr(value["model"], value["key"])
-            ).gino.scalar()
+            data[model_id] = await cfg.app.db.func.count(value["model"]).gino.scalar()
         except asyncpg.exceptions.UndefinedTableError:
             data[model_id] = "Table does not exist"
     return data
@@ -440,28 +438,21 @@ async def create_object_copy(
 ) -> str:
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
-    key = model_data["key"]
-    base_object_key = columns_data[key]["type"](base_object_key)
+    base_obj_id = get_obj_id_from_row(model_data, request_params)
     model = cfg.models[model_id]["model"]
     # id can be str or int
     # todo: need fix for several unique columns
     if not new_id:
-        new_obj_key = generate_new_id(base_object_key, model_data)
+        new_obj_key = generate_new_id(base_obj_id, model_data)
     else:
         new_obj_key = new_id
-    bas_obj = (await model.get(base_object_key)).to_dict()
+    bas_obj = (await model.get(base_obj_id)).to_dict()
 
-    bas_obj[key] = new_obj_key
+    bas_obj.update(new_obj_key)
 
     if new_fk_link_id and fk_column is not None:
         bas_obj[fk_column.name] = new_fk_link_id
 
-    for item in model_data["required_columns"]:
-        # todo: need to document this behaviour in copy step
-        if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
-            bas_obj[item] = bas_obj[key]
-            if columns_data[item]["type"] == "HASH":
-                bas_obj[item] = cfg.hash_method(bas_obj[key])
     new_obj = reverse_hash_names(model_id, bas_obj)
     await model.create(**new_obj)
     return new_obj_key

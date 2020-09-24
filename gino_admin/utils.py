@@ -249,29 +249,43 @@ def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
     return result
 
 
-def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
-    keys_columns = model_data["identity"]
-    if isinstance(base_key, str):
-        new_obj_key = (
-            base_key
-            + f"{'_' if not base_key.endswith('_') else ''}"
-            + uuid.uuid1().hex[5:10]
-        )
-        len_ = model_data["columns_data"][key]["len"]
-        if len_:
-            if new_obj_key[:len_] == base_key:
-                # if we spend all id previous
-                new_obj_key = new_obj_key[
-                    len_ : len_ + len_  # noqa E203
-                ]  # auto format from black
-            else:
-                new_obj_key = new_obj_key[:len_]
-    else:
-        if isinstance(model_data["columns_data"][key]["db_type"], BigInteger):
-            new_obj_key = randint(0, 2 ** 63)
+def create_obj_id_for_query(id_dict: Dict) -> Text:
+    return ",".join([f"{key}={value}" for key, value in id_dict.items()])
+
+
+def extract_obj_id_from_query(id_row: Text) -> Dict:
+    pairs = id_row.split(',')
+    _id = {}
+    for pair in pairs:
+        key, value = pair.split('=')
+        _id[key] = value
+    return _id
+    
+def generate_new_id(base_obj_id: Dict, model_data: Dict) -> Dict:
+    new_obj_key_dict = {}
+    for key, value in base_obj_id.items():
+        if isinstance(value, str):
+            new_obj_key = (
+                value
+                + f"{'_' if not value.endswith('_') else ''}"
+                + uuid.uuid1().hex[5:10]
+            )
+            len_ = model_data["columns_data"][key]["len"]
+            if len_:
+                if new_obj_key[:len_] == value:
+                    # if we spend all id previous
+                    new_obj_key = new_obj_key[
+                        len_ : len_ + len_  # noqa E203
+                    ]  # auto format from black
+                else:
+                    new_obj_key = new_obj_key[:len_]
         else:
-            new_obj_key = randint(0, 2 ** 31)
-    return new_obj_key
+            if isinstance(model_data["columns_data"][key]["db_type"], BigInteger):
+                new_obj_key = randint(0, 2 ** 63)
+            else:
+                new_obj_key = randint(0, 2 ** 31)
+        new_obj_key_dict[key] = new_obj_key
+    return new_obj_key_dict
 
 
 def get_changes(old_obj: Dict, new_obj: Dict):
