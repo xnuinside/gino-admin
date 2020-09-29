@@ -80,9 +80,9 @@ async def model_deepcopy(request, model_id):
     """
     request_params = {key: request.form[key][0] for key in request.form}
     columns_data = cfg.models[model_id]["columns_data"]
-    key = cfg.models[model_id]["key"]
-    base_object_id = columns_data[key]["type"](request_params["id"])
+    base_obj_id = utils.get_obj_id_from_row(cfg.models[model_id], request_params)
     try:
+        #todo: fix deepcopy
         request_params["new_id"] = columns_data[key]["type"](request_params["new_id"])
     except ValueError:
         request["flash"](f"{columns_data[key]} must be number", "error")
@@ -92,7 +92,7 @@ async def model_deepcopy(request, model_id):
             async with conn.transaction() as _:
                 new_base_obj_id = await deepcopy_recursive(
                     cfg.models[model_id]["model"],
-                    base_object_id,
+                    base_obj_id,
                     new_id=request_params["new_id"],
                 )
                 message = f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}"
@@ -109,11 +109,13 @@ async def model_deepcopy(request, model_id):
 async def model_copy(request, model_id):
     """ route for copy item per row """
     model_data = cfg.models[model_id]
+    print(request.form)
     request_params = {elem: request.form[elem][0] for elem in request.form}
-    key = model_data["key"]
+    print(request_params)
+    base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
     try:
-        new_obj_key = await create_object_copy(model_id, request_params[key])
-        message = f"Object with {key} {request_params[key]} was copied with {key} {new_obj_key}"
+        new_obj_key = await create_object_copy(model_id, base_obj_id)
+        message = f"Object with {base_obj_id} key was copied as {new_obj_key}"
         flash_message = (message, "success")
         request["history_action"]["log_message"] = message
         request["history_action"]["object_id"] = new_obj_key

@@ -401,7 +401,9 @@ async def render_add_or_edit_form(
 ) -> HTTPResponse:
     model_data = cfg.models[model_id]
     model = cfg.models[model_id]["model"]
+    columns_data = model_data["columns_data"]
     if obj_id:
+        obj_id = correct_types(obj_id, columns_data)
         obj = serialize_dict((await get_by_params(obj_id, model)).to_dict())
         add = False
     else:
@@ -409,8 +411,8 @@ async def render_add_or_edit_form(
         add = True
     columns = {
         column_name: {
-            "len": model_data["columns_data"][column_name]["len"],
-            "type": model_data["columns_data"][column_name]["type"].__name__,
+            "len": columns_data[column_name]["len"],
+            "type": columns_data[column_name]["type"].__name__,
         }
         for column_name in model_data["columns_names"]
     }
@@ -431,29 +433,30 @@ async def count_elements_in_db():
 
 async def create_object_copy(
     model_id: Text,
-    base_object_key: Text,
+    base_obj_id: Text,
     fk_column: Column = None,
     new_fk_link_id: Text = None,
     new_id: Optional[Text] = None,
 ) -> str:
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
-    base_obj_id = get_obj_id_from_row(model_data, request_params)
     model = cfg.models[model_id]["model"]
-    # id can be str or int
-    # todo: need fix for several unique columns
     if not new_id:
-        new_obj_key = generate_new_id(base_obj_id, model_data)
+        new_obj_key = generate_new_id(base_obj_id, columns_data)
     else:
         new_obj_key = new_id
+    base_obj_id = correct_types(base_obj_id, columns_data)
+    
+    print(base_obj_id)
     bas_obj = (await model.get(base_obj_id)).to_dict()
 
     bas_obj.update(new_obj_key)
 
+    print(bas_obj)
     if new_fk_link_id and fk_column is not None:
         bas_obj[fk_column.name] = new_fk_link_id
 
-    new_obj = reverse_hash_names(model_id, bas_obj)
+    new_obj = correct_types(reverse_hash_names(model_id, bas_obj), columns_data)
     await model.create(**new_obj)
     return new_obj_key
 

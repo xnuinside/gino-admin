@@ -50,6 +50,7 @@ types_map = {
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
+    "SMALLINT[]": list
 }
 
 
@@ -234,10 +235,8 @@ def get_settings():
 def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
     print(row)
     result = {}
+    print('identitttty')
     for x in model_data["identity"]:
-        print(x)
-        print(row[x])
-        print(model_data["columns_data"][x]["type"])
         type_ = model_data["columns_data"][x]["type"]
         if type_ in [datetime.datetime, datetime.date]:
             if not isinstance(row[x], str):
@@ -246,10 +245,12 @@ def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
                 result[x] = row[x]
         else:
             result[x] = model_data["columns_data"][x]["type"](row[x]) 
+    print(result)
     return result
 
 
 def create_obj_id_for_query(id_dict: Dict) -> Text:
+    print(id_dict)
     return ",".join([f"{key}={value}" for key, value in id_dict.items()])
 
 
@@ -261,16 +262,16 @@ def extract_obj_id_from_query(id_row: Text) -> Dict:
         _id[key] = value
     return _id
     
-def generate_new_id(base_obj_id: Dict, model_data: Dict) -> Dict:
+def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
     new_obj_key_dict = {}
     for key, value in base_obj_id.items():
-        if isinstance(value, str):
+        if columns_data[key]["type"] == str:
             new_obj_key = (
                 value
                 + f"{'_' if not value.endswith('_') else ''}"
                 + uuid.uuid1().hex[5:10]
             )
-            len_ = model_data["columns_data"][key]["len"]
+            len_ = columns_data[key]["len"]
             if len_:
                 if new_obj_key[:len_] == value:
                     # if we spend all id previous
@@ -279,11 +280,11 @@ def generate_new_id(base_obj_id: Dict, model_data: Dict) -> Dict:
                     ]  # auto format from black
                 else:
                     new_obj_key = new_obj_key[:len_]
+        elif isinstance(columns_data[key]["db_type"], BigInteger):
+            new_obj_key = randint(0, 2 ** 63)
         else:
-            if isinstance(model_data["columns_data"][key]["db_type"], BigInteger):
-                new_obj_key = randint(0, 2 ** 63)
-            else:
-                new_obj_key = randint(0, 2 ** 31)
+            print(f'unknown logic to generate copy for id of type {columns_data[key]["type"]}')
+            new_obj_key = value
         new_obj_key_dict[key] = new_obj_key
     return new_obj_key_dict
 

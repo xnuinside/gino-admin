@@ -24,7 +24,6 @@ async def model_view_table(
 @auth.token_validation()
 async def model_edit_view(request, model_id):
     _id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
-    print(_id)
     return await render_add_or_edit_form(request, model_id, _id)
 
 

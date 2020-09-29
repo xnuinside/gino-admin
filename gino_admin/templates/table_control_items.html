@@ -22,8 +22,8 @@
     <input type="hidden" name="{{field}}" value="{{value}}">
     {% endfor %}
 </form>
-<form id="copy_{{row[unique]}}" action="{{url_prefix}}/{{model.lower()}}/copy/" method="post" >
-    <input type="hidden" name="{{unique}}" value="{{row[unique]}}">
+<form id="copy_{{row['_id']}}" action="{{url_prefix}}/{{model.lower()}}/copy/" method="post" >
+    <input type="hidden" name="_id" value="{{row['_id']}}">
 </form>
     </div>
           </div>
