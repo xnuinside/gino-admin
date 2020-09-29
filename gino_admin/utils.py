@@ -134,7 +134,7 @@ class CompositeType:
     pass
 
 
-def correct_types(params: Dict, columns_data: Dict):
+def correct_types(params: Dict, columns_data: Dict, no_default=False):
     to_del = []
     for param in params:
         if not params[param]:
@@ -154,9 +154,11 @@ def correct_types(params: Dict, columns_data: Dict):
                 params[param] = extract_datetime(params[param], columns_data[param]["type"])
     for param in to_del:
         del params[param]
-    for column in columns_data:
-        if columns_data[column]["type"] == bool and column not in params:
-            params[column] = False
+    
+    if not no_default:
+        for column in columns_data:
+            if columns_data[column]["type"] == bool and column not in params:
+                params[column] = False
     return params
 
 

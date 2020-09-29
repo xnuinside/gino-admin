@@ -403,8 +403,12 @@ async def render_add_or_edit_form(
     model = cfg.models[model_id]["model"]
     columns_data = model_data["columns_data"]
     if obj_id:
-        obj_id = correct_types(obj_id, columns_data)
-        obj = serialize_dict((await get_by_params(obj_id, model)).to_dict())
+        obj_id = correct_types(obj_id, columns_data, no_default=True)
+        obj = await get_by_params(obj_id, model)
+        if obj:
+            obj = serialize_dict(obj.to_dict())
+        else:
+            request["flash_messages"].append((f"obj with id {obj_id} was not found", "error"))
         add = False
     else:
         obj = {}
@@ -441,11 +445,12 @@ async def create_object_copy(
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
     model = cfg.models[model_id]["model"]
+    print(base_obj_id, 'base_obj')
     if not new_id:
         new_obj_key = generate_new_id(base_obj_id, columns_data)
     else:
         new_obj_key = new_id
-    base_obj_id = correct_types(base_obj_id, columns_data)
+    base_obj_id = correct_types(base_obj_id, columns_data, no_default=True)
     
     print(base_obj_id)
     bas_obj = (await model.get(base_obj_id)).to_dict()

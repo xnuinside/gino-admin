@@ -113,6 +113,7 @@ async def model_copy(request, model_id):
     request_params = {elem: request.form[elem][0] for elem in request.form}
     print(request_params)
     base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
+    print(base_obj_id)
     try:
         new_obj_key = await create_object_copy(model_id, base_obj_id)
         message = f"Object with {base_obj_id} key was copied as {new_obj_key}"

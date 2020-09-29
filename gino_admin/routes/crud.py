@@ -37,8 +37,7 @@ async def model_edit_post(request, model_id):
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
     }
-    previous_id = utils.correct_types(previous_id, model_data["columns_data"])
-    print(previous_id)
+    previous_id = utils.correct_types(previous_id, model_data["columns_data"], no_default=True)
     obj = await get_by_params(previous_id, model)
     old_obj = obj.to_dict()
     if model_data["hashed_indexes"]:
@@ -48,7 +47,6 @@ async def model_edit_post(request, model_id):
         await obj.update(**request_params).apply()
         changes = utils.get_changes(old_obj, obj.to_dict())
         new_obj_id = utils.get_obj_id_from_row(model_data, request_params)
-        print(new_obj_id)
         message = f'Object with id {previous_id} was updated. Changes: from {changes["from"]} to {changes["to"]}'
         request["flash"](message, "success")
         request["history_action"]["log_message"] = message
