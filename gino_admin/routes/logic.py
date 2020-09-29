@@ -15,7 +15,7 @@ from sqlalchemy_utils.functions import identity
 from gino_admin import config
 from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
                               reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row, 
-                              create_obj_id_for_query)
+                              create_obj_id_for_query, get_type_name)
 
 cfg = config.cfg
 
@@ -23,11 +23,11 @@ cfg = config.cfg
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
     model_data = cfg.models[model_id]
-    print(model_data)
     columns_names = model_data["columns_names"]
     table_name = get_table_name(model_id)
     model = cfg.app.db.tables[table_name]
     query = cfg.app.db.select([model])
+    columns_data = model_data["columns_data"]
     try:
         rows = await query.gino.all()
     except asyncpg.exceptions.UndefinedTableError:
@@ -43,8 +43,8 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     output = output[::-1]
     columns = {
         column_name: {
-            "len": model_data["columns_data"][column_name]["len"],
-            "type": model_data["columns_data"][column_name]["type"].__name__,
+            "len": columns_data[column_name]["len"],
+            "type": get_type_name(columns_data[column_name])
         }
         for column_name in model_data["columns_names"]
     }
@@ -416,8 +416,8 @@ async def render_add_or_edit_form(
     columns = {
         column_name: {
             "len": columns_data[column_name]["len"],
-            "type": columns_data[column_name]["type"].__name__,
-        }
+            "type": get_type_name(columns_data[column_name])
+            }
         for column_name in model_data["columns_names"]
     }
     return cfg.jinja.render(

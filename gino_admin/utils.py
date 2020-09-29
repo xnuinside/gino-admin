@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import time
+from ast import literal_eval
 import uuid
 from random import randint
 from typing import Any, Dict, List, Text, Union
@@ -38,7 +39,7 @@ _windows_device_files = (
 types_map = {
     "INTEGER": int,
     "BIGINT": int,
-    "VARCHAR[]": list,
+    "VARCHAR[]": (list,str),
     "SMALLINT": int,
     "VARCHAR": str,
     "FLOAT": float,
@@ -50,7 +51,7 @@ types_map = {
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
-    "SMALLINT[]": list
+    "SMALLINT[]": (list,int)
 }
 
 
@@ -143,15 +144,28 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
             continue
         if isinstance(param, CompositeType):
             continue
-        if "_hash" not in param and not isinstance(
-            params[param], columns_data[param]["type"]
-        ):
-            if columns_data[param]["type"] not in [datetime.datetime, datetime.date]:
-                params[param] = columns_data[param]["type"](params[param])
-            elif columns_data[param]["type"] == list:
-                params[param] = params[param].split(",")
-            else:
-                params[param] = extract_datetime(params[param], columns_data[param]["type"])
+        if not isinstance(columns_data[param]["type"], tuple):
+            if "_hash" not in param and not isinstance(
+                params[param], columns_data[param]["type"]
+            ):
+                if columns_data[param]["type"] not in [datetime.datetime, datetime.date]:
+                    params[param] = columns_data[param]["type"](params[param])
+                elif columns_data[param]["type"] == list:
+                    params[param] = params[param].split(",")
+                else:
+                    params[param] = extract_datetime(params[param], columns_data[param]["type"])
+        else:
+            print(columns_data[param]["type"])
+            if columns_data[param]["type"][0] == list:
+                print(params[param])
+                if isinstance(params[param], str):
+                    params[param] = literal_eval(params[param])
+                elements_type = columns_data[param]["type"][1]
+                formatted_list = []
+                print(params)
+                for elem in params[param]:
+                    formatted_list.append(elements_type(elem))
+                params[param] = formatted_list
     for param in to_del:
         del params[param]
     
@@ -178,6 +192,15 @@ def extract_datetime(datetime_str: Text, type_: Union[datetime.datetime, datetim
                 return date_object
         except ValueError:
             continue
+
+
+def get_type_name(column_data: Dict) -> Text:
+    """ get type name for ui """
+    if not isinstance(column_data["type"], tuple):
+        type_ = column_data["type"].__name__ 
+    else:
+        type_ = f'array of {column_data["type"][1]}'
+    return type_
 
 
 def generate_token(ip: Text):
