@@ -81,6 +81,7 @@ $(document).ready( function () {
     ],
 initComplete: function () {
     $('.buttons-csv').attr('id', 'buttons-csv')
+    $("#models_table_filter").attr('style', "margin-right: 45px; margin-bottom: 10px;")
     $('#models_table_length').attr('class', 'dataTables_length ui form left aligned content four wide column')
     $('#models_table_filter').attr('class','dataTables_filter ui form inline field')
      $("#grid").appendTo("#models_table_wrapper");
@@ -117,7 +118,8 @@ $(function() {
 	$(".deepcopy_href").click(function(){
         $("#obj_id").html(this.dataset.id);
         var type = this.dataset.type;
-        if (type == 'int') {
+        console.log(type)
+        if (type == 'int' || type == 'float') {
             var prefix = Math.floor(Math.random() * 100);
             $("#new_id").val(this.dataset.id + prefix);
         }
@@ -125,7 +127,7 @@ $(function() {
             var prefix = Math.random().toString(36).slice(2)
             $("#new_id").val(this.dataset.id + '_' + prefix);
         };
-        $("#id").val(this.dataset.id);
+        $("#_id").val(this.dataset.id);
 		$(".deepcopy").modal('show');
 	});
 	$(".deepcopy").modal({

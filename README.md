@@ -16,6 +16,43 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 ![Load Presets](docs/img/db_presets.png)
 
 
+
+### Updates in version 0.2.0 (current master):
+
+1. **UI fixes**: 
+- Data Picker was fixed, required fields now dispalayed with '* required' in UI.
+- Menu in header became scrollable, now you can see 20+ models without pain
+- Tables became scrollable horisontal - you can keep dozen columns and see them (hooray!)
+- in Add/edit forms now displayd the field type
+
+2. **Major changes**: 
+- **Limitation to have 'unique' rows was removed**. Now you not need any unique keys to make possible work with table in Admin panel. Just keep in mind that if you edit row - you will also edit all full 'dublicated' rows. So we try identify row by all fields. 
+But if you have several full duplicates in rows - edit action will edit all of them. 
+
+Limits:
+
+Deepcopy does not available for tables without primary keys right now.
+
+
+- **Primary keys** now also used to identify unique rows. Now Admin Panel don't expect only 'unique' key in model. Now it firstly works with Primary Keys and only if primary key not exist in model - use 'unique' fields to identify unique rows. Also it supports Composite Primary keys (2 and more fields) in all type of operations: delete/update/insert/deepcopy/copy.
+
+- **Schemas support**
+
+Now if you work using the custom "schema" name - it's okay and supported by Admin Panel.  
+
+3. **Fixed in types support**:
+
+- passing data as a string - now supported both Date & DateTime format (before correct work only DataTime format)
+- parsing lists (for fields with ARRAY type), also parsed type inside array
+
+4. **Types support improvement**: 
+
+- Added support for ARRAYS, TEXT, SmallInt, CHAR, Time
+
+5. **New features**: 
+- Added Users to Admin Panel - now you can add multiple users for the panel to track history of changes correct and separate accesses
+
+
 ### Supported features
 
 - Auth by login/pass with cookie check
@@ -46,40 +83,6 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 ### How to install
 
 ```pip install gino-admin==0.2.0```
-    
-
-### Updates in version 0.2.0 (current master):
-
-1. **UI fixes**: 
-- Data Picker was fixed, required fields now dispalayed with '* required' in UI.
-- Menu in header became scrollable, now you can see 20+ models without pain
-- Tables became scrollable horisontal - you can keep dozen columns and see them (hooray!)
-- in Add/edit forms now displayd the field type
-
-2. **Major changes**: 
-
-- **Primary keys** to identify unique rows. Now Admin Panel don't expect only 'unique' key in model. Now it firstly works with Primary Keys and only if primary key not exist in model - use 'unique' fields to identify unique rows. Also it supports Composite Primary keys (2 and more fields) in all type of operations: delete/update/insert/deepcopy/copy.
-
-- **Schemas support**
-
-Now if you work using the custom "schema" name - it's okay and supported by Admin Panel.  
-
-3. **Fixed in types support**:
-
-- passing data as a string - now supported both Date & DateTime format (before correct work only DataTime format)
-- parsing lists (for fields with ARRAY type)
-
-4. **Types support improvement**: 
-
-- Added support for ARRAYS, TEXT, SmallInt, CHAR, Time
-
-5. **New features**: 
-- Added Users to Admin Panel - now you can add multiple users for the panel to track history of changes correct and separate accesses
-
-6. **UI Feature**: 
-- set up main colors - you can define that color you want to use in header by providing the parameter
-
-
 
 ### How to use
 

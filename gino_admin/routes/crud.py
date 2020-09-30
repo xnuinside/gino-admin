@@ -4,7 +4,11 @@ from sanic.request import Request
 import datetime
 from gino_admin import auth, utils
 from gino_admin.core import admin, cfg
-from gino_admin.routes.logic import render_add_or_edit_form, render_model_view, get_by_params
+from gino_admin.routes.logic import (render_add_or_edit_form, 
+                                     render_model_view, 
+                                     get_by_params, 
+                                     delete_all_by_params,
+                                     update_all_by_params)
 
 
 @admin.route("/<model_id>", methods=["GET"])
@@ -30,22 +34,30 @@ async def model_edit_view(request, model_id):
 @admin.route("/<model_id>/edit", methods=["POST"])
 @auth.token_validation()
 async def model_edit_post(request, model_id):
-    previous_id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
     model_data = cfg.models[model_id]
     model = model_data["model"]
+    columns_data = model_data["columns_data"]
+    previous_id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
+    previous_id = utils.correct_types(previous_id, columns_data)
     request_params = {
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
     }
-    previous_id = utils.correct_types(previous_id, model_data["columns_data"], no_default=True)
-    obj = await get_by_params(previous_id, model)
-    old_obj = obj.to_dict()
     if model_data["hashed_indexes"]:
         request_params = utils.reverse_hash_names(model_id, request_params)
-    request_params = utils.correct_types(request_params, model_data["columns_data"])
+    request_params = utils.correct_types(request_params, columns_data)
     try:
-        await obj.update(**request_params).apply()
-        changes = utils.get_changes(old_obj, obj.to_dict())
+        if not model_data["identity"]:
+            old_obj = previous_id
+            await update_all_by_params(request_params, previous_id, model)
+            obj = request_params
+        else:
+            
+            obj = await get_by_params(previous_id, model)
+            old_obj = obj.to_dict()
+            await obj.update(**request_params).apply()
+            obj = obj.to_dict()
+        changes = utils.get_changes(old_obj, obj)
         new_obj_id = utils.get_obj_id_from_row(model_data, request_params)
         message = f'Object with id {previous_id} was updated. Changes: from {changes["from"]} to {changes["to"]}'
         request["flash"](message, "success")
@@ -119,12 +131,15 @@ async def model_add(request, model_id):
 async def model_delete(request, model_id):
     """ route for delete item per row """
     model_data = cfg.models[model_id]
+    model = model_data["model"]
     request_params = {key: request.form[key][0] for key in request.form}
     obj_id = utils.get_obj_id_from_row(model_data, request_params)
-    
     try:
-        obj = get_by_params(obj_id, model_data["model"])
-        await obj.delete()
+        if not model_data["identity"]:
+            await delete_all_by_params(obj_id, model)
+        else:
+            obj = await get_by_params(obj_id, model)
+            await obj.delete()
         message = f"Object with {obj_id} was deleted"
         flash_message = (message, "success")
         request["history_action"]["log_message"] = message

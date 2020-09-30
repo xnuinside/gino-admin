@@ -372,7 +372,52 @@ async def drop_and_recreate_all_tables():
             pass
     await cfg.app.db.gino.create_all()
 
-    
+
+async def update_all_by_params(update_params: Dict, where_params: Dict, model):
+    q = model.update.values(**update_params)
+    operand_types = {'==': '__eq__', 'in': 'contains'}
+    for attr, value in where_params.items():
+        field = getattr(model, attr)
+        if isinstance(value, list):
+            if in_query in value[0]:
+                final_ = []
+                operand_name = operand_types['in']
+                value = value[0].split(in_query)[0]
+                final_.append(value)
+                value = final_
+            else: 
+                operand_name = operand_types['==']
+        else:
+            operand_name = operand_types['==']
+        operand = getattr(field, operand_name)
+        if value != '':
+            q = q.where(operand(value))
+    items = await q.gino.status()
+    return items
+
+async def delete_all_by_params(query_params: Dict, model):
+    q = model.delete
+    operand_types = {'==': '__eq__', 'in': 'contains'}
+    for attr, value in query_params.items():
+        field = getattr(model, attr)
+        if isinstance(value, list):
+            if in_query in value[0]:
+                final_ = []
+                operand_name = operand_types['in']
+                value = value[0].split(in_query)[0]
+                final_.append(value)
+                value = final_
+            else: 
+                operand_name = operand_types['==']
+        else:
+            operand_name = operand_types['==']
+        operand = getattr(field, operand_name)
+        if value != '':
+            q = q.where(operand(value))
+    items = await q.gino.status()
+    return items
+
+
 async def get_by_params(query_params: Dict, model):
     q = model.query
     operand_types = {'==': '__eq__', 'in': 'contains'}
@@ -396,8 +441,12 @@ async def get_by_params(query_params: Dict, model):
     return items
 
 
+
+
 async def render_add_or_edit_form(
-    request: Request, model_id: Text, obj_id: Dict = None
+    request: Request, 
+    model_id: Text, 
+    obj_id: Dict = None
 ) -> HTTPResponse:
     model_data = cfg.models[model_id]
     model = cfg.models[model_id]["model"]
@@ -445,19 +494,14 @@ async def create_object_copy(
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
     model = cfg.models[model_id]["model"]
-    print(base_obj_id, 'base_obj')
     if not new_id:
         new_obj_key = generate_new_id(base_obj_id, columns_data)
     else:
         new_obj_key = new_id
     base_obj_id = correct_types(base_obj_id, columns_data, no_default=True)
-    
-    print(base_obj_id)
-    bas_obj = (await model.get(base_obj_id)).to_dict()
-
+    bas_obj = await get_by_params(base_obj_id, model)
+    bas_obj = bas_obj.to_dict()
     bas_obj.update(new_obj_key)
-
-    print(bas_obj)
     if new_fk_link_id and fk_column is not None:
         bas_obj[fk_column.name] = new_fk_link_id
 
@@ -480,7 +524,15 @@ async def deepcopy_recursive(
     new_obj_key = await create_object_copy(
         model.__tablename__, object_id, fk_column, new_fk_link_id, new_id=new_id
     )
-    primary_key_col = identity(model)[0]
+    if len(identity(model)) == 0:
+        primary_key_col = object_id
+        return (
+                f"Deepcopy does not available for tables without primary keys right now",
+                "error",
+            )
+    else:
+        primary_key_col = identity(model)[0]
+    
     dependent_models = {}
     # TODO(ehborisov): check how it works in the case of composite key
     for m_id, data in cfg.models.items():
@@ -497,6 +549,8 @@ async def deepcopy_recursive(
         )
         # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
         for inst_id in all_referencing_instance_ids:
-            await deepcopy_recursive(dep_model, inst_id[0], new_obj_key, fk_column)
+            result = await deepcopy_recursive(dep_model, inst_id[0], new_obj_key, fk_column)
+            if isinstance(result, tuple):
+                return result
     logger.debug(f"Finished copying, returning newly created object's id {new_obj_key}")
     return new_obj_key

@@ -79,13 +79,16 @@ async def model_deepcopy(request, model_id):
     :return:
     """
     request_params = {key: request.form[key][0] for key in request.form}
+    
     columns_data = cfg.models[model_id]["columns_data"]
-    base_obj_id = utils.get_obj_id_from_row(cfg.models[model_id], request_params)
+    base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
+    base_obj_id = utils.correct_types(base_obj_id, columns_data)
     try:
         #todo: fix deepcopy
-        request_params["new_id"] = columns_data[key]["type"](request_params["new_id"])
-    except ValueError:
-        request["flash"](f"{columns_data[key]} must be number", "error")
+        new_id = utils.extract_obj_id_from_query(request_params["new_id"])
+        new_id = utils.correct_types(new_id, columns_data)
+    except ValueError as e:
+        request["flash"](e, "error")
         return await render_model_view(request, model_id)
     try:
         async with cfg.app.db.acquire() as conn:
@@ -93,12 +96,15 @@ async def model_deepcopy(request, model_id):
                 new_base_obj_id = await deepcopy_recursive(
                     cfg.models[model_id]["model"],
                     base_obj_id,
-                    new_id=request_params["new_id"],
+                    new_id=new_id,
                 )
-                message = f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}"
-                request["flash"](message, "success")
-                request["history_action"]["log_message"] = message
-                request["history_action"]["object_id"] = new_base_obj_id
+                if isinstance(new_base_obj_id, tuple):
+                    request["flash"](new_base_obj_id, "error")
+                else:
+                    message = f"Object with {request_params['_id']} was deepcopied with new id {new_base_obj_id}"
+                    request["flash"](message, "success")
+                    request["history_action"]["log_message"] = message
+                    request["history_action"]["object_id"] = new_base_obj_id
     except asyncpg.exceptions.PostgresError as e:
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
@@ -109,11 +115,8 @@ async def model_deepcopy(request, model_id):
 async def model_copy(request, model_id):
     """ route for copy item per row """
     model_data = cfg.models[model_id]
-    print(request.form)
     request_params = {elem: request.form[elem][0] for elem in request.form}
-    print(request_params)
     base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
-    print(base_obj_id)
     try:
         new_obj_key = await create_object_copy(model_id, base_obj_id)
         message = f"Object with {base_obj_id} key was copied as {new_obj_key}"

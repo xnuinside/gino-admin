@@ -89,21 +89,24 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
     cfg.models = {model.__tablename__: {"model": model} for model in db_models}
     cfg.app.db = db
 
-    models_to_remove = []
+    #models_to_remove = []
 
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
-        if not column_details["identity"]:
-            models_to_remove.append(model_id)
-        else:
-            cfg.models[model_id].update(column_details)
+        cfg.models[model_id].update(column_details)
+        #if not column_details["identity"]:
+            #models_to_remove.append(model_id)
+        #else:
+            #cfg.models[model_id].update(column_details)
 
+    """
     for model_id in models_to_remove:
         logger.warning(
             f"\nWARNING: Model {model_id.capitalize()} will not be displayed in Admin Panel "
             f"because does not contains any unique column\n"
         )
         del cfg.models[model_id]
+    """
 
 
 def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):

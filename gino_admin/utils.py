@@ -155,14 +155,11 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
                 else:
                     params[param] = extract_datetime(params[param], columns_data[param]["type"])
         else:
-            print(columns_data[param]["type"])
             if columns_data[param]["type"][0] == list:
-                print(params[param])
                 if isinstance(params[param], str):
                     params[param] = literal_eval(params[param])
                 elements_type = columns_data[param]["type"][1]
                 formatted_list = []
-                print(params)
                 for elem in params[param]:
                     formatted_list.append(elements_type(elem))
                 params[param] = formatted_list
@@ -257,11 +254,18 @@ def get_settings():
         settings[setting] = getattr(cfg, setting)
     return settings
 
+
 def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
-    print(row)
+    """ create _id dict for row based on several fields """
     result = {}
-    print('identitttty')
-    for x in model_data["identity"]:
+    if not model_data["identity"]:
+        # if our tbale does not have unique or primary keys
+        key_fields = row
+    else:
+        key_fields = model_data["identity"]
+    if "_id" in key_fields:
+        del key_fields["_id"]
+    for x in key_fields:
         type_ = model_data["columns_data"][x]["type"]
         if type_ in [datetime.datetime, datetime.date]:
             if not isinstance(row[x], str):
@@ -269,17 +273,18 @@ def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
             else:
                 result[x] = row[x]
         else:
-            result[x] = model_data["columns_data"][x]["type"](row[x]) 
-    print(result)
+            result[x] = model_data["columns_data"][x]["type"](row[x])
+    result = correct_types(result, model_data["columns_data"], no_default=True)
     return result
 
 
 def create_obj_id_for_query(id_dict: Dict) -> Text:
-    print(id_dict)
+    """ create query str based on _id """
     return ",".join([f"{key}={value}" for key, value in id_dict.items()])
 
 
 def extract_obj_id_from_query(id_row: Text) -> Dict:
+    """ reverse _id dict from query str """
     pairs = id_row.split(',')
     _id = {}
     for pair in pairs:
@@ -288,6 +293,7 @@ def extract_obj_id_from_query(id_row: Text) -> Dict:
     return _id
     
 def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
+    """ generate new id based on previous obj id """
     new_obj_key_dict = {}
     for key, value in base_obj_id.items():
         if columns_data[key]["type"] == str:
@@ -315,6 +321,7 @@ def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
 
 
 def get_changes(old_obj: Dict, new_obj: Dict):
+    """ get diff for changes on 'update' for updated object """
     from_ = {}
     to_ = {}
     for key, value in new_obj.items():
@@ -326,4 +333,5 @@ def get_changes(old_obj: Dict, new_obj: Dict):
     return {"from": from_, "to": to_}
 
 def get_table_name(model_id: Text) -> Text:
+    """ create full table name including schema if it exists """
     return model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id

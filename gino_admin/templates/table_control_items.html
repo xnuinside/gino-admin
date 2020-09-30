@@ -10,13 +10,13 @@
            <i class="copy icon"></i>  Copy
         </a>
         <a class="item deepcopy_href"  id="deepcopy" data-id="{{row['_id']}}">
-            <i class="clone icon"></i> Deepcopy
+            <i class="sitemap icon"></i> Deepcopy
         </a>
          <a href="javascript:;" class="item" onclick="document.getElementById('delete_{{row['_id']}}').submit();">
              <i class="trash icon"></i> Delete
          </a>
 
-<form id="delete_{{row[unique]}}" action="{{url_prefix}}/{{model.lower()}}/delete/" method="post" >
+<form id="delete_{{row['_id']}}" action="{{url_prefix}}/{{model.lower()}}/delete/" method="post" >
     {% set current_row=model_data[loop_index]%}
     {% for field, value in current_row.items() %}
     <input type="hidden" name="{{field}}" value="{{value}}">
