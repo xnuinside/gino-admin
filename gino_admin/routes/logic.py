@@ -147,19 +147,22 @@ def extract_tables_from_header(header: List, request: Request):
 
 async def create_or_update(row, model_id):
     try:
-        obj = (await cfg.models[model_id]["model"].create(**row)).to_dict()
+        model_data = cfg.models[model_id]
+        obj = (await model_data["model"].create(**row)).to_dict()
+        obj_id = get_obj_id_from_row(model_data, obj)
+        return obj_id, None, None
     except asyncpg.exceptions.UniqueViolationError as e:
         if cfg.csv_update_existed:
-            model_data = cfg.models[model_id]
-            obj_id = {x: model_data["columns_data"][x]["type"](row[x]) for x in model_data["identity"]}
-            obj = await model_data["model"].get(**obj_id)
+            obj_id = get_obj_id_from_row(model_data, row)
+            print(obj_id)
+            obj = await get_by_params(obj_id, model_data["model"])
+            print(obj)
             await obj.update(**row).apply()
             return None, obj_id, None
         else:
             return None, None, (row, e.args)
     except Exception as e:
         return None, None, (row, e.args)
-    return obj_id, None, None
 
 
 async def upload_simple_csv_row(row, header, model_id):
@@ -339,7 +342,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
         base_msg = (
             "Objects"
             if composite
-            else f"Objects with {cfg.models[model_id]['key']}:"
+            else f"Objects"
         )
         if ids_added:
             request["flash_messages"].append(
@@ -478,7 +481,9 @@ async def count_elements_in_db():
     data = {}
     for model_id, value in cfg.models.items():
         try:
-            data[model_id] = await cfg.app.db.func.count(value["model"]).gino.scalar()
+            table_name = get_table_name(model_id)
+            sql_query = f"SELECT COUNT(*) FROM {table_name}"
+            data[model_id] = (await cfg.app.db.status(cfg.app.db.text(sql_query)))[1][0][0]
         except asyncpg.exceptions.UndefinedTableError:
             data[model_id] = "Table does not exist"
     return data

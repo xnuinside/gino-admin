@@ -94,14 +94,14 @@ class Config(BaseModel):
     history_data_columns: List[str] = []
     admin_users_data_columns: List[str] = []
     track_history_endpoints: List[str] = [
-        "app.admin.model_delete",
-        "app.admin.model_delete_all",
-        "app.admin.model_edit_post",
-        "app.admin.model_add",
-        "app.admin.presets_use",
-        "app.admin.init_db_run",
-        "app.admin.file_upload",
-        "app.admin.sql_query_run",
+        "core.admin.model_delete",
+        "core.admin.model_delete_all",
+        "core.admin.model_edit_post",
+        "core.admin.model_add",
+        "core.admin.presets_use",
+        "core.admin.init_db_run",
+        "core.admin.file_upload",
+        "core.admin.sql_query_run",
     ]
 
     @validator("displayable_setting")

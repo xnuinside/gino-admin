@@ -118,6 +118,9 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         )
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
+    
+    if 'db_uri' in config_settings:
+        del config_settings['db_uri']
     for key in config_settings:
         try:
             setattr(cfg, key, config_settings[key])
@@ -169,8 +172,44 @@ def create_admin_app(
         config = {}
     if db_models is None:
         db_models = []
+    
+    if not os.environ.get("SANIC_DB_HOST"):
+        # mean user define path to DB with one-line uri
+        config = parse_db_uri(config)
     return init_admin_app(host, port, db, db_models, config)
 
+def parse_db_uri(config: Dict) -> None:
+    """ parse db uri and set up sanic variables"""
+    
+    if config.get('db_uri'):
+        db_uri = config['db_uri']
+    else:
+        db_uri = os.environ.get('ADMIN_DB_URI')
+    if not db_uri:
+        raise Exception(
+            "Need to setup DB_URI env variable  with credentianls to access Database or send 'db_uri' in Gino-Admin config.\n"
+            "Example: DB_URI=postgresql://local:local@localhost:5432/gino_db")
+    db_uri = db_uri.split("postgresql://")[1]
+    if '@' in db_uri:
+        db_uri = db_uri.split("@")
+        host_and_db = db_uri[1].split('/')
+        login_and_password = db_uri[0].split(':')
+        login = login_and_password[0]
+        password = login_and_password[1]
+        host = host_and_db[0]
+        db = host_and_db[1]
+    else:
+        db_uri = db_uri.split("/")
+        host = db_uri[0]
+        db = db_uri[1]
+        login, password = None, None
+    if ':' in host:
+        host = host.split(':')[0]
+    os.environ["SANIC_DB_HOST"] = host
+    os.environ["SANIC_DB_DATABASE"] = db
+    os.environ["SANIC_DB_USER"] = login
+    os.environ["SANIC_DB_PASSWORD"] = password
+    return config
 
 def init_admin_app(host, port, db, db_models, config):
     """ init admin panel app """
@@ -181,7 +220,7 @@ def init_admin_app(host, port, db, db_models, config):
     @app.route("/")
     async def index(request):
         return response.redirect("/admin")
-
+    
     add_admin_panel(app, db, db_models, **config)
 
     return app.run(host=host, port=port, debug=cfg.debug)

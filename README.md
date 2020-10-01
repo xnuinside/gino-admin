@@ -52,6 +52,27 @@ Now if you work using the custom "schema" name - it's okay and supported by Admi
 5. **New features**: 
 - Added Users to Admin Panel - now you can add multiple users for the panel to track history of changes correct and separate accesses
 
+- URI to DB now can be passed as config parameter 'db_uri' or with env variable 'DB_URI',
+for example, no need to setup SANIC variables:
+
+```python
+
+create_admin_app(
+        host="0.0.0.0",
+        port=os.getenv("PORT", 5000),
+        db=kkr_metadata.models.db,
+        db_models=db_models,
+        config={
+            "presets_folder": os.path.join(current_path, "csv_to_upload"),
+            "db_uri": "postgresql://local:local@localhost:5432/gino_admin"
+        },
+    )
+```
+
+6. **More fixes**:
+
+- History works again
+
 
 ### Supported features
 

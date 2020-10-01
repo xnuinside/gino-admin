@@ -258,7 +258,7 @@ def get_settings():
 def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
     """ create _id dict for row based on several fields """
     result = {}
-    if not model_data["identity"]:
+    if not model_data.get("identity"):
         # if our tbale does not have unique or primary keys
         key_fields = row
     else:

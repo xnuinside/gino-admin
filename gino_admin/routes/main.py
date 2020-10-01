@@ -28,6 +28,7 @@ async def middleware_request(request):
 
 @admin.middleware("response")
 async def middleware_response(request, response):
+    print(request.endpoint, request.method)
     if request.endpoint in cfg.track_history_endpoints and request.method == "POST":
         await write_history_after_response(request)
 

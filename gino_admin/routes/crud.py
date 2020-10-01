@@ -52,7 +52,7 @@ async def model_edit_post(request, model_id):
             await update_all_by_params(request_params, previous_id, model)
             obj = request_params
         else:
-            
+            print(previous_id)
             obj = await get_by_params(previous_id, model)
             old_obj = obj.to_dict()
             await obj.update(**request_params).apply()
@@ -61,13 +61,14 @@ async def model_edit_post(request, model_id):
         new_obj_id = utils.get_obj_id_from_row(model_data, request_params)
         message = f'Object with id {previous_id} was updated. Changes: from {changes["from"]} to {changes["to"]}'
         request["flash"](message, "success")
+        print(request["history_action"])
         request["history_action"]["log_message"] = message
         request["history_action"]["object_id"] = previous_id
-    except asyncpg.exceptions.ForeignKeyViolationError:
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
         request["flash"](
             f"ForeignKey error. "
-            f"Impossible to edit {model_data['key']} field for row {previous_id}, "
-            f"because exists objects that depend on it. ",
+            f"Impossible to edit field for row {previous_id}, "
+            f"because exists objects that depend on it. {e}",
             "error",
         )
     except asyncpg.exceptions.UniqueViolationError:
