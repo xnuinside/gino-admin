@@ -4,7 +4,7 @@
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
-Play with Demo (current master 0.0.12) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
+Play with Demo (current master 0.2.0) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
 
 
 ![badge1](https://img.shields.io/pypi/v/gino_admin) ![badge2](https://img.shields.io/pypi/l/gino_admin) ![badge3](https://img.shields.io/pypi/pyversions/gino_admin) 
@@ -57,15 +57,15 @@ Now if you work using the custom "schema" name - it's okay and supported by Admi
 
 - Auth by login/pass with cookie check
 - Create(Add new) item by one for the Model
-- Search/sort in tables
-- [Upload/export data from/to CSV](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#upload-csv-files)
 - Delete all rows/per element
 - Copy existed element (data table row)
 - Edit existed data (table row)
+- Search/sort in tables
+- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
+- [Upload/export data from/to CSV](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#upload-csv-files)
 - SQL-Runner (execute SQL-queries)
 - [Presets: Define order and Load to DB bunch of CSV-files](https://gino-admin.readthedocs.io/en/latest/presets.html)
-- Drop DB (Full clean up behavior: Drop tables & Recreate)
-- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
+- Init DB (Full clean up behavior: Drop tables & Recreate)
 - [Composite CSV: Load multiple relative tables in one CSV-file](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload)
 - History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc) 
 
