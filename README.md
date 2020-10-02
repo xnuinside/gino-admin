@@ -17,6 +17,19 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 
 
+### How to install
+
+```bash
+
+    pip install gino-admin==0.2.0
+
+```
+
+### How to use
+
+You can find several code examples in [examples/](examples/) folder.
+
+
 ### Updates in version 0.2.0 (current master):
 
 1. **UI fixes**: 
@@ -101,15 +114,6 @@ create_admin_app(
 - Other staff on [Gino Project Dashboard](https://github.com/xnuinside/gino-admin/projects/1)
 
 
-### How to install
-
-```pip install gino-admin==0.2.0```
-
-### How to use
-
-You can find several code examples in [examples/](examples/) folder.
-
-
 #### Run Admin Panel from Command line
 
 **Run Admin Panel from cli**
@@ -136,7 +140,10 @@ Optional params:
 
 Example:
 
-```gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
+```bash
+
+    gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
+
 ```
 
 #### Add Admin Panel to existed Sanic application as '/admin' route
