@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from csv import reader
-from typing import List, Optional, Text, Any, Dict
+from typing import List, Optional, Text, Any, Dict, Tuple
 from io import TextIOWrapper, BytesIO
 
 import asyncpg
@@ -15,7 +15,7 @@ from sqlalchemy_utils.functions import identity
 from gino_admin import config
 from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
                               reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row, 
-                              create_obj_id_for_query, get_type_name)
+                              create_obj_id_for_query, get_type_name, prepare_request_params)
 from gino_admin.history import log_history_event
 
 cfg = config.cfg
@@ -146,18 +146,17 @@ def extract_tables_from_header(header: List, request: Request):
     return None, header_columns, tables_indexes
 
 
-async def create_or_update(row, model_id):
+async def create_or_update(row: Dict, model_id: Text) -> Tuple:
     try:
         model_data = cfg.models[model_id]
+        row = prepare_request_params(row, model_id, model_data)
         obj = (await model_data["model"].create(**row)).to_dict()
         obj_id = get_obj_id_from_row(model_data, obj)
         return obj_id, None, None
     except asyncpg.exceptions.UniqueViolationError as e:
         if cfg.csv_update_existed:
             obj_id = get_obj_id_from_row(model_data, row)
-            print(obj_id)
             obj = await get_by_params(obj_id, model_data["model"])
-            print(obj)
             await obj.update(**row).apply()
             return None, obj_id, None
         else:
@@ -167,10 +166,8 @@ async def create_or_update(row, model_id):
 
 
 async def upload_simple_csv_row(row, header, model_id):
-    columns_data = cfg.models[model_id]["columns_data"]
     row = {header[index]: value for index, value in enumerate(row)}
-    row = reverse_hash_names(model_id, row)
-    row = correct_types(row, columns_data)
+    row = prepare_request_params(row, model_id, cfg.models[model_id])
     return await create_or_update(row, model_id)
 
 
@@ -334,7 +331,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
         if errors:
             request["flash_messages"].append(
                 (
-                    f"Errors: was not added  (row number, row {cfg.models[model_id]['key']}, error) : {errors}",
+                    f"Errors: : {errors}",
                     "error",
                 )
             )

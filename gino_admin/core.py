@@ -101,8 +101,13 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
     
+    if not os.environ.get("SANIC_DB_HOST", None):
+        # mean user define path to DB with one-line uri
+        config = parse_db_uri(config_settings)
+    
     if 'db_uri' in config_settings:
         del config_settings['db_uri']
+
     for key in config_settings:
         try:
             setattr(cfg, key, config_settings[key])
@@ -114,7 +119,10 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
             )
 
     add_history_model(db)
-    add_users_model(db)
+    import asyncio
+    loop = asyncio.get_event_loop()
+    
+    loop.run_until_complete(add_users_model(db, app.config))
 
     extract_models_metadata(db, db_models)
     if config_settings.get("route"):
@@ -141,7 +149,6 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         app_jinja.init_app(app)
     cfg.app.config = app.config
 
-
 def create_admin_app(
     db: Gino,
     db_models: List = None,
@@ -154,10 +161,7 @@ def create_admin_app(
         config = {}
     if db_models is None:
         db_models = []
-    
-    if not os.environ.get("SANIC_DB_HOST"):
-        # mean user define path to DB with one-line uri
-        config = parse_db_uri(config)
+
     return init_admin_app(host, port, db, db_models, config)
 
 def parse_db_uri(config: Dict) -> None:

@@ -62,8 +62,13 @@ class Config(BaseModel):
     upload_dir: str = "files/"
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
-    datetime_str_formats: List[str] = [
+    date_str_formats: List[str] = [
         "%Y-%m-%d",
+        "%d-%m-%Y",
+        "%Y-%d-%m",
+        "%m-%d-%Y"
+    ]
+    datetime_str_formats: List[str] = [
         "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
         "%Y-%m-%dT%H:%M:%S",
@@ -95,15 +100,18 @@ class Config(BaseModel):
     history_data_columns: List[str] = []
     admin_users_data_columns: List[str] = []
     track_history_endpoints: List[str] = [
-        "core.admin.model_delete",
-        "core.admin.model_delete_all",
-        "core.admin.model_edit_post",
-        "core.admin.model_add",
-        "core.admin.presets_use",
-        "core.admin.init_db_run",
-        "core.admin.file_upload",
-        "core.admin.sql_query_run",
+        "model_delete",
+        "model_delete_all",
+        "model_edit_post",
+        "model_add",
+        "presets_use",
+        "init_db_run",
+        "file_upload",
+        "sql_query_run",
+        "login",
+        "logout_post"
     ]
+    admin_user_added = False
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

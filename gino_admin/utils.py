@@ -179,22 +179,30 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
     return params
 
 
-def extract_date(date_str: Text):
-    date_object = datetime.datetime.strptime(date_str, "%m-%d-%y")
-    return date_object
+def parse_datetime(datetime_str: Text) -> datetime.datetime:
+    for str_format in cfg.datetime_str_formats:
+        try:
+            datetime_object = datetime.datetime.strptime(datetime_str, str_format)
+            return datetime_object
+        except ValueError:
+                continue
+
+
+def parse_date(date_str: Text) -> datetime.date:
+    for str_format in cfg.date_str_formats:
+        try:
+            date_object = datetime.datetime.strptime(datetime_str, str_format).date()
+            return date_object
+        except ValueError:
+            continue
 
 
 def extract_datetime(datetime_str: Text, type_: Union[datetime.datetime, datetime.date]):
-    for str_format in cfg.datetime_str_formats:
-        try:
-            if type_ == datetime.datetime:
-                datetime_object = datetime.datetime.strptime(datetime_str, str_format)
-                return datetime_object
-            elif type_ == datetime.date:
-                date_object = datetime.datetime.strptime(datetime_str, str_format).date()
-                return date_object
-        except ValueError:
-            continue
+    """ parse datetime or date object from string """
+    if type_ == datetime.datetime:
+       return parse_datetime(datetime_str)
+    elif type_ == datetime.date:
+        return parse_date(datetime_str)
 
 
 def prepare_request_params(request_params: Dict, model_id: Text, model_data: Dict) -> Dict:
@@ -231,7 +239,6 @@ def get_presets():
         and cfg.presets["loaded_at"] < os.path.getmtime(cfg.presets_folder)
     ):
         cfg.presets = {"presets": load_presets(), "loaded_at": time.time()}
-
     return cfg.presets
 
 
