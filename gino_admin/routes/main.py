@@ -235,7 +235,13 @@ async def sql_query_run(request):
             request["history_action"]["object_id"] = "sql_run"
         except asyncpg.exceptions.PostgresSyntaxError as e:
             request["flash"](f"{e.args}", "error")
-    return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
+        except asyncpg.exceptions.UndefinedTableError as e:
+            request["flash"](f"{e.args}", "error")
+    if result:
+        return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
+    else:
+        return jinja.render("sql_runner.html", request)
+        
 
 
 @admin.route("/history", methods=["GET"])

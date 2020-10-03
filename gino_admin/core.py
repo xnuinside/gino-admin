@@ -9,7 +9,7 @@ from sanic_jwt import Initialize
 from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
-# from gino_admin.users import add_users_model
+from gino_admin.users import add_users_model
 from gino_admin.routes import rest
 from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name
 
@@ -86,27 +86,13 @@ def extract_column_data(model_id: Text) -> Dict:
 
 def extract_models_metadata(db: Gino, db_models: List) -> None:
     """ extract required data about DB Models """
+    db_models.append(cfg.users_model)
     cfg.models = {model.__tablename__: {"model": model} for model in db_models}
     cfg.app.db = db
-
-    #models_to_remove = []
-
+    
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
         cfg.models[model_id].update(column_details)
-        #if not column_details["identity"]:
-            #models_to_remove.append(model_id)
-        #else:
-            #cfg.models[model_id].update(column_details)
-
-    """
-    for model_id in models_to_remove:
-        logger.warning(
-            f"\nWARNING: Model {model_id.capitalize()} will not be displayed in Admin Panel "
-            f"because does not contains any unique column\n"
-        )
-        del cfg.models[model_id]
-    """
 
 
 def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
@@ -132,7 +118,7 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
             )
 
     add_history_model(db)
-    # add_users_model(db)
+    add_users_model(db)
 
     extract_models_metadata(db, db_models)
     if config_settings.get("route"):

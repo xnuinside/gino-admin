@@ -24,6 +24,7 @@ def render_with_updated_context(
     context["url_prefix"] = cfg.route
     context["admin_panel_version"] = __version__
     context["round_number"] = cfg.round_number
+    context["admin_users_route"] = cfg.admin_users_table_name
     return html(
         self.render_string(template, request, **context),
         status=status,
