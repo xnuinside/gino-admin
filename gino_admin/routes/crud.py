@@ -4,6 +4,7 @@ from sanic.request import Request
 import datetime
 from gino_admin import auth, utils
 from gino_admin.core import admin, cfg
+from gino_admin.history import log_history_event
 from gino_admin.routes.logic import (render_add_or_edit_form, 
                                      render_model_view, 
                                      get_by_params, 
@@ -43,27 +44,24 @@ async def model_edit_post(request, model_id):
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
     }
-    if model_data["hashed_indexes"]:
-        request_params = utils.reverse_hash_names(model_id, request_params)
-    request_params = utils.correct_types(request_params, columns_data)
+    request_params = utils.prepare_request_params(request_params, model_id, model_data)
     try:
         if not model_data["identity"]:
             old_obj = previous_id
             await update_all_by_params(request_params, previous_id, model)
             obj = request_params
         else:
-            print(previous_id)
             obj = await get_by_params(previous_id, model)
             old_obj = obj.to_dict()
             await obj.update(**request_params).apply()
             obj = obj.to_dict()
         changes = utils.get_changes(old_obj, obj)
         new_obj_id = utils.get_obj_id_from_row(model_data, request_params)
-        message = f'Object with id {previous_id} was updated. Changes: from {changes["from"]} to {changes["to"]}'
+        message = f'Object with id {previous_id} was updated.'
+        if changes:
+            message += f'Changes: from {changes["from"]} to {changes["to"]}'
         request["flash"](message, "success")
-        print(request["history_action"])
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = previous_id
+        log_history_event(request, message, previous_id)
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         request["flash"](
             f"ForeignKey error. "
@@ -98,18 +96,15 @@ async def model_add(request, model_id):
     if not_filled:
         request["flash"](f"Fields {not_filled} required. Please fill it", "error")
     else:
-        if model_data["hashed_indexes"]:
-            request_params = utils.reverse_hash_names(model_id, request_params)
         try:
-            request_params = utils.correct_types(
-                request_params, model_data["columns_data"]
+            request_params = utils.prepare_request_params(
+                request_params, model_id, model_data
             )
             obj = await model_data["model"].create(**request_params)
             obj_id = utils.get_obj_id_from_row(model_data, request_params)
             message = f'Object with {obj_id} was added.'
             request["flash"](message, "success")
-            request["history_action"]["log_message"] = message
-            request["history_action"]["object_id"] = obj_id
+            log_history_event(request, message, obj_id)
         except (
             asyncpg.exceptions.StringDataRightTruncationError,
             ValueError,
@@ -143,8 +138,7 @@ async def model_delete(request, model_id):
             await obj.delete()
         message = f"Object with {obj_id} was deleted"
         flash_message = (message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = obj_id
+        log_history_event(request, message, obj_id)
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         flash_message = (str(e.args), "error")
 
@@ -158,8 +152,7 @@ async def model_delete_all(request, model_id):
         await cfg.models[model_id]["model"].delete.where(True).gino.status()
         message = f"All objects in {model_id} was deleted"
         flash_message = (message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = model_id
+        log_history_event(request, message, f'all, model_id: {model_id}')
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         flash_message = (e.args, "error")
     return await model_view_table(request, model_id, flash_message)

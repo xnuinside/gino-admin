@@ -11,7 +11,7 @@ from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
 from gino_admin.users import add_users_model
 from gino_admin.routes import rest
-from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name
+from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name, HashColumn
 
 cfg = config.cfg
 
@@ -22,10 +22,6 @@ STATIC_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static
 
 admin.static("/static", STATIC_FOLDER)
 admin.static("/favicon.ico", os.path.join(STATIC_FOLDER, "favicon.ico"))
-
-
-class HashColumn:
-    pass
 
 
 def extract_column_data(model_id: Text) -> Dict:

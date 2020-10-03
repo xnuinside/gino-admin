@@ -157,10 +157,8 @@ TODO:
 * Add possible to add new Presets from GUI
 * Other staff on `Gino Project Dashboard <https://github.com/xnuinside/gino-admin/projects/1>`_
 
-Run Admin Panel from Command line
---------------------------------~
-
-**Run Admin Panel from cli**
+Run Admin Panel with Cli
+------------------------
 
 .. code-block::
 
@@ -220,7 +218,7 @@ Where:
 
 In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '\ ******\ '
 
-Run Admin Panel as Standalone Sanic app (if you use different frameworks as main App)
+Run Admin Panel as Standalone Sanic App (if you use different frameworks as Main App)
 ------------------------------------------------------------------------------------~
 
 You can use Gino Admin as stand alone web app. Does not matter what Framework used for your main App.
@@ -336,31 +334,7 @@ Read in docs: `Authorization <https://gino-admin.readthedocs.io/en/latest/author
 Limitations
 ^^^^^^^^^^^
 
-For correct work of Admin Panel all models MUST contain at least one unique and primary_key Column (field).
-
-This column used to identify row (one element) for Copy & Edit & Delete operations.
-Name of unique and primary_key column and type does not matter.
-
-So if you define model, for example, User, you can have column **user_id** as unique and primary_key:
-
-.. code-block::
-
-       class User(db.Model):
-
-           __tablename__ = "users"
-
-           user_id = db.Column(db.String(), unique=True, primary_key=True)
-
-Or for model 'Country' it can be 'code'
-
-.. code-block::
-
-       class Country(db.Model):
-
-           __tablename__ = "countries"
-
-           code = db.Column(db.String(8), unique=True, primary_key=True)
-           name = db.Column(db.String())
+In current version, for correct work of Deepcopy feature in Admin Panel model MUST contain at least one unique or primary_key Column (field).
 
 Screens:
 ^^^^^^^^

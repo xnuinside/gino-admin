@@ -16,6 +16,7 @@ from gino_admin import config
 from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
                               reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row, 
                               create_obj_id_for_query, get_type_name)
+from gino_admin.history import log_history_event
 
 cfg = config.cfg
 
@@ -268,10 +269,9 @@ async def upload_from_csv_data(upload_file: File, file_name: Text, request: Requ
     with TextIOWrapper(BytesIO(upload_file.body)) as read_obj:
         request, is_success = await insert_data_from_csv_rows(read_obj, model_id, request)
         if is_success:
-            request["history_action"][
-                "log_message"
-            ] = f"Upload data from CSV from file {file_name} to model {model_id}"
-            request["history_action"]["object_id"] = "upload_csv"
+            log_history_event(request, 
+                              f"Upload data from CSV from file {file_name} to model {model_id}",
+                              "system: upload_csv")
         return request, is_success
 
 

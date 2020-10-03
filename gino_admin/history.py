@@ -5,11 +5,13 @@ import asyncpg
 import sanic
 
 from gino_admin import config
+from sanic import request
+from typing import Text
 
 cfg = config.cfg
 
 
-def add_history_model(db):
+def add_history_model(db) -> None:
     if cfg.history_table_name not in db.tables:
 
         class GinoAdminHistory(db.Model):
@@ -36,7 +38,7 @@ def add_history_model(db):
         ]
 
 
-async def write_history_after_response(request: sanic.request.Request):
+async def write_history_after_response(request: sanic.request.Request) -> None:
     if not os.getenv("ADMIN_AUTH_DISABLE") == "1":
         if (
             not request.cookies
@@ -49,9 +51,11 @@ async def write_history_after_response(request: sanic.request.Request):
 
     else:
         user = "AUTH_DISABLED"
+    print(request.url)
+    route = request.url.split('admin/')[1]
     history_row = {
         "user": user,
-        "route": request.endpoint.split(".")[-1],
+        "route": route,
         "log_message": request["history_action"].get("log_message", ""),
         "object_id": str(request["history_action"].get("object_id", "none")),
         "datetime": datetime.datetime.now(),
@@ -61,3 +65,8 @@ async def write_history_after_response(request: sanic.request.Request):
     except asyncpg.exceptions.UndefinedTableError:
         await cfg.app.db.gino.create_all()
         await cfg.history_model.create(**history_row)
+
+
+def log_history_event(request: request.Request, message: Text, object_id: Text) -> None:
+    request["history_action"]["log_message"] = message
+    request["history_action"]["object_id"] = object_id

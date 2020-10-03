@@ -22,6 +22,10 @@ logger = logging.getLogger("Gino Admin")
 salt = uuid.uuid4().hex
 
 
+class HashColumn:
+    pass
+
+
 _windows_device_files = (
     "CON",
     "AUX",
@@ -148,12 +152,14 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
             if "_hash" not in param and not isinstance(
                 params[param], columns_data[param]["type"]
             ):
-                if columns_data[param]["type"] not in [datetime.datetime, datetime.date]:
-                    params[param] = columns_data[param]["type"](params[param])
-                elif columns_data[param]["type"] == list:
+                if columns_data[param]["type"] == list:
                     params[param] = params[param].split(",")
-                else:
+                elif columns_data[param]["type"] in [datetime.datetime, datetime.date]:
                     params[param] = extract_datetime(params[param], columns_data[param]["type"])
+                elif type(columns_data[param]["type"]) == HashColumn:
+                    print(params[param])
+                    print(columns_data[param]["type"])
+                    params[param] = columns_data[param]["type"](params[param])
         else:
             if columns_data[param]["type"][0] == list:
                 if isinstance(params[param], str):
@@ -190,6 +196,13 @@ def extract_datetime(datetime_str: Text, type_: Union[datetime.datetime, datetim
         except ValueError:
             continue
 
+
+def prepare_request_params(request_params: Dict, model_id: Text, model_data: Dict) -> Dict:
+    """ reverse hash names and correct types of input params """
+    request_params = correct_types(request_params, model_data["columns_data"])
+    if model_data["hashed_indexes"]:
+        request_params = reverse_hash_names(model_id, request_params)
+    return request_params
 
 def get_type_name(column_data: Dict) -> Text:
     """ get type name for ui """
@@ -325,11 +338,12 @@ def get_changes(old_obj: Dict, new_obj: Dict):
     from_ = {}
     to_ = {}
     for key, value in new_obj.items():
-        if key not in old_obj:
-            to_[key] = value
-        elif old_obj[key] != value:
-            from_[key] = old_obj[key]
-            to_[key] = value
+        if '_hash' not in key:
+            if key not in old_obj:
+                to_[key] = value
+            elif old_obj[key] != value:
+                from_[key] = old_obj[key]
+                to_[key] = value
     return {"from": from_, "to": to_}
 
 def get_table_name(model_id: Text) -> Text:

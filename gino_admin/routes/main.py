@@ -8,7 +8,7 @@ from sanic.request import Request
 
 from gino_admin import auth, config, utils
 from gino_admin.core import admin
-from gino_admin.history import write_history_after_response
+from gino_admin.history import write_history_after_response, log_history_event
 from gino_admin.routes.crud import model_view_table
 from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      deepcopy_recursive,
@@ -104,8 +104,7 @@ async def model_deepcopy(request, model_id):
                 else:
                     message = f"Object with {request_params['_id']} was deepcopied with new id {new_base_obj_id}"
                     request["flash"](message, "success")
-                    request["history_action"]["log_message"] = message
-                    request["history_action"]["object_id"] = new_base_obj_id
+                    log_history_event(request, message, new_base_obj_id)
     except asyncpg.exceptions.PostgresError as e:
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
@@ -122,8 +121,7 @@ async def model_copy(request, model_id):
         new_obj_key = await create_object_copy(model_id, base_obj_id)
         message = f"Object with {base_obj_id} key was copied as {new_obj_key}"
         flash_message = (message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = new_obj_key
+        log_history_event(request, message, new_obj_key)
     except asyncpg.exceptions.UniqueViolationError as e:
         flash_message = (
             f"Duplicate in Unique column Error during copy: {e.args}. \n"
@@ -153,8 +151,7 @@ async def init_db_run(request: Request):
     await drop_and_recreate_all_tables()
     message = f"{count} object was deleted. DB was Init from Scratch"
     request["flash"](message, "success")
-    request["history_action"]["log_message"] = message
-    request["history_action"]["object_id"] = "init_db"
+    log_history_event(request, message, "system: init_db")
     return jinja.render("init_db.html", request, data=await count_elements_in_db())
 
 
@@ -190,11 +187,8 @@ async def presets_use(request: Request):
             )
         for message in request["flash_messages"]:
             request["flash"](*message)
-        request["history_action"]["log_message"] = (
-            f"Loaded preset {preset['id']}"
-            f"" + f"{' with DB drop' if with_drop else ''}"
-        )
-        request["history_action"]["object_id"] = "load_preset"
+        history_message = f"Loaded preset {preset['id']} {' with DB drop' if with_drop else ''}"
+        log_history_event(request, history_message, "system: load_preset")
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
     return jinja.render("presets.html", request, presets=utils.get_presets()["presets"])
@@ -231,8 +225,7 @@ async def sql_query_run(request):
         sql_query = request.form["sql_query"][0]
         try:
             result = await cfg.app.db.status(cfg.app.db.text(sql_query))
-            request["history_action"]["log_message"] = f"Query run '{sql_query}'"
-            request["history_action"]["object_id"] = "sql_run"
+            log_history_event(request, f"Query run '{sql_query}'", "system: sql_run")
         except asyncpg.exceptions.PostgresSyntaxError as e:
             request["flash"](f"{e.args}", "error")
         except asyncpg.exceptions.UndefinedTableError as e:

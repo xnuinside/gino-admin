@@ -9,6 +9,8 @@ from gino_admin.history import write_history_after_response
 from gino_admin.routes.logic import (drop_and_recreate_all_tables,
                                      insert_data_from_csv_file, upload_from_csv_data)
 from gino_admin.utils import get_preset_by_id, logger, read_yaml
+from gino_admin.history import log_history_event
+
 
 cfg = config.cfg
 
@@ -65,12 +67,9 @@ async def presets(request: Request):
         else:
             message = "Preset was loaded"
         result = response.json({"status": f"{message}"}, status=200)
-
-        request["history_action"]["log_message"] = (
-            f"Loaded preset {preset['id']}"
-            f"" + f"{' with DB drop' if with_drop else ''}"
-        )
-        request["history_action"]["object_id"] = "load_preset"
+        log_history_event(request, 
+                          f"Loaded preset {preset['id']}{' with DB drop' if with_drop else ''}",
+                          "system: load_preset")
     except FileNotFoundError:
         answer = {"error": f"Wrong file path in Preset {preset['name']}."}
         result = response.json(answer, status=422)
