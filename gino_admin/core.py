@@ -9,9 +9,9 @@ from sanic_jwt import Initialize
 from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
-# from gino_admin.users import add_users_model
+from gino_admin.users import add_users_model
 from gino_admin.routes import rest
-from gino_admin.utils import GinoAdminError, logger, types_map
+from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name, HashColumn
 
 cfg = config.cfg
 
@@ -24,23 +24,22 @@ admin.static("/static", STATIC_FOLDER)
 admin.static("/favicon.ico", os.path.join(STATIC_FOLDER, "favicon.ico"))
 
 
-class HashColumn:
-    pass
-
-
 def extract_column_data(model_id: Text) -> Dict:
     """ extract data about column """
     _hash = "_hash"
     columns_data, hashed_indexes = {}, []
-    for num, column in enumerate(cfg.app.db.tables[model_id].columns):
-
+    table_name = get_table_name(model_id)
+    for num, column in enumerate(cfg.app.db.tables[table_name].columns):
         if _hash in column.name:
             name = column.name.split(_hash)[0]
             type_ = HashColumn
             hashed_indexes.append(num)
         else:
             name = column.name
-            type_ = types_map.get(str(column.type).split("(")[0], str)
+            type_ = types_map.get(str(column.type).split("(")[0])
+            if not type_:
+                logger.error(f"{column.type} was not found in types_map")
+                type_ = str
         if len(str(column.type).split("(")) > 1:
             len_ = int(str(column.type).split("(")[1].split(")")[0])
         else:
@@ -50,13 +49,14 @@ def extract_column_data(model_id: Text) -> Dict:
             "len": len_,
             "nullable": column.nullable,
             "unique": column.unique,
+            "primary": column.primary_key,
             "foreign_keys": column.foreign_keys,
             "db_type": column.type
         }
     required = [
-        key for key, value in columns_data.items() if value["nullable"] is False
+        key for key, value in columns_data.items() if value["nullable"] is False or value["primary"]
     ]
-    unique = [key for key, value in columns_data.items() if value["unique"] is True]
+    unique_keys = [key for key, value in columns_data.items() if value["unique"] is True]
     foreign_keys = {}
     for column_name, data in columns_data.items():
         for key in data["foreign_keys"]:
@@ -64,38 +64,31 @@ def extract_column_data(model_id: Text) -> Dict:
                 column_name,
                 key._colspec.split(".")[1],
             )
-    columns_details = {
-        "unique_columns": unique,
+    
+    primary_keys = [key for key, value in columns_data.items() if value["primary"] is True]
+    table_details = {
+        "unique_columns": unique_keys,
         "required_columns": required,
         "columns_data": columns_data,
+        "primary_keys": primary_keys,
         "columns_names": list(columns_data.keys()),
         "hashed_indexes": hashed_indexes,
         "foreign_keys": foreign_keys,
+        "identity": primary_keys if primary_keys else unique_keys
+        
     }
-    return columns_details
+    return table_details
 
 
 def extract_models_metadata(db: Gino, db_models: List) -> None:
     """ extract required data about DB Models """
+    db_models.append(cfg.users_model)
     cfg.models = {model.__tablename__: {"model": model} for model in db_models}
     cfg.app.db = db
-
-    models_to_remove = []
-
+    
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
-        if not column_details["unique_columns"]:
-            models_to_remove.append(model_id)
-        else:
-            cfg.models[model_id].update(column_details)
-            cfg.models[model_id]["key"] = cfg.models[model_id]["unique_columns"][0]
-
-    for model_id in models_to_remove:
-        logger.warning(
-            f"\nWARNING: Model {model_id.capitalize()} will not be displayed in Admin Panel "
-            f"because does not contains any unique column\n"
-        )
-        del cfg.models[model_id]
+        cfg.models[model_id].update(column_details)
 
 
 def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
@@ -107,6 +100,14 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         )
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
+
+    if not app.config.get("DB_HOST", None):
+        # mean user define path to DB with one-line uri
+        config = parse_db_uri(config_settings)
+    
+    if 'db_uri' in config_settings:
+        del config_settings['db_uri']
+
     for key in config_settings:
         try:
             setattr(cfg, key, config_settings[key])
@@ -118,7 +119,10 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
             )
 
     add_history_model(db)
-    # add_users_model(db)
+    import asyncio
+    loop = asyncio.get_event_loop()
+    
+    loop.run_until_complete(add_users_model(db, app.config))
 
     extract_models_metadata(db, db_models)
     if config_settings.get("route"):
@@ -145,7 +149,6 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         app_jinja.init_app(app)
     cfg.app.config = app.config
 
-
 def create_admin_app(
     db: Gino,
     db_models: List = None,
@@ -158,8 +161,41 @@ def create_admin_app(
         config = {}
     if db_models is None:
         db_models = []
+
     return init_admin_app(host, port, db, db_models, config)
 
+def parse_db_uri(config: Dict) -> None:
+    """ parse db uri and set up sanic variables"""
+    
+    if config.get('db_uri'):
+        db_uri = config['db_uri']
+    else:
+        db_uri = os.environ.get('ADMIN_DB_URI')
+    if not db_uri:
+        raise Exception(
+            "Need to setup DB_URI env variable  with credentianls to access Database or send 'db_uri' in Gino-Admin config.\n"
+            "Example: DB_URI=postgresql://local:local@localhost:5432/gino_db")
+    db_uri = db_uri.split("postgresql://")[1]
+    if '@' in db_uri:
+        db_uri = db_uri.split("@")
+        host_and_db = db_uri[1].split('/')
+        login_and_password = db_uri[0].split(':')
+        login = login_and_password[0]
+        password = login_and_password[1]
+        host = host_and_db[0]
+        db = host_and_db[1]
+    else:
+        db_uri = db_uri.split("/")
+        host = db_uri[0]
+        db = db_uri[1]
+        login, password = None, None
+    if ':' in host:
+        host = host.split(':')[0]
+    os.environ["SANIC_DB_HOST"] = host
+    os.environ["SANIC_DB_DATABASE"] = db
+    os.environ["SANIC_DB_USER"] = login
+    os.environ["SANIC_DB_PASSWORD"] = password
+    return config
 
 def init_admin_app(host, port, db, db_models, config):
     """ init admin panel app """
@@ -170,7 +206,7 @@ def init_admin_app(host, port, db, db_models, config):
     @app.route("/")
     async def index(request):
         return response.redirect("/admin")
-
+    
     add_admin_panel(app, db, db_models, **config)
 
     return app.run(host=host, port=port, debug=cfg.debug)

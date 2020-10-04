@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gino-admin"
-version = "0.1.1"
+version = "0.2.0"
 description = "Admin Panel for PostgreSQL DB with Gino ORM"
 authors = ["xnuinside <xnuinside@gmail.com>"]
 license = "MIT"
@@ -31,6 +31,8 @@ flake8 = "^3.7.9"
 pytest-docker-compose = "^3.1.2"
 pytest = "^5.4.2"
 sphinx = "^3.0.3"
+m2r = "^0.2.1"
+twine = "^3.2.0"
 
 [tool.poetry.scripts]
 gino-admin = 'gino_admin.cli:cli'

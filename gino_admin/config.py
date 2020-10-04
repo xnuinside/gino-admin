@@ -8,7 +8,7 @@ from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 
 loader = FileSystemLoader(
@@ -24,6 +24,7 @@ def render_with_updated_context(
     context["url_prefix"] = cfg.route
     context["admin_panel_version"] = __version__
     context["round_number"] = cfg.round_number
+    context["admin_users_route"] = cfg.admin_users_table_name
     return html(
         self.render_string(template, request, **context),
         status=status,
@@ -61,10 +62,17 @@ class Config(BaseModel):
     upload_dir: str = "files/"
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
+    date_str_formats: List[str] = [
+        "%Y-%m-%d",
+        "%d-%m-%Y",
+        "%Y-%d-%m",
+        "%m-%d-%Y"
+    ]
     datetime_str_formats: List[str] = [
         "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
         "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d %H:%M:%S.%f",
         "%m-%d-%yT%H:%M:%S.%f",
         "%m-%d-%y %H:%M:%S",
@@ -92,15 +100,18 @@ class Config(BaseModel):
     history_data_columns: List[str] = []
     admin_users_data_columns: List[str] = []
     track_history_endpoints: List[str] = [
-        "app.admin.model_delete",
-        "app.admin.model_delete_all",
-        "app.admin.model_edit_post",
-        "app.admin.model_add",
-        "app.admin.presets_use",
-        "app.admin.init_db_run",
-        "app.admin.file_upload",
-        "app.admin.sql_query_run",
+        "model_delete",
+        "model_delete_all",
+        "model_edit_post",
+        "model_add",
+        "presets_use",
+        "init_db_run",
+        "file_upload",
+        "sql_query_run",
+        "login",
+        "logout_post"
     ]
+    admin_user_added = False
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

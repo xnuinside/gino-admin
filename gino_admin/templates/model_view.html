@@ -12,9 +12,22 @@
     </div>
     <div class="ui divider"></div>
 </div>
-<div id="grid" class="ui grid">
-    <div class="sixteen column row" id="row_filters">
+
+<div id="grid_footer" class="ui grid">
+
+    <div class="eight wide column left aligned content" id="grid_footer_left"><br>
     </div>
+    <div class="eight wide column right aligned content " id="grid_footer_row">
+    </div>
+</div>
+
+<div class="ui grid" id="row_filters">
+
+        <div class="ten wide column  left aligned content">
+        </div>
+        <div class="six wide column right aligned content" id="search">
+        </div>
+
 </div>
 {% include 'data_table.html' %}
 
@@ -23,8 +36,11 @@
 
 {% include 'modals/delete_modal.html' %}
 
-<div id="grid_footer" class="ui grid right aligned content">
-    <div class="three column " id="grid_footer_row">
+<div id="grid_footer" class="ui grid">
+
+    <div class="eight wide column left aligned content" id="grid_footer_left"><br>
+    </div>
+    <div class="eight wide column right aligned content " id="grid_footer_row">
     </div>
 </div>
 <!-- end of modal -->
@@ -45,8 +61,10 @@
 <script>
 $(document).ready( function () {
     $('#models_table').DataTable({
-    dom: 'Blfrtip',
-
+    dom: 'rtiplfB',
+    orderCellsTop: true,
+    fixedHeader: true,
+    "scrollX": true,
     buttons: [
         {
             extend: 'csvHtml5',
@@ -63,16 +81,20 @@ $(document).ready( function () {
     ],
 initComplete: function () {
     $('.buttons-csv').attr('id', 'buttons-csv')
-    $('#models_table_length').attr('class', 'dataTables_length twelve wide column')
-    $('#models_table_filter').attr('class','dataTables_filter ui form right aligned content four wide column')
+    $("#models_table_filter").attr('style', "margin-right: 45px; margin-bottom: 10px;")
+    $('#models_table_length').attr('class', 'dataTables_length ui form left aligned content four wide column')
+    $('#models_table_filter').attr('class','dataTables_filter ui form inline field three wide column' )
      $("#grid").appendTo("#models_table_wrapper");
      $('#grid').insertBefore('#models_table');
     $('#buttons-csv').attr('class','ui right floated five wide small green labeled icon button')
     $('#buttons-csv').html('<i class="download icon"></i>Export to CSV')
 
     $('#buttons-csv').insertBefore('#add');
-    $("#models_table_length").appendTo("#row_filters");
-    $("#models_table_filter").appendTo("#row_filters");
+
+    $('#row_filters').insertAfter('#header_grid');
+    
+    $("#models_table_length").appendTo("#grid_footer_left");
+    $("#models_table_filter").appendTo("#search");
     $('#grid_footer').insertAfter('#models_table');
 
     $('#models_table_info').appendTo("#grid_footer_row");
@@ -82,7 +104,6 @@ initComplete: function () {
 }
 } );
 } );
-
 $(function(){
 	$("#delete_all").click(function(){
 		$(".ui.basic.modal").modal('show');
@@ -97,7 +118,8 @@ $(function() {
 	$(".deepcopy_href").click(function(){
         $("#obj_id").html(this.dataset.id);
         var type = this.dataset.type;
-        if (type == 'int') {
+        console.log(type)
+        if (type == 'int' || type == 'float') {
             var prefix = Math.floor(Math.random() * 100);
             $("#new_id").val(this.dataset.id + prefix);
         }
@@ -105,7 +127,7 @@ $(function() {
             var prefix = Math.random().toString(36).slice(2)
             $("#new_id").val(this.dataset.id + '_' + prefix);
         };
-        $("#id").val(this.dataset.id);
+        $("#_id").val(this.dataset.id);
 		$(".deepcopy").modal('show');
 	});
 	$(".deepcopy").modal({

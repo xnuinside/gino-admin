@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import time
+from ast import literal_eval
 import uuid
 from random import randint
 from typing import Any, Dict, List, Text, Union
@@ -12,13 +13,16 @@ from sqlalchemy.types import BigInteger
 import aiofiles
 import yaml
 from passlib.hash import pbkdf2_sha256
-
 from gino_admin import config
 
 cfg = config.cfg
 logger = logging.getLogger("Gino Admin")
 
 salt = uuid.uuid4().hex
+
+
+class HashColumn:
+    pass
 
 
 _windows_device_files = (
@@ -38,13 +42,19 @@ _windows_device_files = (
 types_map = {
     "INTEGER": int,
     "BIGINT": int,
+    "VARCHAR[]": (list,str),
+    "SMALLINT": int,
     "VARCHAR": str,
     "FLOAT": float,
     "DECIMAL": float,
     "NUMERIC": float,
+    "CHAR": str,
+    "TEXT": str,
+    "TIMESTAMP": datetime.datetime,
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
+    "SMALLINT[]": (list,int)
 }
 
 
@@ -128,42 +138,92 @@ class CompositeType:
     pass
 
 
-def correct_types(params: Dict, columns_data: Dict):
+def correct_types(params: Dict, columns_data: Dict, no_default=False):
     to_del = []
     for param in params:
+        if '_hash' in param:
+            param_type = columns_data[param.replace('_hash', '')]["type"] 
+        else:
+            param_type = columns_data[param]["type"]
+       
         if not params[param]:
             # mean None
             to_del.append(param)
             continue
         if isinstance(param, CompositeType):
             continue
-        if "_hash" not in param and not isinstance(
-            params[param], columns_data[param]["type"]
-        ):
-            if columns_data[param]["type"] not in [datetime.datetime, datetime.date]:
-                params[param] = columns_data[param]["type"](params[param])
-            else:
-                params[param] = extract_datetime(params[param])
+        if not isinstance(param_type, tuple):
+            if "_hash" not in param and not isinstance(
+                params[param], param_type
+            ):
+                if param_type== list:
+                    params[param] = params[param].split(",")
+                elif param_type in [datetime.datetime, datetime.date]:
+                    params[param] = extract_datetime(params[param], param_type)
+                elif param_type == HashColumn:
+                    continue
+                else:
+                    params[param] = param_type(params[param])
+                    
+        else:
+            if param_type[0] == list:
+                if isinstance(params[param], str):
+                    params[param] = literal_eval(params[param])
+                elements_type = param_type[1]
+                formatted_list = []
+                for elem in params[param]:
+                    formatted_list.append(elements_type(elem))
+                params[param] = formatted_list
     for param in to_del:
         del params[param]
-    for column in columns_data:
-        if columns_data[column]["type"] == bool and column not in params:
-            params[column] = False
+    
+    if not no_default:
+        for column in columns_data:
+            if columns_data[column]["type"] == bool and column not in params:
+                params[column] = False
     return params
 
 
-def extract_date(date_str: Text):
-    date_object = datetime.datetime.strptime(date_str, "%m-%d-%y")
-    return date_object
-
-
-def extract_datetime(datetime_str: Text):
+def parse_datetime(datetime_str: Text) -> datetime.datetime:
     for str_format in cfg.datetime_str_formats:
         try:
             datetime_object = datetime.datetime.strptime(datetime_str, str_format)
             return datetime_object
         except ValueError:
+                continue
+
+
+def parse_date(date_str: Text) -> datetime.date:
+    for str_format in cfg.date_str_formats:
+        try:
+            date_object = datetime.datetime.strptime(date_str, str_format).date()
+            return date_object
+        except ValueError:
             continue
+
+
+def extract_datetime(datetime_str: Text, type_: Union[datetime.datetime, datetime.date]):
+    """ parse datetime or date object from string """
+    if type_ == datetime.datetime:
+       return parse_datetime(datetime_str)
+    elif type_ == datetime.date:
+        return parse_date(datetime_str)
+
+
+def prepare_request_params(request_params: Dict, model_id: Text, model_data: Dict) -> Dict:
+    """ reverse hash names and correct types of input params """
+    request_params = correct_types(request_params, model_data["columns_data"])
+    if model_data["hashed_indexes"]:
+        request_params = reverse_hash_names(model_id, request_params)
+    return request_params
+
+def get_type_name(column_data: Dict) -> Text:
+    """ get type name for ui """
+    if not isinstance(column_data["type"], tuple):
+        type_ = column_data["type"].__name__ 
+    else:
+        type_ = f'array of {column_data["type"][1]}'
+    return type_
 
 
 def generate_token(ip: Text):
@@ -171,7 +231,8 @@ def generate_token(ip: Text):
     return pbkdf2_sha256.encrypt(salt + ip)
 
 
-def read_yaml(preset_file):
+def read_yaml(preset_file: Text) -> Dict:
+    """ read preset yaml file"""
     with open(preset_file, "r") as preset_file:
         return yaml.safe_load(preset_file)
 
@@ -183,7 +244,6 @@ def get_presets():
         and cfg.presets["loaded_at"] < os.path.getmtime(cfg.presets_folder)
     ):
         cfg.presets = {"presets": load_presets(), "loaded_at": time.time()}
-
     return cfg.presets
 
 
@@ -220,38 +280,84 @@ def get_settings():
     return settings
 
 
-def generate_new_id(base_key: Text, model_data: Dict) -> Union[Text, int]:
-    key = model_data["key"]
-    if isinstance(base_key, str):
-        new_obj_key = (
-            base_key
-            + f"{'_' if not base_key.endswith('_') else ''}"
-            + uuid.uuid1().hex[5:10]
-        )
-        len_ = model_data["columns_data"][key]["len"]
-        if len_:
-            if new_obj_key[:len_] == base_key:
-                # if we spend all id previous
-                new_obj_key = new_obj_key[
-                    len_ : len_ + len_  # noqa E203
-                ]  # auto format from black
-            else:
-                new_obj_key = new_obj_key[:len_]
+def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
+    """ create _id dict for row based on several fields """
+    result = {}
+    if not model_data.get("identity"):
+        # if our tbale does not have unique or primary keys
+        key_fields = row
     else:
-        if isinstance(model_data["columns_data"][key]["db_type"], BigInteger):
+        key_fields = model_data["identity"]
+    if "_id" in key_fields:
+        del key_fields["_id"]
+    for x in key_fields:
+        type_ = model_data["columns_data"][x]["type"]
+        if type_ in [datetime.datetime, datetime.date]:
+            if not isinstance(row[x], str):
+                result[x] = row[x].isoformat()
+            else:
+                result[x] = row[x]
+        else:
+            result[x] = model_data["columns_data"][x]["type"](row[x])
+    result = correct_types(result, model_data["columns_data"], no_default=True)
+    return result
+
+
+def create_obj_id_for_query(id_dict: Dict) -> Text:
+    """ create query str based on _id """
+    return ",".join([f"{key}={value}" for key, value in id_dict.items()])
+
+
+def extract_obj_id_from_query(id_row: Text) -> Dict:
+    """ reverse _id dict from query str """
+    pairs = id_row.split(',')
+    _id = {}
+    for pair in pairs:
+        key, value = pair.split('=')
+        _id[key] = value
+    return _id
+    
+def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
+    """ generate new id based on previous obj id """
+    new_obj_key_dict = {}
+    for key, value in base_obj_id.items():
+        if columns_data[key]["type"] == str:
+            new_obj_key = (
+                value
+                + f"{'_' if not value.endswith('_') else ''}"
+                + uuid.uuid1().hex[5:10]
+            )
+            len_ = columns_data[key]["len"]
+            if len_:
+                if new_obj_key[:len_] == value:
+                    # if we spend all id previous
+                    new_obj_key = new_obj_key[
+                        len_ : len_ + len_  # noqa E203
+                    ]  # auto format from black
+                else:
+                    new_obj_key = new_obj_key[:len_]
+        elif isinstance(columns_data[key]["db_type"], BigInteger):
             new_obj_key = randint(0, 2 ** 63)
         else:
-            new_obj_key = randint(0, 2 ** 31)
-    return new_obj_key
+            logger.error(f'unknown logic to generate copy for id of type {columns_data[key]["type"]}')
+            new_obj_key = value
+        new_obj_key_dict[key] = new_obj_key
+    return new_obj_key_dict
 
 
 def get_changes(old_obj: Dict, new_obj: Dict):
+    """ get diff for changes on 'update' for updated object """
     from_ = {}
     to_ = {}
     for key, value in new_obj.items():
-        if key not in old_obj:
-            to_[key] = value
-        elif old_obj[key] != value:
-            from_[key] = old_obj[key]
-            to_[key] = value
+        if '_hash' not in key:
+            if key not in old_obj:
+                to_[key] = value
+            elif old_obj[key] != value:
+                from_[key] = old_obj[key]
+                to_[key] = value
     return {"from": from_, "to": to_}
+
+def get_table_name(model_id: Text) -> Text:
+    """ create full table name including schema if it exists """
+    return model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id

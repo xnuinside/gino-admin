@@ -1,0 +1,34 @@
+Welcome to Gino-Admin's documentation!
+======================================
+
+Docs status: work in progress
+
+Project's github: https://github.com/xnuinside/gino-admin
+
+
+{readme}
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   quick_start
+   authorization
+   cli
+   examples
+   config
+   features
+   rest_api
+   presets
+   csv_upload
+   changelog
+   ui_screens
+   contributing
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

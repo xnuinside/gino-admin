@@ -7,6 +7,9 @@ REM Command file for Sphinx documentation
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
+if "%BUILDFROMTEMPLATES%" == "" (
+	set BUILDFROMTEMPLATES=templates/build_doc.py
+)
 set SOURCEDIR=source
 set BUILDDIR=build
 
@@ -24,7 +27,8 @@ if errorlevel 9009 (
 	echo.http://sphinx-doc.org/
 	exit /b 1
 )
-
+python %BUILDFROMTEMPLATES%
+exit /b 0
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 goto end
 

@@ -1,11 +1,15 @@
 from typing import List, Text, Tuple, Union
-
 import asyncpg
 from sanic.request import Request
-
+import datetime
 from gino_admin import auth, utils
 from gino_admin.core import admin, cfg
-from gino_admin.routes.logic import render_add_or_edit_form, render_model_view
+from gino_admin.history import log_history_event
+from gino_admin.routes.logic import (render_add_or_edit_form, 
+                                     render_model_view, 
+                                     get_by_params, 
+                                     delete_all_by_params,
+                                     update_all_by_params)
 
 
 @admin.route("/<model_id>", methods=["GET"])
@@ -24,40 +28,47 @@ async def model_view_table(
 @admin.route("/<model_id>/edit", methods=["GET"])
 @auth.token_validation()
 async def model_edit_view(request, model_id):
-    _id = dict(request.query_args)["id"]
+    _id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
     return await render_add_or_edit_form(request, model_id, _id)
 
 
 @admin.route("/<model_id>/edit", methods=["POST"])
 @auth.token_validation()
 async def model_edit_post(request, model_id):
-    obj_id = dict(request.query_args)["id"]
     model_data = cfg.models[model_id]
     model = model_data["model"]
-    obj = await model.get(model_data["columns_data"][model_data["key"]]["type"](obj_id))
-    old_obj = obj.to_dict()
+    columns_data = model_data["columns_data"]
+    previous_id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
+    previous_id = utils.correct_types(previous_id, columns_data)
     request_params = {
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
     }
-    if model_data["hashed_indexes"]:
-        request_params = utils.reverse_hash_names(model_id, request_params)
-    request_params = utils.correct_types(request_params, model_data["columns_data"])
+    request_params = utils.prepare_request_params(request_params, model_id, model_data)
     try:
-        await obj.update(**request_params).apply()
-        changes = utils.get_changes(old_obj, obj.to_dict())
-        message = f'Object with id {obj_id} was updated. Changes: from {changes["from"]} to {changes["to"]}'
+        if not model_data["identity"]:
+            old_obj = previous_id
+            await update_all_by_params(request_params, previous_id, model)
+            obj = request_params
+        else:
+            obj = await get_by_params(previous_id, model)
+            old_obj = obj.to_dict()
+            await obj.update(**request_params).apply()
+            obj = obj.to_dict()
+        changes = utils.get_changes(old_obj, obj)
+        new_obj_id = utils.get_obj_id_from_row(model_data, request_params)
+        message = f'Object with id {previous_id} was updated.'
+        if changes:
+            message += f'Changes: from {changes["from"]} to {changes["to"]}'
         request["flash"](message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = obj_id
-    except asyncpg.exceptions.ForeignKeyViolationError:
+        log_history_event(request, message, previous_id)
+    except asyncpg.exceptions.ForeignKeyViolationError as e:
         request["flash"](
             f"ForeignKey error. "
-            f"Impossible to edit {model_data['key']} field for row {obj_id}, "
-            f"because exists objects that depend on it. ",
+            f"Impossible to edit field for row {previous_id}, "
+            f"because exists objects that depend on it. {e}",
             "error",
         )
-        request_params[model_data["key"]] = obj_id
     except asyncpg.exceptions.UniqueViolationError:
         request["flash"](
             f"{model_id.capitalize()} with such id already exists", "error"
@@ -66,7 +77,7 @@ async def model_edit_post(request, model_id):
         column = e.args[0].split("column")[1].split("violates")[0]
         request["flash"](f"Field {column} cannot be null", "error")
     return await render_add_or_edit_form(
-        request, model_id, request_params[model_data["key"]]
+        request, model_id, new_obj_id
     )
 
 
@@ -81,22 +92,19 @@ async def model_add_view(request, model_id):
 async def model_add(request, model_id):
     model_data = cfg.models[model_id]
     request_params = {key: request.form[key][0] for key in request.form}
-
     not_filled = [x for x in model_data["required_columns"] if x not in request_params]
     if not_filled:
         request["flash"](f"Fields {not_filled} required. Please fill it", "error")
     else:
-        if model_data["hashed_indexes"]:
-            request_params = utils.reverse_hash_names(model_id, request_params)
         try:
-            request_params = utils.correct_types(
-                request_params, model_data["columns_data"]
+            request_params = utils.prepare_request_params(
+                request_params, model_id, model_data
             )
             obj = await model_data["model"].create(**request_params)
-            message = f'Object with {model_data["key"]} {obj.to_dict()[model_data["key"]]} was added.'
+            obj_id = utils.get_obj_id_from_row(model_data, request_params)
+            message = f'Object with {obj_id} was added.'
             request["flash"](message, "success")
-            request["history_action"]["log_message"] = message
-            request["history_action"]["object_id"] = obj.to_dict()[model_data["key"]]
+            log_history_event(request, message, obj_id)
         except (
             asyncpg.exceptions.StringDataRightTruncationError,
             ValueError,
@@ -119,21 +127,18 @@ async def model_add(request, model_id):
 async def model_delete(request, model_id):
     """ route for delete item per row """
     model_data = cfg.models[model_id]
+    model = model_data["model"]
     request_params = {key: request.form[key][0] for key in request.form}
-    # unique_column_name
-    unique_cn = model_data["key"]
-    request_params[unique_cn] = model_data["columns_data"][unique_cn]["type"](
-        request_params[unique_cn]
-    )
-
+    obj_id = utils.get_obj_id_from_row(model_data, request_params)
     try:
-        await model_data["model"].delete.where(
-            getattr(model_data["model"], unique_cn) == request_params[unique_cn]
-        ).gino.status()
-        message = f"Object with {unique_cn} {request_params[unique_cn]} was deleted"
+        if not model_data["identity"]:
+            await delete_all_by_params(obj_id, model)
+        else:
+            obj = await get_by_params(obj_id, model)
+            await obj.delete()
+        message = f"Object with {obj_id} was deleted"
         flash_message = (message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = request_params[unique_cn]
+        log_history_event(request, message, obj_id)
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         flash_message = (str(e.args), "error")
 
@@ -147,8 +152,7 @@ async def model_delete_all(request, model_id):
         await cfg.models[model_id]["model"].delete.where(True).gino.status()
         message = f"All objects in {model_id} was deleted"
         flash_message = (message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = model_id
+        log_history_event(request, message, f'all, model_id: {model_id}')
     except asyncpg.exceptions.ForeignKeyViolationError as e:
         flash_message = (e.args, "error")
     return await model_view_table(request, model_id, flash_message)

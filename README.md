@@ -4,7 +4,7 @@
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
-Play with Demo (current master 0.0.12) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
+Play with Demo (current master 0.2.0) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
 
 
 ![badge1](https://img.shields.io/pypi/v/gino_admin) ![badge2](https://img.shields.io/pypi/l/gino_admin) ![badge3](https://img.shields.io/pypi/pyversions/gino_admin) 
@@ -16,77 +16,135 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 ![Load Presets](docs/img/db_presets.png)
 
 
-### Supported features
-
-- Auth by login/pass with cookie check
-- Create(Add new) item by one for the Model
-- Search/sort in tables
-- [Upload/export data from/to CSV](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#upload-csv-files)
-- Delete all rows/per element
-- Copy existed element (data table row)
-- Edit existed data (table row)
-- SQL-Runner (execute SQL-queries)
-- [Presets: Define order and Load to DB bunch of CSV-files](https://gino-admin.readthedocs.io/en/latest/presets.html)
-- Drop DB (Full clean up behavior: Drop tables & Recreate)
-- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
-- [Composite CSV: Load multiple relative tables in one CSV-file](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload)
-- History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc) 
-
-
-##### TODO:
-
-- Select multiple for delete/copy
-- Edit multiple items (?)
-- Roles & User store in DB
-- Filters in Table's columns
-- Add possible to add new Presets from GUI
-- Other staff on [Gino Project Dashboard](https://github.com/xnuinside/gino-admin/projects/1)
-
 
 ### How to install
 
-```pip install gino-admin==0.1.1```
-    
+```bash
 
-### Updates in version 0.1.1 (current master):
+    pip install gino-admin==0.2.0
 
-1. Fixed annoying UI issues (with icons on buttons & with modal in Init DB page)
-2. Fixed some issues with uploading huge Composite CSV
-
-
+```
 
 ### How to use
 
 You can find several code examples in [examples/](examples/) folder.
 
 
-#### Run Admin Panel from Command line
+### Updates in version 0.2.0 (current master):
 
-**Run Admin Panel from cli**
+1. **UI fixes**: 
+- Data Picker was fixed, required fields now dispalayed with '* required' in UI.
+- Menu in header became scrollable, now you can see 20+ models without pain
+- Tables became scrollable horisontal - you can keep dozen columns and see them (hooray!)
+- in Add/edit forms now displayd the field type
+
+2. **Major changes**: 
+- **Limitation to have 'unique' rows was removed**. Now you not need any unique keys to make possible work with table in Admin panel. Just keep in mind that if you edit row - you will also edit all full 'dublicated' rows. So we try identify row by all fields. 
+But if you have several full duplicates in rows - edit action will edit all of them. 
+
+Limits:
+
+Deepcopy does not available for tables without primary keys right now.
 
 
+- **Primary keys** now also used to identify unique rows. Now Admin Panel don't expect only 'unique' key in model. Now it firstly works with Primary Keys and only if primary key not exist in model - use 'unique' fields to identify unique rows. Also it supports Composite Primary keys (2 and more fields) in all type of operations: delete/update/insert/deepcopy/copy.
+
+- **Schemas support**
+
+Now if you work using the custom "schema" name - it's okay and supported by Admin Panel.  
+
+3. **Fixed in types support**:
+
+- passing data as a string - now supported both Date & DateTime format (before correct work only DataTime format)
+- parsing lists (for fields with ARRAY type), also parsed type inside array
+
+4. **Types support improvement**: 
+
+- Added support for ARRAYS, TEXT, SmallInt, CHAR, Time
+
+5. **New features**: 
+- Added Users to Admin Panel - now you can add multiple users for the panel to track history of changes correct and separate accesses
+
+- URI to DB now can be passed as config parameter 'db_uri' or with env variable 'DB_URI',
+for example, no need to setup SANIC variables:
+
+```python
+
+create_admin_app(
+        host="0.0.0.0",
+        port=os.getenv("PORT", 5000),
+        db=kkr_metadata.models.db,
+        db_models=db_models,
+        config={
+            "presets_folder": os.path.join(current_path, "csv_to_upload"),
+            "db_uri": "postgresql://local:local@localhost:5432/gino_admin"
+        },
+    )
 ```
-gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
 
-Optional params:
-    -d --db
-        Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
-        Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
-        Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
-    -h --host
-    -p --port
-    -c --config Example:  -c "presets_folder=examples/base_example/src/csv_to_upload;some_property=1"
-                Notice: all fields that not supported in config will be ignored, like 'some_property' in example
-    --no-auth  Run Admin Panel without Auth in UI
-    -u --user Admin User login & password
-        Expected format: login:password
-        Example: admin:1234
-        Notice: user also can be defined from env variable with 'SANIC_' prefix - check Auth section example
+6. **More fixes**:
+
+- History works again
+
+
+### Supported features
+
+- Auth by login/pass with cookie check
+- Create(Add new) item by one for the Model
+- Delete all rows/per element
+- Copy existed element (data table row)
+- Edit existed data (table row)
+- Search/sort in tables
+- Deepcopy element (recursive copy all rows/objects that depend on chosen as ForeignKey)
+- [Upload/export data from/to CSV](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#upload-csv-files)
+- SQL-Runner (execute SQL-queries)
+- [Presets: Define order and Load to DB bunch of CSV-files](https://gino-admin.readthedocs.io/en/latest/presets.html)
+- Init DB (Full clean up behavior: Drop tables & Recreate)
+- [Composite CSV: Load multiple relative tables in one CSV-file](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload)
+- History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc)
+- Support multiple users for Admin panel (add, edit, remove users from 'Admin Users' page)
+
+
+### TODO:
+
+- Add possible to add new Presets from GUI
+- Select multiple rows for delete
+- Copy/deepcopy multiple items
+- Edit multiple items (?)
+- Roles for Admin Panel users (split accessess)
+- Filters in Table's columns
+- Other staff on [Gino Project Dashboard](https://github.com/xnuinside/gino-admin/projects/1)
+
+
+#### Run Admin Panel with Cli
+
+```bash
+
+    gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+
+    Optional params:
+        -d --db
+            Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+            Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
+            Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
+        -h --host
+        -p --port
+        -c --config Example:  -c "presets_folder=examples/base_example/src/csv_to_upload;some_property=1"
+                    Notice: all fields that not supported in config will be ignored, like 'some_property' in example
+        --no-auth  Run Admin Panel without Auth in UI
+        -u --user Admin User login & password
+            Expected format: login:password
+            Example: admin:1234
+            Notice: user also can be defined from env variable with 'SANIC_' prefix - check Auth section example
+
 ```
 
 Example:
 
-```gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
+```bash
+
+    gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
+
 ```
 
 #### Add Admin Panel to existed Sanic application as '/admin' route
@@ -98,7 +156,8 @@ How to run example in: examples/base_example/how_to_run_example.txt
 
 Example:
 
-```
+```python
+
     from from gino_admin import add_admin_panel
 
 
@@ -120,7 +179,7 @@ Where:
 
 In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
 
-#### Run Admin Panel as Standalone Sanic app (if you use different frameworks as main App)
+#### Run Admin Panel as Standalone Sanic App (if you use different frameworks as Main App) 
 
 You can use Gino Admin as stand alone web app. Does not matter what Framework used for your main App.
 
@@ -231,31 +290,8 @@ Read in docs: [Authorization](https://gino-admin.readthedocs.io/en/latest/author
 ### Limitations
 
 
-For correct work of Admin Panel all models MUST contain at least one unique and primary_key Column (field).
+In current version, for correct work of Deepcopy feature in Admin Panel model MUST contain at least one unique or primary_key Column (field).
 
-This column used to identify row (one element) for Copy & Edit & Delete operations.
-Name of unique and primary_key column and type does not matter.
-
-So if you define model, for example, User, you can have column **user_id** as unique and primary_key:
-
-```
-    class User(db.Model):
-
-        __tablename__ = "users"
-
-        user_id = db.Column(db.String(), unique=True, primary_key=True)
-```
-
-Or for model 'Country' it can be 'code'
-
-```
-    class Country(db.Model):
-
-        __tablename__ = "countries"
-
-        code = db.Column(db.String(8), unique=True, primary_key=True)
-        name = db.Column(db.String())
-```
 
 ### Screens:
 

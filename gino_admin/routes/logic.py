@@ -1,7 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 from csv import reader
-from typing import List, Optional, Text, Any
+from typing import List, Optional, Text, Any, Dict, Tuple
 from io import TextIOWrapper, BytesIO
 
 import asyncpg
@@ -14,7 +14,9 @@ from sqlalchemy_utils.functions import identity
 
 from gino_admin import config
 from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
-                              reverse_hash_names, serialize_dict)
+                              reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row, 
+                              create_obj_id_for_query, get_type_name, prepare_request_params)
+from gino_admin.history import log_history_event
 
 cfg = config.cfg
 
@@ -23,8 +25,10 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
     model_data = cfg.models[model_id]
     columns_names = model_data["columns_names"]
-    model = cfg.app.db.tables[model_id]
+    table_name = get_table_name(model_id)
+    model = cfg.app.db.tables[table_name]
     query = cfg.app.db.select([model])
+    columns_data = model_data["columns_data"]
     try:
         rows = await query.gino.all()
     except asyncpg.exceptions.UndefinedTableError:
@@ -33,14 +37,15 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     output = []
     for row in rows:
         row = {columns_names[num]: field for num, field in enumerate(row)}
+        row['_id'] = create_obj_id_for_query(get_obj_id_from_row(model_data, row))
         for index in cfg.models[model_id]["hashed_indexes"]:
             row[columns_names[index]] = "*************"
         output.append(row)
     output = output[::-1]
     columns = {
         column_name: {
-            "len": model_data["columns_data"][column_name]["len"],
-            "type": model_data["columns_data"][column_name]["type"].__name__,
+            "len": columns_data[column_name]["len"],
+            "type": get_type_name(columns_data[column_name])
         }
         for column_name in model_data["columns_names"]
     }
@@ -50,7 +55,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
         model=model_id,
         columns=columns,
         model_data=output,
-        unique=cfg.models[model_id]["key"],
+        unique=cfg.models[model_id]["identity"],
     )
     return _response
 
@@ -141,30 +146,29 @@ def extract_tables_from_header(header: List, request: Request):
     return None, header_columns, tables_indexes
 
 
-async def create_or_update(row, model_id):
+async def create_or_update(row: Dict, model_id: Text) -> Tuple:
     try:
-        obj = (await cfg.models[model_id]["model"].create(**row)).to_dict()
+        model_data = cfg.models[model_id]
+        row = prepare_request_params(row, model_id, model_data)
+        obj = (await model_data["model"].create(**row)).to_dict()
+        obj_id = get_obj_id_from_row(model_data, obj)
+        return obj_id, None, None
     except asyncpg.exceptions.UniqueViolationError as e:
         if cfg.csv_update_existed:
-            model_data = cfg.models[model_id]
-            obj_id = row[model_data["key"]]
-            obj = await model_data["model"].get(
-                model_data["columns_data"][model_data["key"]]["type"](obj_id)
-            )
+            obj_id = prepare_request_params(
+                get_obj_id_from_row(model_data, row), model_id, model_data)
+            obj = await get_by_params(obj_id, model_data["model"])
             await obj.update(**row).apply()
             return None, obj_id, None
         else:
             return None, None, (row, e.args)
     except Exception as e:
         return None, None, (row, e.args)
-    return obj[cfg.models[model_id]["key"]], None, None
 
 
 async def upload_simple_csv_row(row, header, model_id):
-    columns_data = cfg.models[model_id]["columns_data"]
     row = {header[index]: value for index, value in enumerate(row)}
-    row = reverse_hash_names(model_id, row)
-    row = correct_types(row, columns_data)
+    row = prepare_request_params(row, model_id, cfg.models[model_id])
     return await create_or_update(row, model_id)
 
 
@@ -173,6 +177,8 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
     # todo: refactor this huge code
     table_num = 0
     previous_table_name = None
+    id_added = [] 
+    id_updated = []
     for table_name, indexes in tables_indexes.items():
         # {'start': None, 'end': None}
         table_header = deepcopy(header)[
@@ -208,7 +214,6 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
                 model_id = cfg.composite_csv_settings[table_name]["pattern"].replace(
                     "*", previous_table_name
                 )
-
             columns_data = cfg.models[model_id]["columns_data"]
 
             for index, value in enumerate(table_header):
@@ -223,9 +228,9 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
             table_header[num]["column"]: value
             for num, value in enumerate(table_row_data)
         }
+        model_data = cfg.models[model_id]
         try:
-            table_row = reverse_hash_names(model_id, table_row)
-            table_row = correct_types(table_row, columns_data)
+            table_row = prepare_request_params(table_row, model_id, model_data)
             if table_num > 0:
                 column, target_column = cfg.models[model_id]["foreign_keys"][
                     previous_table_name
@@ -234,14 +239,9 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
                 table_row[column] = foreing_column_value
             id_added, id_updated, error = await create_or_update(table_row, model_id)
             if id_added or id_updated:
-                model_data = cfg.models[model_id]
-                new_obj = (
-                    await model_data["model"].get(
-                        model_data["columns_data"][model_data["key"]]["type"](
-                            id_added or id_updated
-                        )
-                    )
-                ).to_dict()
+                id_ = id_added if id_added else id_updated
+                new_obj = (await get_by_params(id_, model_data["model"])).to_dict()
+                
                 if indexes["start"] == 0:
                     unique_keys = {}
                 unique_keys[model_id] = new_obj
@@ -266,10 +266,9 @@ async def upload_from_csv_data(upload_file: File, file_name: Text, request: Requ
     with TextIOWrapper(BytesIO(upload_file.body)) as read_obj:
         request, is_success = await insert_data_from_csv_rows(read_obj, model_id, request)
         if is_success:
-            request["history_action"][
-                "log_message"
-            ] = f"Upload data from CSV from file {file_name} to model {model_id}"
-            request["history_action"]["object_id"] = "upload_csv"
+            log_history_event(request, 
+                              f"Upload data from CSV from file {file_name} to model {model_id}",
+                              "system: upload_csv")
         return request, is_success
 
 
@@ -332,7 +331,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
         if errors:
             request["flash_messages"].append(
                 (
-                    f"Errors: was not added  (row number, row {cfg.models[model_id]['key']}, error) : {errors}",
+                    f"Errors: : {errors}",
                     "error",
                 )
             )
@@ -340,7 +339,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
         base_msg = (
             "Objects"
             if composite
-            else f"Objects with {cfg.models[model_id]['key']}:"
+            else f"Objects"
         )
         if ids_added:
             request["flash_messages"].append(
@@ -374,24 +373,100 @@ async def drop_and_recreate_all_tables():
     await cfg.app.db.gino.create_all()
 
 
-async def render_add_or_edit_form(
-    request: Request, model_id: Text, obj_id: Text = None
-) -> HTTPResponse:
+async def update_all_by_params(update_params: Dict, where_params: Dict, model):
+    q = model.update.values(**update_params)
+    operand_types = {'==': '__eq__', 'in': 'contains'}
+    for attr, value in where_params.items():
+        field = getattr(model, attr)
+        if isinstance(value, list):
+            if in_query in value[0]:
+                final_ = []
+                operand_name = operand_types['in']
+                value = value[0].split(in_query)[0]
+                final_.append(value)
+                value = final_
+            else: 
+                operand_name = operand_types['==']
+        else:
+            operand_name = operand_types['==']
+        operand = getattr(field, operand_name)
+        if value != '':
+            q = q.where(operand(value))
+    items = await q.gino.status()
+    return items
 
+async def delete_all_by_params(query_params: Dict, model):
+    q = model.delete
+    operand_types = {'==': '__eq__', 'in': 'contains'}
+    for attr, value in query_params.items():
+        field = getattr(model, attr)
+        if isinstance(value, list):
+            if in_query in value[0]:
+                final_ = []
+                operand_name = operand_types['in']
+                value = value[0].split(in_query)[0]
+                final_.append(value)
+                value = final_
+            else: 
+                operand_name = operand_types['==']
+        else:
+            operand_name = operand_types['==']
+        operand = getattr(field, operand_name)
+        if value != '':
+            q = q.where(operand(value))
+    items = await q.gino.status()
+    return items
+
+
+async def get_by_params(query_params: Dict, model):
+    q = model.query
+    operand_types = {'==': '__eq__', 'in': 'contains'}
+    for attr, value in query_params.items():
+        field = getattr(model, attr)
+        if isinstance(value, list):
+            if in_query in value[0]:
+                final_ = []
+                operand_name = operand_types['in']
+                value = value[0].split(in_query)[0]
+                final_.append(value)
+                value = final_
+            else: 
+                operand_name = operand_types['==']
+        else:
+            operand_name = operand_types['==']
+        operand = getattr(field, operand_name)
+        if value != '':
+            q = q.where(operand(value))
+    items = await q.gino.first()
+    return items
+
+
+
+
+async def render_add_or_edit_form(
+    request: Request, 
+    model_id: Text, 
+    obj_id: Dict = None
+) -> HTTPResponse:
     model_data = cfg.models[model_id]
     model = cfg.models[model_id]["model"]
+    columns_data = model_data["columns_data"]
     if obj_id:
-        obj_id = model_data["columns_data"][model_data["key"]]["type"](obj_id)
-        obj = serialize_dict((await model.get(obj_id)).to_dict())
+        obj_id = correct_types(obj_id, columns_data, no_default=True)
+        obj = await get_by_params(obj_id, model)
+        if obj:
+            obj = serialize_dict(obj.to_dict())
+        else:
+            request["flash_messages"].append((f"obj with id {obj_id} was not found", "error"))
         add = False
     else:
         obj = {}
         add = True
     columns = {
         column_name: {
-            "len": model_data["columns_data"][column_name]["len"],
-            "type": model_data["columns_data"][column_name]["type"].__name__,
-        }
+            "len": columns_data[column_name]["len"],
+            "type": get_type_name(columns_data[column_name])
+            }
         for column_name in model_data["columns_names"]
     }
     return cfg.jinja.render(
@@ -403,9 +478,9 @@ async def count_elements_in_db():
     data = {}
     for model_id, value in cfg.models.items():
         try:
-            data[model_id] = await cfg.app.db.func.count(
-                getattr(value["model"], value["key"])
-            ).gino.scalar()
+            table_name = get_table_name(model_id)
+            sql_query = f"SELECT COUNT(*) FROM {table_name}"
+            data[model_id] = (await cfg.app.db.status(cfg.app.db.text(sql_query)))[1][0][0]
         except asyncpg.exceptions.UndefinedTableError:
             data[model_id] = "Table does not exist"
     return data
@@ -413,36 +488,25 @@ async def count_elements_in_db():
 
 async def create_object_copy(
     model_id: Text,
-    base_object_key: Text,
+    base_obj_id: Text,
     fk_column: Column = None,
     new_fk_link_id: Text = None,
     new_id: Optional[Text] = None,
 ) -> str:
     model_data = cfg.models[model_id]
     columns_data = model_data["columns_data"]
-    key = model_data["key"]
-    base_object_key = columns_data[key]["type"](base_object_key)
     model = cfg.models[model_id]["model"]
-    # id can be str or int
-    # todo: need fix for several unique columns
     if not new_id:
-        new_obj_key = generate_new_id(base_object_key, model_data)
+        new_obj_key = generate_new_id(base_obj_id, columns_data)
     else:
         new_obj_key = new_id
-    bas_obj = (await model.get(base_object_key)).to_dict()
-
-    bas_obj[key] = new_obj_key
-
+    base_obj_id = correct_types(base_obj_id, columns_data, no_default=True)
+    bas_obj = await get_by_params(base_obj_id, model)
+    bas_obj = bas_obj.to_dict()
+    bas_obj.update(new_obj_key)
     if new_fk_link_id and fk_column is not None:
         bas_obj[fk_column.name] = new_fk_link_id
-
-    for item in model_data["required_columns"]:
-        # todo: need to document this behaviour in copy step
-        if (item in bas_obj and not bas_obj[item]) or item not in bas_obj:
-            bas_obj[item] = bas_obj[key]
-            if columns_data[item]["type"] == "HASH":
-                bas_obj[item] = cfg.hash_method(bas_obj[key])
-    new_obj = reverse_hash_names(model_id, bas_obj)
+    new_obj = correct_types(reverse_hash_names(model_id, bas_obj), columns_data)
     await model.create(**new_obj)
     return new_obj_key
 
@@ -461,11 +525,20 @@ async def deepcopy_recursive(
     new_obj_key = await create_object_copy(
         model.__tablename__, object_id, fk_column, new_fk_link_id, new_id=new_id
     )
-    primary_key_col = identity(model)[0]
+    if len(identity(model)) == 0:
+        primary_key_col = object_id
+        return (
+                f"Deepcopy does not available for tables without primary keys right now",
+                "error",
+            )
+    else:
+        primary_key_col = identity(model)[0]
+    
     dependent_models = {}
     # TODO(ehborisov): check how it works in the case of composite key
     for m_id, data in cfg.models.items():
-        for column in cfg.app.db.tables[m_id].columns:
+        table_name = get_table_name(m_id)
+        for column in cfg.app.db.tables[table_name].columns:
             if column.references(primary_key_col):
                 dependent_models[data["model"]] = column
     for dep_model in dependent_models:
@@ -477,6 +550,8 @@ async def deepcopy_recursive(
         )
         # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
         for inst_id in all_referencing_instance_ids:
-            await deepcopy_recursive(dep_model, inst_id[0], new_obj_key, fk_column)
+            result = await deepcopy_recursive(dep_model, inst_id[0], new_obj_key, fk_column)
+            if isinstance(result, tuple):
+                return result
     logger.debug(f"Finished copying, returning newly created object's id {new_obj_key}")
     return new_obj_key

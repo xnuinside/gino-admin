@@ -8,7 +8,7 @@ from sanic.request import Request
 
 from gino_admin import auth, config, utils
 from gino_admin.core import admin
-from gino_admin.history import write_history_after_response
+from gino_admin.history import write_history_after_response, log_history_event
 from gino_admin.routes.crud import model_view_table
 from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      deepcopy_recursive,
@@ -28,7 +28,7 @@ async def middleware_request(request):
 
 @admin.middleware("response")
 async def middleware_response(request, response):
-    if request.endpoint in cfg.track_history_endpoints and request.method == "POST":
+    if request.endpoint.split('.')[-1] in cfg.track_history_endpoints and request.method == "POST":
         await write_history_after_response(request)
 
 
@@ -51,7 +51,7 @@ async def logout_post(request: Request):
 
 @admin.route("/login", methods=["GET", "POST"])
 async def login(request):
-    _login = auth.validate_login(request, cfg.app.config)
+    _login = await auth.validate_login(request, cfg.app.config)
     if _login:
         _token = utils.generate_token(request.ip)
         cfg.sessions[_token] = {
@@ -79,26 +79,31 @@ async def model_deepcopy(request, model_id):
     :return:
     """
     request_params = {key: request.form[key][0] for key in request.form}
+    
     columns_data = cfg.models[model_id]["columns_data"]
-    key = cfg.models[model_id]["key"]
-    base_object_id = columns_data[key]["type"](request_params["id"])
+    base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
+    base_obj_id = utils.correct_types(base_obj_id, columns_data)
     try:
-        request_params["new_id"] = columns_data[key]["type"](request_params["new_id"])
-    except ValueError:
-        request["flash"](f"{columns_data[key]} must be number", "error")
+        #todo: fix deepcopy
+        new_id = utils.extract_obj_id_from_query(request_params["new_id"])
+        new_id = utils.correct_types(new_id, columns_data)
+    except ValueError as e:
+        request["flash"](e, "error")
         return await render_model_view(request, model_id)
     try:
         async with cfg.app.db.acquire() as conn:
             async with conn.transaction() as _:
                 new_base_obj_id = await deepcopy_recursive(
                     cfg.models[model_id]["model"],
-                    base_object_id,
-                    new_id=request_params["new_id"],
+                    base_obj_id,
+                    new_id=new_id,
                 )
-                message = f"Object with {request_params['id']} was deep copied with new id {new_base_obj_id}"
-                request["flash"](message, "success")
-                request["history_action"]["log_message"] = message
-                request["history_action"]["object_id"] = new_base_obj_id
+                if isinstance(new_base_obj_id, tuple):
+                    request["flash"](new_base_obj_id, "error")
+                else:
+                    message = f"Object with {request_params['_id']} was deepcopied with new id {new_base_obj_id}"
+                    request["flash"](message, "success")
+                    log_history_event(request, message, new_base_obj_id)
     except asyncpg.exceptions.PostgresError as e:
         request["flash"](e.args, "error")
     return await render_model_view(request, model_id)
@@ -110,13 +115,12 @@ async def model_copy(request, model_id):
     """ route for copy item per row """
     model_data = cfg.models[model_id]
     request_params = {elem: request.form[elem][0] for elem in request.form}
-    key = model_data["key"]
+    base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
     try:
-        new_obj_key = await create_object_copy(model_id, request_params[key])
-        message = f"Object with {key} {request_params[key]} was copied with {key} {new_obj_key}"
+        new_obj_key = await create_object_copy(model_id, base_obj_id)
+        message = f"Object with {base_obj_id} key was copied as {new_obj_key}"
         flash_message = (message, "success")
-        request["history_action"]["log_message"] = message
-        request["history_action"]["object_id"] = new_obj_key
+        log_history_event(request, message, new_obj_key)
     except asyncpg.exceptions.UniqueViolationError as e:
         flash_message = (
             f"Duplicate in Unique column Error during copy: {e.args}. \n"
@@ -146,8 +150,7 @@ async def init_db_run(request: Request):
     await drop_and_recreate_all_tables()
     message = f"{count} object was deleted. DB was Init from Scratch"
     request["flash"](message, "success")
-    request["history_action"]["log_message"] = message
-    request["history_action"]["object_id"] = "init_db"
+    log_history_event(request, message, "system: init_db")
     return jinja.render("init_db.html", request, data=await count_elements_in_db())
 
 
@@ -183,11 +186,8 @@ async def presets_use(request: Request):
             )
         for message in request["flash_messages"]:
             request["flash"](*message)
-        request["history_action"]["log_message"] = (
-            f"Loaded preset {preset['id']}"
-            f"" + f"{' with DB drop' if with_drop else ''}"
-        )
-        request["history_action"]["object_id"] = "load_preset"
+        history_message = f"Loaded preset {preset['id']} {' with DB drop' if with_drop else ''}"
+        log_history_event(request, history_message, "system: load_preset")
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
     return jinja.render("presets.html", request, presets=utils.get_presets()["presets"])
@@ -224,11 +224,16 @@ async def sql_query_run(request):
         sql_query = request.form["sql_query"][0]
         try:
             result = await cfg.app.db.status(cfg.app.db.text(sql_query))
-            request["history_action"]["log_message"] = f"Query run '{sql_query}'"
-            request["history_action"]["object_id"] = "sql_run"
+            log_history_event(request, f"Query run '{sql_query}'", "system: sql_run")
         except asyncpg.exceptions.PostgresSyntaxError as e:
             request["flash"](f"{e.args}", "error")
-    return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
+        except asyncpg.exceptions.UndefinedTableError as e:
+            request["flash"](f"{e.args}", "error")
+    if result:
+        return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
+    else:
+        return jinja.render("sql_runner.html", request)
+        
 
 
 @admin.route("/history", methods=["GET"])
