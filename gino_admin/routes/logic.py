@@ -155,7 +155,8 @@ async def create_or_update(row: Dict, model_id: Text) -> Tuple:
         return obj_id, None, None
     except asyncpg.exceptions.UniqueViolationError as e:
         if cfg.csv_update_existed:
-            obj_id = get_obj_id_from_row(model_data, row)
+            obj_id = prepare_request_params(
+                get_obj_id_from_row(model_data, row), model_id, model_data)
             obj = await get_by_params(obj_id, model_data["model"])
             await obj.update(**row).apply()
             return None, obj_id, None
@@ -227,9 +228,9 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
             table_header[num]["column"]: value
             for num, value in enumerate(table_row_data)
         }
+        model_data = cfg.models[model_id]
         try:
-            table_row = reverse_hash_names(model_id, table_row)
-            table_row = correct_types(table_row, columns_data)
+            table_row = prepare_request_params(table_row, model_id, model_data)
             if table_num > 0:
                 column, target_column = cfg.models[model_id]["foreign_keys"][
                     previous_table_name
@@ -238,9 +239,8 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
                 table_row[column] = foreing_column_value
             id_added, id_updated, error = await create_or_update(table_row, model_id)
             if id_added or id_updated:
-                model_data = cfg.models[model_id]
                 id_ = id_added if id_added else id_updated
-                new_obj = (await model_data["model"].get(**id_)).to_dict()
+                new_obj = (await get_by_params(id_, model_data["model"])).to_dict()
                 
                 if indexes["start"] == 0:
                     unique_keys = {}
@@ -506,7 +506,6 @@ async def create_object_copy(
     bas_obj.update(new_obj_key)
     if new_fk_link_id and fk_column is not None:
         bas_obj[fk_column.name] = new_fk_link_id
-
     new_obj = correct_types(reverse_hash_names(model_id, bas_obj), columns_data)
     await model.create(**new_obj)
     return new_obj_key

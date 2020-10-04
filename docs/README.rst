@@ -144,40 +144,43 @@ Supported features
 * `Presets: Define order and Load to DB bunch of CSV-files <https://gino-admin.readthedocs.io/en/latest/presets.html>`_
 * Init DB (Full clean up behavior: Drop tables & Recreate)
 * `Composite CSV: Load multiple relative tables in one CSV-file <https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload>`_
-* History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc) 
+* History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc)
+* Support multiple users for Admin panel (add, edit, remove users from 'Admin Users' page)
 
 TODO:
-"""""
+^^^^^
 
 
-* Select multiple for delete/copy
-* Edit multiple items (?)
-* Roles & User store in DB
-* Filters in Table's columns
 * Add possible to add new Presets from GUI
+* Select multiple rows for delete
+* Copy/deepcopy multiple items
+* Edit multiple items (?)
+* Roles for Admin Panel users (split accessess)
+* Filters in Table's columns
 * Other staff on `Gino Project Dashboard <https://github.com/xnuinside/gino-admin/projects/1>`_
 
 Run Admin Panel with Cli
 ------------------------
 
-.. code-block::
+.. code-block:: bash
 
-   gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
 
-   Optional params:
-       -d --db
-           Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
-           Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
-           Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
-       -h --host
-       -p --port
-       -c --config Example:  -c "presets_folder=examples/base_example/src/csv_to_upload;some_property=1"
-                   Notice: all fields that not supported in config will be ignored, like 'some_property' in example
-       --no-auth  Run Admin Panel without Auth in UI
-       -u --user Admin User login & password
-           Expected format: login:password
-           Example: admin:1234
-           Notice: user also can be defined from env variable with 'SANIC_' prefix - check Auth section example
+       gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+
+       Optional params:
+           -d --db
+               Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+               Example: postgresql://gino:gino@%gino:5432/gino (based on DB settings in examples/)
+               Notice: DB credentials can be set up as  env variables with 'SANIC_' prefix
+           -h --host
+           -p --port
+           -c --config Example:  -c "presets_folder=examples/base_example/src/csv_to_upload;some_property=1"
+                       Notice: all fields that not supported in config will be ignored, like 'some_property' in example
+           --no-auth  Run Admin Panel without Auth in UI
+           -u --user Admin User login & password
+               Expected format: login:password
+               Example: admin:1234
+               Notice: user also can be defined from env variable with 'SANIC_' prefix - check Auth section example
 
 Example:
 
@@ -196,7 +199,8 @@ How to run example in: examples/base_example/how_to_run_example.txt
 
 Example:
 
-.. code-block::
+.. code-block:: python
+
 
        from from gino_admin import add_admin_panel
 

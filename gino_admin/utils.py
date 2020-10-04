@@ -13,7 +13,6 @@ from sqlalchemy.types import BigInteger
 import aiofiles
 import yaml
 from passlib.hash import pbkdf2_sha256
-
 from gino_admin import config
 
 cfg = config.cfg
@@ -142,29 +141,35 @@ class CompositeType:
 def correct_types(params: Dict, columns_data: Dict, no_default=False):
     to_del = []
     for param in params:
+        if '_hash' in param:
+            param_type = columns_data[param.replace('_hash', '')]["type"] 
+        else:
+            param_type = columns_data[param]["type"]
+       
         if not params[param]:
             # mean None
             to_del.append(param)
             continue
         if isinstance(param, CompositeType):
             continue
-        if not isinstance(columns_data[param]["type"], tuple):
+        if not isinstance(param_type, tuple):
             if "_hash" not in param and not isinstance(
-                params[param], columns_data[param]["type"]
+                params[param], param_type
             ):
-                if columns_data[param]["type"] == list:
+                if param_type== list:
                     params[param] = params[param].split(",")
-                elif columns_data[param]["type"] in [datetime.datetime, datetime.date]:
-                    params[param] = extract_datetime(params[param], columns_data[param]["type"])
-                elif type(columns_data[param]["type"]) == HashColumn:
-                    print(params[param])
-                    print(columns_data[param]["type"])
-                    params[param] = columns_data[param]["type"](params[param])
+                elif param_type in [datetime.datetime, datetime.date]:
+                    params[param] = extract_datetime(params[param], param_type)
+                elif param_type == HashColumn:
+                    continue
+                else:
+                    params[param] = param_type(params[param])
+                    
         else:
-            if columns_data[param]["type"][0] == list:
+            if param_type[0] == list:
                 if isinstance(params[param], str):
                     params[param] = literal_eval(params[param])
-                elements_type = columns_data[param]["type"][1]
+                elements_type = param_type[1]
                 formatted_list = []
                 for elem in params[param]:
                     formatted_list.append(elements_type(elem))
@@ -191,7 +196,7 @@ def parse_datetime(datetime_str: Text) -> datetime.datetime:
 def parse_date(date_str: Text) -> datetime.date:
     for str_format in cfg.date_str_formats:
         try:
-            date_object = datetime.datetime.strptime(datetime_str, str_format).date()
+            date_object = datetime.datetime.strptime(date_str, str_format).date()
             return date_object
         except ValueError:
             continue
@@ -334,7 +339,7 @@ def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
         elif isinstance(columns_data[key]["db_type"], BigInteger):
             new_obj_key = randint(0, 2 ** 63)
         else:
-            print(f'unknown logic to generate copy for id of type {columns_data[key]["type"]}')
+            logger.error(f'unknown logic to generate copy for id of type {columns_data[key]["type"]}')
             new_obj_key = value
         new_obj_key_dict[key] = new_obj_key
     return new_obj_key_dict

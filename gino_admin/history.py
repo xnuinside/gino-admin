@@ -51,7 +51,6 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
 
     else:
         user = "AUTH_DISABLED"
-    print(request.url)
     route = request.url.split('admin/')[1]
     history_row = {
         "user": user,

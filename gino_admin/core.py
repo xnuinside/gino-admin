@@ -100,8 +100,8 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         )
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
-    
-    if not os.environ.get("SANIC_DB_HOST", None):
+
+    if not app.config.get("DB_HOST", None):
         # mean user define path to DB with one-line uri
         config = parse_db_uri(config_settings)
     
