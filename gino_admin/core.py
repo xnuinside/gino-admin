@@ -1,3 +1,4 @@
+import asyncio
 import os
 from copy import deepcopy
 from typing import Dict, List, Text
@@ -9,9 +10,10 @@ from sanic_jwt import Initialize
 from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
-from gino_admin.users import add_users_model
 from gino_admin.routes import rest
-from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name, HashColumn
+from gino_admin.users import add_users_model
+from gino_admin.utils import (GinoAdminError, HashColumn, get_table_name,
+                              logger, parse_db_uri, types_map)
 
 cfg = config.cfg
 
@@ -51,12 +53,16 @@ def extract_column_data(model_id: Text) -> Dict:
             "unique": column.unique,
             "primary": column.primary_key,
             "foreign_keys": column.foreign_keys,
-            "db_type": column.type
+            "db_type": column.type,
         }
     required = [
-        key for key, value in columns_data.items() if value["nullable"] is False or value["primary"]
+        key
+        for key, value in columns_data.items()
+        if value["nullable"] is False or value["primary"]
     ]
-    unique_keys = [key for key, value in columns_data.items() if value["unique"] is True]
+    unique_keys = [
+        key for key, value in columns_data.items() if value["unique"] is True
+    ]
     foreign_keys = {}
     for column_name, data in columns_data.items():
         for key in data["foreign_keys"]:
@@ -64,8 +70,10 @@ def extract_column_data(model_id: Text) -> Dict:
                 column_name,
                 key._colspec.split(".")[1],
             )
-    
-    primary_keys = [key for key, value in columns_data.items() if value["primary"] is True]
+
+    primary_keys = [
+        key for key, value in columns_data.items() if value["primary"] is True
+    ]
     table_details = {
         "unique_columns": unique_keys,
         "required_columns": required,
@@ -74,8 +82,7 @@ def extract_column_data(model_id: Text) -> Dict:
         "columns_names": list(columns_data.keys()),
         "hashed_indexes": hashed_indexes,
         "foreign_keys": foreign_keys,
-        "identity": primary_keys if primary_keys else unique_keys
-        
+        "identity": primary_keys if primary_keys else unique_keys,
     }
     return table_details
 
@@ -85,7 +92,7 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
     db_models.append(cfg.users_model)
     cfg.models = {model.__tablename__: {"model": model} for model in db_models}
     cfg.app.db = db
-    
+
     for model_id in cfg.models:
         column_details = extract_column_data(model_id)
         cfg.models[model_id].update(column_details)
@@ -93,6 +100,9 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
 
 def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     """ init admin panel and configure """
+    if "config" in config_settings:
+        config_settings.update(config_settings["config"])
+        del config_settings["config"]
     if "custom_hash_method" in config_settings:
         logger.warning(
             f"'custom_hash_method' will be depricated in version 0.1.0. "
@@ -100,28 +110,25 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         )
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
-
     if not app.config.get("DB_HOST", None):
         # mean user define path to DB with one-line uri
-        config = parse_db_uri(config_settings)
-    
-    if 'db_uri' in config_settings:
-        del config_settings['db_uri']
-
-    for key in config_settings:
-        try:
-            setattr(cfg, key, config_settings[key])
-        except ValueError as e:
-            raise GinoAdminError(
-                "Error During Gino Admin Panel Initialisation. "
-                "You trying to set upWrong config parameters: "
-                f"{e}"
+        if config_settings.get("db_uri", None):
+            parse_db_uri(config_settings["db_uri"])
+        else:
+            raise Exception(
+                "Credentials for DB must be provided"
+                "as SANIC config settings or as db_uri arg to Gino-Admin Panel"
             )
 
+    if "db_uri" in config_settings:
+        del config_settings["db_uri"]
+
+    setup_config_from_args(config_settings)
+
     add_history_model(db)
-    import asyncio
+
     loop = asyncio.get_event_loop()
-    
+
     loop.run_until_complete(add_users_model(db, app.config))
 
     extract_models_metadata(db, db_models)
@@ -149,6 +156,23 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         app_jinja.init_app(app)
     cfg.app.config = app.config
 
+
+def setup_config_from_args(config_settings: Dict) -> None:
+    for key, value in config_settings.items():
+        if key == "ui":
+            ui = config.UIConfig(**value)
+            ui.colors = config.ColorSchema(**value["colors"])
+            value = ui
+        try:
+            setattr(cfg, key, value)
+        except ValueError as e:
+            raise GinoAdminError(
+                "Error During Gino Admin Panel Initialisation. "
+                "You trying to set upWrong config parameters: "
+                f"{e}"
+            )
+
+
 def create_admin_app(
     db: Gino,
     db_models: List = None,
@@ -164,49 +188,17 @@ def create_admin_app(
 
     return init_admin_app(host, port, db, db_models, config)
 
-def parse_db_uri(config: Dict) -> None:
-    """ parse db uri and set up sanic variables"""
-    
-    if config.get('db_uri'):
-        db_uri = config['db_uri']
-    else:
-        db_uri = os.environ.get('ADMIN_DB_URI')
-    if not db_uri:
-        raise Exception(
-            "Need to setup DB_URI env variable  with credentianls to access Database or send 'db_uri' in Gino-Admin config.\n"
-            "Example: DB_URI=postgresql://local:local@localhost:5432/gino_db")
-    db_uri = db_uri.split("postgresql://")[1]
-    if '@' in db_uri:
-        db_uri = db_uri.split("@")
-        host_and_db = db_uri[1].split('/')
-        login_and_password = db_uri[0].split(':')
-        login = login_and_password[0]
-        password = login_and_password[1]
-        host = host_and_db[0]
-        db = host_and_db[1]
-    else:
-        db_uri = db_uri.split("/")
-        host = db_uri[0]
-        db = db_uri[1]
-        login, password = None, None
-    if ':' in host:
-        host = host.split(':')[0]
-    os.environ["SANIC_DB_HOST"] = host
-    os.environ["SANIC_DB_DATABASE"] = db
-    os.environ["SANIC_DB_USER"] = login
-    os.environ["SANIC_DB_PASSWORD"] = password
-    return config
 
 def init_admin_app(host, port, db, db_models, config):
     """ init admin panel app """
-    app = Sanic()
+    app = Sanic(name="gino_admin")
 
     db.init_app(app)
 
     @app.route("/")
     async def index(request):
         return response.redirect("/admin")
-    
+
     add_admin_panel(app, db, db_models, **config)
 
     return app.run(host=host, port=port, debug=cfg.debug)

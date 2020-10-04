@@ -126,10 +126,11 @@ top: 25%!important;
   <body>
   {% include 'header.html' %}
 
-    {% block content %}{% endblock %}
+  {% block content %}
+  {% endblock %}
 
 
-
+  
     <script>
     $('.message .close')
       .on('click', function() {

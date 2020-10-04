@@ -4,7 +4,7 @@
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
-Play with Demo (current master 0.2.0) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login)
+Play with Demo (current master 0.2.1) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login) (login: admin, pass: 1234)
 
 
 ![badge1](https://img.shields.io/pypi/v/gino_admin) ![badge2](https://img.shields.io/pypi/l/gino_admin) ![badge3](https://img.shields.io/pypi/pyversions/gino_admin) 
@@ -21,7 +21,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ```bash
 
-    pip install gino-admin==0.2.0
+    pip install gino-admin==0.2.1
 
 ```
 
@@ -29,8 +29,67 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 You can find several code examples in [examples/](examples/) folder.
 
+### Updates in version 0.2.1 (current master):
 
-### Updates in version 0.2.0 (current master):
+1. Fixes:
+
+1.1 Dependencies - removed unnecessary packages and added one lost for cli. Cli now works correct. 
+1.2 Login form now provide errors if you enter wrong user or passoword
+1.3 Wrong attepts to login in Admin panel are adding to History now
+
+
+2. Added possibility to customize UI colors with config. 
+
+Default colors schema also changed:
+
+![Table view](docs/img/new_colors.png)
+
+
+Config object now has section 'ui'. In UI section now exist 'colors' where you can set up colors that will be used for:
+
+- Primary buttons. Property: buttons
+- Second buttons. Property: buttons_second
+- Alert buttons (actions that something remove/reset - deleted, drop db and etc). Property: buttons_alert
+- Tables headers. Property: table
+- Tables with Alert headers (like in Init DB). Property: table_alerts
+- Footer background. Property: footer
+- Header background. Property: header
+
+Admin panel used SemanticUI as CSS Framework so all names of possible colors is described and showed here:
+https://semantic-ui.com/usage/theming.html 
+
+(red: #B03060; orange #FE9A76; yellow: #FFD700; olive:  #32CD32 green:  #016936; teal :  #008080; blue :  #0E6EB8; violet: #EE82EE; purple: #B413EC; pink:  #FF1493; brown:  #A52A2A; grey :  #A0A0A0; black:  #000000;)
+
+
+To change colors pass config as:
+
+```python
+
+create_admin_app(
+        host="0.0.0.0",
+        port=os.getenv("PORT", 5000),
+        db=example.models.db,
+        db_models=db_models,
+        config={
+            "ui" : {
+                "colors": 
+                {"buttons": "orange",
+                "buttons_alert": "pink"}
+                },
+            "db_uri": "postgresql://gino:gino@localhost:5432/gino"
+        },
+    )
+```
+
+Example here: examples/colored_ui/
+
+3. Added example how to add all models from file with one method (to avoid import each model separate) - palced in *examples/colored_ui/src/app.py* method - **create_models_list**
+
+4. Added valid input for Text columns as Text Area
+![Text Area Inouts](docs/img/text_area.png)
+
+
+### Updates in version 0.2.0:
 
 1. **UI fixes**: 
 - Data Picker was fixed, required fields now dispalayed with '* required' in UI.
@@ -73,7 +132,7 @@ for example, no need to setup SANIC variables:
 create_admin_app(
         host="0.0.0.0",
         port=os.getenv("PORT", 5000),
-        db=kkr_metadata.models.db,
+        db=example.models.db,
         db_models=db_models,
         config={
             "presets_folder": os.path.join(current_path, "csv_to_upload"),
@@ -103,6 +162,7 @@ create_admin_app(
 - [Composite CSV: Load multiple relative tables in one CSV-file](https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload)
 - History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc)
 - Support multiple users for Admin panel (add, edit, remove users from 'Admin Users' page)
+- UI Colors customizing
 
 
 ### TODO:
@@ -120,8 +180,9 @@ create_admin_app(
 
 ```bash
 
-    gino_admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
+    gino-admin run #module_name_with_models -d postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
 
+    gino-admin run --help # use to get cli help
     Optional params:
         -d --db
             Expected format: postgresql://%(DB_USER):%(DB_PASSWORD)@%(DB_HOST):%(DB_PORT)/%(DB)
@@ -143,7 +204,7 @@ Example:
 
 ```bash
 
-    gino-admin run examples/base_example/src/db.py postgresql://gino:gino@%gino:5432/gino -u admin:1234
+    gino-admin run examples/base_example/src/db.py --db postgresql://gino:gino@localhost:5432/gino -u admin:1234
 
 ```
 
@@ -179,7 +240,9 @@ Where:
 
 In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
 
-#### Run Admin Panel as Standalone Sanic App (if you use different frameworks as Main App) 
+#### Run Admin Panel as Standalone Sanic App
+
+Note: this method is a good approach if you use different frameworks as Main App
 
 You can use Gino Admin as stand alone web app. Does not matter what Framework used for your main App.
 

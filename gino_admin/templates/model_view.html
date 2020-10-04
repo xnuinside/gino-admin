@@ -47,12 +47,12 @@
 {% for cat, msg in get_flashed_messages(with_categories=true) %}
       <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
       {% endfor %}
-    <button id="add" class="ui right floated small green labeled icon button" type="button">
+    <button id="add" class="ui right floated small {{cfg.ui.colors.buttons}} labeled icon button" type="button">
         <i class="user icon"></i>
         <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
     </button>
 
-    <button id="delete_all" class="ui left floated small red inverted labeled icon button" type="button">
+    <button id="delete_all" class="ui left floated small {{cfg.ui.colors.buttons_alert}} labeled icon button" type="button">
     <i class="trash icon"></i>Delete all {{model}}</button>
 
 
@@ -84,15 +84,18 @@ initComplete: function () {
     $("#models_table_filter").attr('style', "margin-right: 45px; margin-bottom: 10px;")
     $('#models_table_length').attr('class', 'dataTables_length ui form left aligned content four wide column')
     $('#models_table_filter').attr('class','dataTables_filter ui form inline field three wide column' )
-     $("#grid").appendTo("#models_table_wrapper");
-     $('#grid').insertBefore('#models_table');
-    $('#buttons-csv').attr('class','ui right floated five wide small green labeled icon button')
+    $("#grid").appendTo("#models_table_wrapper");
+    $('#grid').insertBefore('#models_table');
+    $('#buttons-csv').attr('class','ui right floated five wide small {{cfg.ui.colors.buttons_second}} labeled icon button')
     $('#buttons-csv').html('<i class="download icon"></i>Export to CSV')
 
     $('#buttons-csv').insertBefore('#add');
 
     $('#row_filters').insertAfter('#header_grid');
-    
+    $('#models_table').attr('style', 'width: 100%')
+    $('.dataTables_scrollHead').attr('style', 'overflow: hidden; position: relative; border: 0px; width: 100%;')
+    $('.dataTables_scrollHeadInner').attr('style', 'box-sizing: content-box; width: 100%; padding-right: 0px;')
+    $('.dataTable').attr('style', 'margin-left: 0px; width: 100%;')
     $("#models_table_length").appendTo("#grid_footer_left");
     $("#models_table_filter").appendTo("#search");
     $('#grid_footer').insertAfter('#models_table');

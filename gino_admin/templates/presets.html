@@ -23,7 +23,7 @@ Check <a href="https://github.com/xnuinside/gino-admin">documentation</a>  and e
 <div class="ui three cards">{% for preset in presets %}
 
 
-<div class=" green card">
+<div class="{{cfg.ui.colors.table}} card">
   <div class="content">
     <div class="header">{{preset['name']}}</div>
   </div>
@@ -48,9 +48,9 @@ Check <a href="https://github.com/xnuinside/gino-admin">documentation</a>  and e
   <div class="extra content">
       <form action="{{url_prefix}}/presets" method="post">
          <input type="hidden" name="preset" value="{{preset['id']}}"/>
-          <button id="with_db" class="ui red inverted button"
+          <button id="with_db" class="ui {{cfg.ui.colors.buttons_alert}} button"
                   name="with_db" value="with_db" type="submit">Load with DB Drop</button>
-        <button id="simple" class="ui green button" type="submit">Load Preset</button>
+        <button id="simple" class="ui {{cfg.ui.colors.buttons}} button" type="submit">Load Preset</button>
       </form>
   </div>
 </div>

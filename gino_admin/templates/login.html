@@ -8,9 +8,12 @@
 <div class="ui grid">
         <div class="ui five wide column"></div>
     <div class="ui six wide column">
+      {% for cat, msg in get_flashed_messages(with_categories=true) %}
+<div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
     <h2 class="ui image header">
       <div class="content">
-        Please sign in:
+        Please Log in:
       </div>
     </h2>
     <form action="" class="ui form" method="POST">
@@ -32,11 +35,13 @@
           </div>
         </div>
 
-        <button id="submit"  class="ui fluid large green submit button" name="submit" type="submit">Login</button>
+        <button id="submit"  class="ui fluid large {{cfg.ui.colors.buttons}} submit button" name="submit" type="submit">Login</button>
       </div>
 
     </form>
 
     </div>
-    </div><div class="five wide column"></div></div>
+    </div>
+    <div class="five wide column"></div></div>
+
 {% endblock %}

@@ -1,14 +1,15 @@
 import os
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional, Text
 
 from expiring_dict import ExpiringDict
 from jinja2 import FileSystemLoader
 from passlib.hash import pbkdf2_sha256
 from pydantic import BaseConfig, BaseModel, validator
+from sanic import request
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 loader = FileSystemLoader(
@@ -17,7 +18,12 @@ loader = FileSystemLoader(
 
 
 def render_with_updated_context(
-    self, template, request, status=200, headers=None, **context
+    self,
+    template: Text,
+    request: request.Request,
+    status: int = 200,
+    headers: Optional[Dict] = None,
+    **context: Dict
 ):
     context["admin_panel_title"] = cfg.name
     context["objects"] = cfg.models
@@ -25,6 +31,7 @@ def render_with_updated_context(
     context["admin_panel_version"] = __version__
     context["round_number"] = cfg.round_number
     context["admin_users_route"] = cfg.admin_users_table_name
+    context["cfg"] = cfg
     return html(
         self.render_string(template, request, **context),
         status=status,
@@ -49,11 +56,25 @@ class App:
     db = None
 
 
+class ColorSchema(BaseModel):
+    table: Text = "teal"
+    table_alert: Text = "orange"
+    buttons: Text = "teal"
+    buttons_second: Text = "purple"
+    buttons_alert: Text = "orange inverted"
+    footer: Text = "black"
+    header: Text = "black"
+
+
+class UIConfig(BaseModel):
+    colors: ColorSchema = None
+
+
 class Config(BaseModel):
     """ Gino Admin Panel settings """
 
     route: str = "/admin"
-    jinja: SanicJinja2 = None
+    jinja: SanicJinja2 = jinja
     app: App = App
     hash_method: Callable = pbkdf2_sha256.encrypt
     models: Dict = {}
@@ -62,12 +83,7 @@ class Config(BaseModel):
     upload_dir: str = "files/"
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
-    date_str_formats: List[str] = [
-        "%Y-%m-%d",
-        "%d-%m-%Y",
-        "%Y-%d-%m",
-        "%m-%d-%Y"
-    ]
+    date_str_formats: List[str] = ["%Y-%m-%d", "%d-%m-%Y", "%Y-%d-%m", "%m-%d-%Y"]
     datetime_str_formats: List[str] = [
         "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
@@ -99,6 +115,7 @@ class Config(BaseModel):
     users_model: object = None
     history_data_columns: List[str] = []
     admin_users_data_columns: List[str] = []
+    ui: UIConfig = None
     track_history_endpoints: List[str] = [
         "model_delete",
         "model_delete_all",
@@ -109,9 +126,8 @@ class Config(BaseModel):
         "file_upload",
         "sql_query_run",
         "login",
-        "logout_post"
+        "logout_post",
     ]
-    admin_user_added = False
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):
@@ -125,3 +141,4 @@ class Config(BaseModel):
 cfg = Config()
 cfg.sessions = ExpiringDict(ttl=3600)
 cfg.jinja = jinja
+cfg.ui = UIConfig(colors=ColorSchema())

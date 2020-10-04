@@ -5,7 +5,7 @@ from sanic import Sanic, response
 
 from gino_admin import add_admin_panel
 
-app = Sanic()
+app = Sanic(name=__name__)
 app.config["ADMIN_USER"] = "admin"
 app.config["ADMIN_PASSWORD"] = "1234"
 

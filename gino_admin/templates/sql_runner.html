@@ -6,9 +6,9 @@
     <div class="ui ten wide column">
 <h1>SQL-runner</h1><br>
         <form class="ui form" action="{{url_prefix}}/sql_run" method="post">
-            <label class="ui green ribbon label">Write SQL Query</label>
+            <label class="ui {{cfg.ui.colors.table}} ribbon label">Write SQL Query</label>
             <textarea rows="8" name="sql_query"></textarea><br><br>
-            <button type="submit" class="ui right floated labeled icon small button green">
+            <button type="submit" class="ui right floated labeled icon small button {{cfg.ui.colors.buttons}}">
                 <i class="play icon"></i>Run SQL</button>
         </form>
     </div>

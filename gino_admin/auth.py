@@ -4,13 +4,14 @@ from base64 import b64decode
 from functools import wraps
 from typing import Dict, Text, Tuple, Union
 
+import asyncpg
+from passlib.hash import pbkdf2_sha256
 from sanic import response as r
 from sanic_jwt import exceptions
 
 from gino_admin import config
-from gino_admin.utils import logger
 from gino_admin.history import log_history_event
-from passlib.hash import pbkdf2_sha256
+from gino_admin.utils import logger
 
 cfg = config.cfg
 
@@ -45,36 +46,55 @@ def token_validation():
 
 async def validate_login(request, _config):
     if request.method == "POST":
-        username = str(request.form.get("username"))
+        username = request.form.get("username")
         if not username:
-            message = 'failed attempt to auth. no username provided'
-            request["flash_messages"].append(
-                (
-                    message,
-                    "error",
-                )
-            )
-            log_history_event(request, message, 'system: login')
-            return False
+            message = "failed attempt to auth. no username provided"
+            request["flash_messages"].append(("error", message))
+            request = log_history_event(request, message, "system: login")
+            return False, request
+        username = str(username)
         password = str(request.form.get("password"))
-        base_user = cfg.app.config.get('ADMIN_USER')
+        base_user = cfg.app.config.get("ADMIN_USER")
+
         if username == base_user:
-            if password == str(cfg.app.config.get('ADMIN_PASSWORD')):
-                return username
-        user_in_base = await cfg.users_model.get(username)
-        if not user_in_base:
+            if password == str(cfg.app.config.get("ADMIN_PASSWORD")):
+                return username, request
+            else:
+                message = f"failed attempt to auth. wrong user: {username}"
+                request["flash_messages"].append(("error", message))
+                request = log_history_event(request, message, "system: login")
+                return False, request
+        try:
+            user_in_base = await cfg.users_model.get(username)
+            if not user_in_base:
+                request["flash_messages"].append(
+                    (
+                        "error",
+                        f"There is no User with login <b>{username}</b>",
+                    )
+                )
+                log_history_event(
+                    request,
+                    f"failed attempt to auth. wrong user: <b>{username}</b>",
+                    "system: login",
+                )
+                return False, request
+            if pbkdf2_sha256.verify(password, user_in_base.password_hash):
+                return username, request
+            log_history_event(
+                request,
+                f"failed attempt to auth. wrong password for user: <b>{username}</b>",
+                "system: login",
+            )
+        except asyncpg.exceptions.UndefinedTableError:
+            # mean table with users was not created yet
             request["flash_messages"].append(
                 (
-                    f"No User with login {username}",
                     "error",
+                    f"<b>{username}</b> is not root user and table with gino admin users not exists yet",
                 )
             )
-            log_history_event(request, f'failed attempt to auth. wrong user: {username}', 'system: login')
-            return False
-        if pbkdf2_sha256.verify(password, user_in_base.password_hash):
-            return username
-        log_history_event(request, f'failed attempt to auth. wrong password for user: {username}', 'system: login')
-    return False
+    return False, request
 
 
 def logout_user(request):
