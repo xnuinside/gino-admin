@@ -953,7 +953,7 @@ description = "Jinja2 support for sanic"
 name = "sanic-jinja2"
 optional = false
 python-versions = "*"
-version = "0.7.5"
+version = "0.8.0"
 
 [package.dependencies]
 jinja2 = "*"
@@ -1321,7 +1321,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "6718ffad291e1e07bcf1ad3fe6c0d33b84bb7a8478df88ddb5865336b4653e24"
+content-hash = "1b55f1a8b64eff330efb88d9f2a7ae1c4e2a4c02278170fd463b394fb86bb61b"
 lock-version = "1.0"
 python-versions = "^3.7"
 
@@ -1830,7 +1830,7 @@ sanic = [
     {file = "sanic-19.12.2.tar.gz", hash = "sha256:0760b568245917481d65456721c1c50ba72e53e15a191392277751377f2cf770"},
 ]
 sanic-jinja2 = [
-    {file = "sanic_jinja2-0.7.5-py3-none-any.whl", hash = "sha256:061e3c7329a94f81a67eaaab74e8fa8be834911ec2bfd86fbf25a8e558a04326"},
+    {file = "sanic_jinja2-0.8.0-py3-none-any.whl", hash = "sha256:21b138db1c6546ca869b128464424007a8892399b253b46d116e9697e831e5ba"},
 ]
 sanic-jwt = [
     {file = "sanic-jwt-1.5.0.tar.gz", hash = "sha256:46fb02a7e12d29405aa3ab91394a2a315a0b754bddf968249da1db4de09dc356"},

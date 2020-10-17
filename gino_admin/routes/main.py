@@ -8,13 +8,13 @@ from sanic.request import Request
 
 from gino_admin import auth, config, utils
 from gino_admin.core import admin
-from gino_admin.history import write_history_after_response, log_history_event
+from gino_admin.history import log_history_event, write_history_after_response
 from gino_admin.routes.crud import model_view_table
 from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      deepcopy_recursive,
                                      drop_and_recreate_all_tables,
-                                     insert_data_from_csv_file, render_model_view,
-                                     upload_from_csv_data)
+                                     insert_data_from_csv_file,
+                                     render_model_view, upload_from_csv_data)
 
 cfg = config.cfg
 jinja = cfg.jinja
@@ -28,7 +28,13 @@ async def middleware_request(request):
 
 @admin.middleware("response")
 async def middleware_response(request, response):
-    if request.endpoint.split('.')[-1] in cfg.track_history_endpoints and request.method == "POST":
+    print(request.endpoint.split(".")[-1])
+    print(request.method)
+    print(cfg.track_history_endpoints)
+    if (
+        request.endpoint.split(".")[-1] in cfg.track_history_endpoints
+        and request.method == "POST"
+    ):
         await write_history_after_response(request)
 
 
@@ -51,7 +57,7 @@ async def logout_post(request: Request):
 
 @admin.route("/login", methods=["GET", "POST"])
 async def login(request):
-    _login = await auth.validate_login(request, cfg.app.config)
+    _login, request = await auth.validate_login(request, cfg.app.config)
     if _login:
         _token = utils.generate_token(request.ip)
         cfg.sessions[_token] = {
@@ -63,8 +69,7 @@ async def login(request):
         _response = jinja.render("index.html", request)
         _response.cookies["auth-token"] = _token
         return _response
-    else:
-        request["flash"]("Password or login is incorrect", "error")
+    request["session"] = {"_flashes": request["flash_messages"]}
     return jinja.render("login.html", request)
 
 
@@ -79,12 +84,12 @@ async def model_deepcopy(request, model_id):
     :return:
     """
     request_params = {key: request.form[key][0] for key in request.form}
-    
+
     columns_data = cfg.models[model_id]["columns_data"]
     base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
     base_obj_id = utils.correct_types(base_obj_id, columns_data)
     try:
-        #todo: fix deepcopy
+        # todo: fix deepcopy
         new_id = utils.extract_obj_id_from_query(request_params["new_id"])
         new_id = utils.correct_types(new_id, columns_data)
     except ValueError as e:
@@ -113,7 +118,6 @@ async def model_deepcopy(request, model_id):
 @auth.token_validation()
 async def model_copy(request, model_id):
     """ route for copy item per row """
-    model_data = cfg.models[model_id]
     request_params = {elem: request.form[elem][0] for elem in request.form}
     base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
     try:
@@ -186,7 +190,9 @@ async def presets_use(request: Request):
             )
         for message in request["flash_messages"]:
             request["flash"](*message)
-        history_message = f"Loaded preset {preset['id']} {' with DB drop' if with_drop else ''}"
+        history_message = (
+            f"Loaded preset {preset['id']} {' with DB drop' if with_drop else ''}"
+        )
         log_history_event(request, history_message, "system: load_preset")
     except FileNotFoundError:
         request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
@@ -204,7 +210,9 @@ async def file_upload(request: Request, model_id: Text):
     if not utils.valid_file_size(upload_file.body, cfg.max_file_size):
         return response.redirect("/?error=invalid_file_size")
     else:
-        request, is_success = await upload_from_csv_data(upload_file, file_name, request, model_id)
+        request, is_success = await upload_from_csv_data(
+            upload_file, file_name, request, model_id
+        )
         return await model_view_table(request, model_id, request["flash_messages"])
 
 
@@ -230,10 +238,11 @@ async def sql_query_run(request):
         except asyncpg.exceptions.UndefinedTableError as e:
             request["flash"](f"{e.args}", "error")
     if result:
-        return jinja.render("sql_runner.html", request, columns=result[1], result=result[1])
+        return jinja.render(
+            "sql_runner.html", request, columns=result[1], result=result[1]
+        )
     else:
         return jinja.render("sql_runner.html", request)
-        
 
 
 @admin.route("/history", methods=["GET"])

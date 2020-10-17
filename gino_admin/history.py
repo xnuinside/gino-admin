@@ -1,12 +1,12 @@
 import datetime
 import os
+from typing import Text
 
 import asyncpg
 import sanic
+from sanic import request
 
 from gino_admin import config
-from sanic import request
-from typing import Text
 
 cfg = config.cfg
 
@@ -29,8 +29,9 @@ def add_history_model(db) -> None:
             route = db.Column(db.String())
             log_message = db.Column(db.String())
             object_id = db.Column(db.String())
-        schema = db.schema + '.' if db.schema else ''
-        cfg.history_table_name = schema+cfg.history_table_name
+
+        schema = db.schema + "." if db.schema else ""
+        cfg.history_table_name = schema + cfg.history_table_name
         cfg.history_model = GinoAdminHistory
         cfg.history_data_columns = [
             column.name
@@ -45,13 +46,13 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
             or not request.cookies.get("auth-token")
             or request.cookies["auth-token"] not in cfg.sessions
         ):
-            return
+            user = "no_auth"
         else:
             user = cfg.sessions[request.cookies["auth-token"]]["user"]
 
     else:
         user = "AUTH_DISABLED"
-    route = request.url.split('admin/')[1]
+    route = request.url.split("admin/")[1]
     history_row = {
         "user": user,
         "route": route,
@@ -59,6 +60,8 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
         "object_id": str(request["history_action"].get("object_id", "none")),
         "datetime": datetime.datetime.now(),
     }
+    print(history_row)
+    print(request["history_action"])
     try:
         await cfg.history_model.create(**history_row)
     except asyncpg.exceptions.UndefinedTableError:
@@ -69,3 +72,4 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
 def log_history_event(request: request.Request, message: Text, object_id: Text) -> None:
     request["history_action"]["log_message"] = message
     request["history_action"]["object_id"] = object_id
+    return request

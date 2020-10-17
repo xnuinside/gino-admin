@@ -25,6 +25,7 @@ In UI section exist property 'colors' where you can set up colors that will be u
 - Second buttons. Property: buttons_second
 - Alert buttons (actions that something remove/reset - deleted, drop db and etc). Property: buttons_alert
 - Tables headers. Property: table
+- Alert Tables (as in Init DB). Property: table_alert
 - Footer background. Property: footer
 - Header background. Property: header
 

@@ -1,10 +1,11 @@
 import os
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional, Text
 
 from expiring_dict import ExpiringDict
 from jinja2 import FileSystemLoader
 from passlib.hash import pbkdf2_sha256
 from pydantic import BaseConfig, BaseModel, validator
+from sanic import request
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
@@ -17,7 +18,12 @@ loader = FileSystemLoader(
 
 
 def render_with_updated_context(
-    self, template, request, status=200, headers=None, **context
+    self,
+    template: Text,
+    request: request.Request,
+    status: int = 200,
+    headers: Optional[Dict] = None,
+    **context: Dict
 ):
     context["admin_panel_title"] = cfg.name
     context["objects"] = cfg.models
@@ -25,8 +31,7 @@ def render_with_updated_context(
     context["admin_panel_version"] = __version__
     context["round_number"] = cfg.round_number
     context["admin_users_route"] = cfg.admin_users_table_name
-    context['cfg'] = cfg
-    print(cfg.colors)
+    context["cfg"] = cfg
     return html(
         self.render_string(template, request, **context),
         status=status,
@@ -52,12 +57,13 @@ class App:
 
 
 class ColorSchema:
-    table = 'teal'
-    buttons = 'teal'
-    buttons_second = 'green'
-    buttons_alert = 'orange inverted'
-    footer = 'black'
-    header = 'black'
+    table = "teal"
+    table_alert = "orange"
+    buttons = "teal"
+    buttons_second = "purple"
+    buttons_alert = "orange inverted"
+    footer = "black"
+    header = "black"
 
 
 class UIConfig:
@@ -77,12 +83,7 @@ class Config(BaseModel):
     upload_dir: str = "files/"
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
-    date_str_formats: List[str] = [
-        "%Y-%m-%d",
-        "%d-%m-%Y",
-        "%Y-%d-%m",
-        "%m-%d-%Y"
-    ]
+    date_str_formats: List[str] = ["%Y-%m-%d", "%d-%m-%Y", "%Y-%d-%m", "%m-%d-%Y"]
     datetime_str_formats: List[str] = [
         "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
@@ -124,7 +125,7 @@ class Config(BaseModel):
         "file_upload",
         "sql_query_run",
         "login",
-        "logout_post"
+        "logout_post",
     ]
     admin_user_added = False
     ui = UIConfig

@@ -21,7 +21,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ```bash
 
-    pip install gino-admin==0.2.0
+    pip install gino-admin==0.2.1
 
 ```
 
@@ -31,7 +31,13 @@ You can find several code examples in [examples/](examples/) folder.
 
 ### Updates in version 0.2.1 (current master):
 
-1. Fixed dependencies - removed unnecessary packages and added one lost for cli. Cli now works correct. 
+1. Fixes:
+
+1.1 Dependencies - removed unnecessary packages and added one lost for cli. Cli now works correct. 
+1.2 Login form now provide errors if you enter wrong user or passoword
+1.3 Wrong attepts to login in Admin panel are adding to History now
+
+
 2. Added possibility to customize UI colors with config. 
 
 Default colors schema also changed:
@@ -45,6 +51,7 @@ Config object now has section 'ui'. In UI section now exist 'colors' where you c
 - Second buttons. Property: buttons_second
 - Alert buttons (actions that something remove/reset - deleted, drop db and etc). Property: buttons_alert
 - Tables headers. Property: table
+- Tables with Alert headers (like in Init DB). Property: table_alerts
 - Footer background. Property: footer
 - Header background. Property: header
 
