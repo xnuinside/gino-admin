@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Text, Union
 from unicodedata import normalize
 from sqlalchemy.types import BigInteger
 
+import dsnparse
+
 import aiofiles
 import yaml
 from passlib.hash import pbkdf2_sha256
@@ -361,3 +363,12 @@ def get_changes(old_obj: Dict, new_obj: Dict):
 def get_table_name(model_id: Text) -> Text:
     """ create full table name including schema if it exists """
     return model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id
+
+def parse_db_uri(db_uri):
+    db = dsnparse.parse(db_uri)
+    os.environ["SANIC_DB_HOST"] = db.host
+    os.environ["SANIC_DB_DATABASE"] = db.database
+    os.environ["SANIC_DB_USER"] = db.user
+    if db.port:
+        os.environ["SANIC_DB_PORT"] = str(db.port)
+    os.environ["SANIC_DB_PASSWORD"] = db.password

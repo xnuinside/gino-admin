@@ -8,7 +8,7 @@ from pydantic import BaseConfig, BaseModel, validator
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 loader = FileSystemLoader(
@@ -25,6 +25,8 @@ def render_with_updated_context(
     context["admin_panel_version"] = __version__
     context["round_number"] = cfg.round_number
     context["admin_users_route"] = cfg.admin_users_table_name
+    context['cfg'] = cfg
+    print(cfg.colors)
     return html(
         self.render_string(template, request, **context),
         status=status,
@@ -49,11 +51,24 @@ class App:
     db = None
 
 
+class ColorSchema:
+    table = 'teal'
+    buttons = 'teal'
+    buttons_second = 'green'
+    buttons_alert = 'orange inverted'
+    footer = 'black'
+    header = 'black'
+
+
+class UIConfig:
+    colors = ColorSchema
+
+
 class Config(BaseModel):
     """ Gino Admin Panel settings """
 
     route: str = "/admin"
-    jinja: SanicJinja2 = None
+    jinja: SanicJinja2 = jinja
     app: App = App
     hash_method: Callable = pbkdf2_sha256.encrypt
     models: Dict = {}
@@ -112,6 +127,7 @@ class Config(BaseModel):
         "logout_post"
     ]
     admin_user_added = False
+    ui = UIConfig
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

@@ -10,7 +10,6 @@ from sanic.log import logger
 from sanic.request import Request, File
 from sanic.response import HTTPResponse
 from sqlalchemy.sql.schema import Column
-from sqlalchemy_utils.functions import identity
 
 from gino_admin import config
 from gino_admin.utils import (CompositeType, correct_types, generate_new_id,

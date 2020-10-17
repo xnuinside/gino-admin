@@ -11,7 +11,7 @@ from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
 from gino_admin.users import add_users_model
 from gino_admin.routes import rest
-from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name, HashColumn
+from gino_admin.utils import GinoAdminError, logger, types_map, get_table_name, HashColumn, parse_db_uri
 
 cfg = config.cfg
 
@@ -176,26 +176,7 @@ def parse_db_uri(config: Dict) -> None:
             "Need to setup DB_URI env variable  with credentianls to access Database or send 'db_uri' in Gino-Admin config.\n"
             "Example: DB_URI=postgresql://local:local@localhost:5432/gino_db")
     db_uri = db_uri.split("postgresql://")[1]
-    if '@' in db_uri:
-        db_uri = db_uri.split("@")
-        host_and_db = db_uri[1].split('/')
-        login_and_password = db_uri[0].split(':')
-        login = login_and_password[0]
-        password = login_and_password[1]
-        host = host_and_db[0]
-        db = host_and_db[1]
-    else:
-        db_uri = db_uri.split("/")
-        host = db_uri[0]
-        db = db_uri[1]
-        login, password = None, None
-    if ':' in host:
-        host = host.split(':')[0]
-    os.environ["SANIC_DB_HOST"] = host
-    os.environ["SANIC_DB_DATABASE"] = db
-    os.environ["SANIC_DB_USER"] = login
-    os.environ["SANIC_DB_PASSWORD"] = password
-    return config
+    parse_db_uri(db_uri)
 
 def init_admin_app(host, port, db, db_models, config):
     """ init admin panel app """

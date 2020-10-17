@@ -11,6 +11,34 @@ You can define in config:
 * route: Route where will be served (that will be used to access) Admin panel. By default, used '/admin' route
 * round_number: How much symbols display in floats in UI (default 3)
 * db_uri: pass path & credentials to DB with db_uri, example: "postgresql://local:local@localhost:5432/gino_admin"
+* ui: customize ui with config settings
+
+ui
+################################
+
+**colors**
+
+
+In UI section exist property 'colors' where you can set up colors that will be used for:
+
+- Primary buttons. Property: buttons
+- Second buttons. Property: buttons_second
+- Alert buttons (actions that something remove/reset - deleted, drop db and etc). Property: buttons_alert
+- Tables headers. Property: table
+- Footer background. Property: footer
+- Header background. Property: header
+
+How to pass. Example:
+config = {
+            "ui" : {
+                "colors": 
+                {
+                    "buttons": "orange",
+                    "buttons_alert": "pink"
+                    }
+                }
+        }
+        
 
 composite_csv_settings
 ######################
