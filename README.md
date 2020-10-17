@@ -75,7 +75,7 @@ create_admin_app(
                 "colors": 
                 {"buttons": "orange",
                 "buttons_alert": "pink"}
-                }
+                },
             "db_uri": "postgresql://gino:gino@localhost:5432/gino"
         },
     )

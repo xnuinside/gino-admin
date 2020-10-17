@@ -60,8 +60,6 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
         "object_id": str(request["history_action"].get("object_id", "none")),
         "datetime": datetime.datetime.now(),
     }
-    print(history_row)
-    print(request["history_action"])
     try:
         await cfg.history_model.create(**history_row)
     except asyncpg.exceptions.UndefinedTableError:

@@ -56,18 +56,18 @@ class App:
     db = None
 
 
-class ColorSchema:
-    table = "teal"
-    table_alert = "orange"
-    buttons = "teal"
-    buttons_second = "purple"
-    buttons_alert = "orange inverted"
-    footer = "black"
-    header = "black"
+class ColorSchema(BaseModel):
+    table: Text = "teal"
+    table_alert: Text = "orange"
+    buttons: Text = "teal"
+    buttons_second: Text = "purple"
+    buttons_alert: Text = "orange inverted"
+    footer: Text = "black"
+    header: Text = "black"
 
 
-class UIConfig:
-    colors = ColorSchema
+class UIConfig(BaseModel):
+    colors: ColorSchema = None
 
 
 class Config(BaseModel):
@@ -115,6 +115,7 @@ class Config(BaseModel):
     users_model: object = None
     history_data_columns: List[str] = []
     admin_users_data_columns: List[str] = []
+    ui: UIConfig = None
     track_history_endpoints: List[str] = [
         "model_delete",
         "model_delete_all",
@@ -127,8 +128,6 @@ class Config(BaseModel):
         "login",
         "logout_post",
     ]
-    admin_user_added = False
-    ui = UIConfig
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):
@@ -142,3 +141,5 @@ class Config(BaseModel):
 cfg = Config()
 cfg.sessions = ExpiringDict(ttl=3600)
 cfg.jinja = jinja
+UIConfig.colors = ColorSchema
+cfg.ui = UIConfig

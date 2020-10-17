@@ -3,18 +3,18 @@ import logging
 import os
 import re
 import time
-from ast import literal_eval
 import uuid
+from ast import literal_eval
 from random import randint
 from typing import Any, Dict, List, Text, Union
 from unicodedata import normalize
-from sqlalchemy.types import BigInteger
-
-import dsnparse
 
 import aiofiles
+import dsnparse
 import yaml
 from passlib.hash import pbkdf2_sha256
+from sqlalchemy.types import BigInteger
+
 from gino_admin import config
 
 cfg = config.cfg
@@ -44,7 +44,7 @@ _windows_device_files = (
 types_map = {
     "INTEGER": int,
     "BIGINT": int,
-    "VARCHAR[]": (list,str),
+    "VARCHAR[]": (list, str),
     "SMALLINT": int,
     "VARCHAR": str,
     "FLOAT": float,
@@ -56,7 +56,7 @@ types_map = {
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
-    "SMALLINT[]": (list,int)
+    "SMALLINT[]": (list, int),
 }
 
 
@@ -143,11 +143,11 @@ class CompositeType:
 def correct_types(params: Dict, columns_data: Dict, no_default=False):
     to_del = []
     for param in params:
-        if '_hash' in param:
-            param_type = columns_data[param.replace('_hash', '')]["type"] 
+        if "_hash" in param:
+            param_type = columns_data[param.replace("_hash", "")]["type"]
         else:
             param_type = columns_data[param]["type"]
-       
+
         if not params[param]:
             # mean None
             to_del.append(param)
@@ -155,10 +155,8 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
         if isinstance(param, CompositeType):
             continue
         if not isinstance(param_type, tuple):
-            if "_hash" not in param and not isinstance(
-                params[param], param_type
-            ):
-                if param_type== list:
+            if "_hash" not in param and not isinstance(params[param], param_type):
+                if param_type == list:
                     params[param] = params[param].split(",")
                 elif param_type in [datetime.datetime, datetime.date]:
                     params[param] = extract_datetime(params[param], param_type)
@@ -166,7 +164,7 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
                     continue
                 else:
                     params[param] = param_type(params[param])
-                    
+
         else:
             if param_type[0] == list:
                 if isinstance(params[param], str):
@@ -178,7 +176,7 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
                 params[param] = formatted_list
     for param in to_del:
         del params[param]
-    
+
     if not no_default:
         for column in columns_data:
             if columns_data[column]["type"] == bool and column not in params:
@@ -192,7 +190,7 @@ def parse_datetime(datetime_str: Text) -> datetime.datetime:
             datetime_object = datetime.datetime.strptime(datetime_str, str_format)
             return datetime_object
         except ValueError:
-                continue
+            continue
 
 
 def parse_date(date_str: Text) -> datetime.date:
@@ -204,25 +202,30 @@ def parse_date(date_str: Text) -> datetime.date:
             continue
 
 
-def extract_datetime(datetime_str: Text, type_: Union[datetime.datetime, datetime.date]):
+def extract_datetime(
+    datetime_str: Text, type_: Union[datetime.datetime, datetime.date]
+):
     """ parse datetime or date object from string """
     if type_ == datetime.datetime:
-       return parse_datetime(datetime_str)
+        return parse_datetime(datetime_str)
     elif type_ == datetime.date:
         return parse_date(datetime_str)
 
 
-def prepare_request_params(request_params: Dict, model_id: Text, model_data: Dict) -> Dict:
+def prepare_request_params(
+    request_params: Dict, model_id: Text, model_data: Dict
+) -> Dict:
     """ reverse hash names and correct types of input params """
     request_params = correct_types(request_params, model_data["columns_data"])
     if model_data["hashed_indexes"]:
         request_params = reverse_hash_names(model_id, request_params)
     return request_params
 
+
 def get_type_name(column_data: Dict) -> Text:
     """ get type name for ui """
     if not isinstance(column_data["type"], tuple):
-        type_ = column_data["type"].__name__ 
+        type_ = column_data["type"].__name__
     else:
         type_ = f'array of {column_data["type"][1]}'
     return type_
@@ -312,13 +315,14 @@ def create_obj_id_for_query(id_dict: Dict) -> Text:
 
 def extract_obj_id_from_query(id_row: Text) -> Dict:
     """ reverse _id dict from query str """
-    pairs = id_row.split(',')
+    pairs = id_row.split(",")
     _id = {}
     for pair in pairs:
-        key, value = pair.split('=')
+        key, value = pair.split("=")
         _id[key] = value
     return _id
-    
+
+
 def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
     """ generate new id based on previous obj id """
     new_obj_key_dict = {}
@@ -341,7 +345,9 @@ def generate_new_id(base_obj_id: Dict, columns_data: Dict) -> Dict:
         elif isinstance(columns_data[key]["db_type"], BigInteger):
             new_obj_key = randint(0, 2 ** 63)
         else:
-            logger.error(f'unknown logic to generate copy for id of type {columns_data[key]["type"]}')
+            logger.error(
+                f'unknown logic to generate copy for id of type {columns_data[key]["type"]}'
+            )
             new_obj_key = value
         new_obj_key_dict[key] = new_obj_key
     return new_obj_key_dict
@@ -352,7 +358,7 @@ def get_changes(old_obj: Dict, new_obj: Dict):
     from_ = {}
     to_ = {}
     for key, value in new_obj.items():
-        if '_hash' not in key:
+        if "_hash" not in key:
             if key not in old_obj:
                 to_[key] = value
             elif old_obj[key] != value:
@@ -360,11 +366,15 @@ def get_changes(old_obj: Dict, new_obj: Dict):
                 to_[key] = value
     return {"from": from_, "to": to_}
 
+
 def get_table_name(model_id: Text) -> Text:
     """ create full table name including schema if it exists """
-    return model_id if not cfg.app.db.schema else cfg.app.db.schema + '.' + model_id
+    return model_id if not cfg.app.db.schema else cfg.app.db.schema + "." + model_id
 
-def parse_db_uri(db_uri):
+
+def parse_db_uri(db_uri: Text) -> None:
+    """ parse line of """
+    print(db_uri)
     db = dsnparse.parse(db_uri)
     os.environ["SANIC_DB_HOST"] = db.host
     os.environ["SANIC_DB_DATABASE"] = db.database

@@ -100,6 +100,9 @@ def extract_models_metadata(db: Gino, db_models: List) -> None:
 
 def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     """ init admin panel and configure """
+    if "config" in config_settings:
+        config_settings.update(config_settings["config"])
+        del config_settings["config"]
     if "custom_hash_method" in config_settings:
         logger.warning(
             f"'custom_hash_method' will be depricated in version 0.1.0. "
@@ -107,23 +110,20 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         )
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
-
     if not app.config.get("DB_HOST", None):
         # mean user define path to DB with one-line uri
-        parse_db_uri(config_settings)
+        if config_settings.get("db_uri", None):
+            parse_db_uri(config_settings["db_uri"])
+        else:
+            raise Exception(
+                "Credentials for DB must be provided"
+                "as SANIC config settings or as db_uri arg to Gino-Admin Panel"
+            )
 
     if "db_uri" in config_settings:
         del config_settings["db_uri"]
 
-    for key in config_settings:
-        try:
-            setattr(cfg, key, config_settings[key])
-        except ValueError as e:
-            raise GinoAdminError(
-                "Error During Gino Admin Panel Initialisation. "
-                "You trying to set upWrong config parameters: "
-                f"{e}"
-            )
+    setup_config_from_args(config_settings)
 
     add_history_model(db)
 
@@ -157,6 +157,22 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     cfg.app.config = app.config
 
 
+def setup_config_from_args(config_settings: Dict) -> None:
+    for key, value in config_settings.items():
+        if key == "ui":
+            ui = config.UIConfig(**value)
+            ui.colors = config.ColorSchema(**value["colors"])
+            value = ui
+        try:
+            setattr(cfg, key, value)
+        except ValueError as e:
+            raise GinoAdminError(
+                "Error During Gino Admin Panel Initialisation. "
+                "You trying to set upWrong config parameters: "
+                f"{e}"
+            )
+
+
 def create_admin_app(
     db: Gino,
     db_models: List = None,
@@ -175,7 +191,7 @@ def create_admin_app(
 
 def init_admin_app(host, port, db, db_models, config):
     """ init admin panel app """
-    app = Sanic()
+    app = Sanic(name="gino_admin")
 
     db.init_app(app)
 

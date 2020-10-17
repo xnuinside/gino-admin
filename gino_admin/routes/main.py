@@ -28,9 +28,6 @@ async def middleware_request(request):
 
 @admin.middleware("response")
 async def middleware_response(request, response):
-    print(request.endpoint.split(".")[-1])
-    print(request.method)
-    print(cfg.track_history_endpoints)
     if (
         request.endpoint.split(".")[-1] in cfg.track_history_endpoints
         and request.method == "POST"
