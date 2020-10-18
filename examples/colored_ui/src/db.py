@@ -28,6 +28,14 @@ class User(db.Model):
     address = db.Column(db.String())
 
 
+class Text(db.Model):
+
+    __tablename__ = "texts"
+
+    id = db.Column(db.String(), primary_key=True)
+    text = db.Column(db.Text(), nullable=False)
+
+
 class Place(db.Model):
 
     __tablename__ = "places"

@@ -119,6 +119,18 @@ To change colors pass config as:
 
 Example here: examples/colored_ui/
 
+
+#. 
+   Added example how to add all models from file with one method (to avoid import each model separate) - palced in *examples/colored_ui/src/app.py* method - **create_models_list**
+
+#. 
+   Added valid input for Text columns as Text Area
+
+   .. image:: ../img/text_area.png
+      :target: ../img/text_area.png
+      :alt: Text Area Inouts
+
+
 Updates in version 0.2.0:
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -213,6 +225,7 @@ Supported features
 * `Composite CSV: Load multiple relative tables in one CSV-file <https://gino-admin.readthedocs.io/en/latest/csv_upload.html#composite-csv-to-upload>`_
 * History logs on changes (log for admin panel actions - edit, delete, add, init_db, load presets and etc)
 * Support multiple users for Admin panel (add, edit, remove users from 'Admin Users' page)
+* UI Colors customizing
 
 TODO:
 ^^^^^

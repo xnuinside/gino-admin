@@ -1,6 +1,6 @@
 import os
 
-from db import City, Country, GiftCard, Item, Place, User, db
+import db
 from sanic import Sanic, response
 from sanic_jinja2 import SanicJinja2
 
@@ -9,8 +9,10 @@ from gino_admin import add_admin_panel
 app = Sanic(name=__name__)
 app.config["ADMIN_USER"] = "admin"
 app.config["ADMIN_PASSWORD"] = "1234"
+# set os.environ["ADMIN_AUTH_DISABLE"] = "1" to disable auth
 
-db.init_app(app)
+
+db.db.init_app(app)
 
 jinja = SanicJinja2(app)
 
@@ -23,10 +25,20 @@ async def index(request):
 current_path = os.path.dirname(os.path.abspath(__file__))
 
 
+def create_models_list(models) -> list:
+    """ creates list of gino models """
+    models_list = []
+    for name in dir(models):
+        entity = getattr(models, name)
+        if getattr(entity, "__tablename__", None):
+            models_list.append(entity)
+    return models_list
+
+
 add_admin_panel(
     app,
-    db,
-    [User, Place, City, GiftCard, Country, Item],
+    db.db,
+    create_models_list(db),
     name="Colored UI",
     config={
         "ui": {"colors": {"buttons": "orange", "buttons_alert": "pink"}},

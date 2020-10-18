@@ -34,8 +34,9 @@
 
           <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
                  {% else %}
-                 {% endif %}
-                 placeholder="Date/Time">
+
+                 placeholder="Date/Time"
+                 {% endif %}>
 
         </div>
       </div>
@@ -46,9 +47,14 @@
         <i class="calendar icon calendar"></i>
         <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
                  {% else %}
-                 {% endif %}
-                 placeholder="Date">
+
+                 placeholder="Date"
+                 {% endif %}>
       </div>
+    </div>
+    {% elif data['type'] == 'text' %}
+    <div class="field">
+      <textarea rows="4" placeholder="Text" name="{{column}}">{% if obj.get(column)%}{{obj.get(column)}}{% else %}{% endif %}  </textarea>
     </div>
     {% else %}
     {% if obj.get(column) is number | float %}

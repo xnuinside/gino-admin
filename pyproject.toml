@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gino-admin"
-version = "0.2.1-alpha0"
+version = "0.2.1"
 description = "Admin Panel for PostgreSQL DB with Gino ORM"
 authors = ["xnuinside <xnuinside@gmail.com>"]
 license = "MIT"
@@ -21,6 +21,7 @@ sanic-jwt = "^1.4.1"
 pydantic = "^1.5.1"
 dsnparse = "^0.1.15"
 expiring-dict = "^1.1.0"
+sqlalchemy_utils = "^0.36.8"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.3.0"

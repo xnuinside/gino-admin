@@ -1,21 +1,24 @@
 from collections import defaultdict
 from copy import deepcopy
 from csv import reader
-from typing import List, Optional, Text, Any, Dict, Tuple
-from io import TextIOWrapper, BytesIO
+from io import BytesIO, TextIOWrapper
+from typing import Any, Dict, List, Optional, Text, Tuple
 
 import asyncpg
 from gino.declarative import Model
 from sanic.log import logger
-from sanic.request import Request, File
+from sanic.request import File, Request
 from sanic.response import HTTPResponse
 from sqlalchemy.sql.schema import Column
+from sqlalchemy_utils.functions import identity
 
 from gino_admin import config
-from gino_admin.utils import (CompositeType, correct_types, generate_new_id,
-                              reverse_hash_names, serialize_dict, get_table_name, get_obj_id_from_row, 
-                              create_obj_id_for_query, get_type_name, prepare_request_params)
 from gino_admin.history import log_history_event
+from gino_admin.utils import (CompositeType, correct_types,
+                              create_obj_id_for_query, generate_new_id,
+                              get_obj_id_from_row, get_table_name,
+                              get_type_name, prepare_request_params,
+                              reverse_hash_names, serialize_dict)
 
 cfg = config.cfg
 
@@ -36,7 +39,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     output = []
     for row in rows:
         row = {columns_names[num]: field for num, field in enumerate(row)}
-        row['_id'] = create_obj_id_for_query(get_obj_id_from_row(model_data, row))
+        row["_id"] = create_obj_id_for_query(get_obj_id_from_row(model_data, row))
         for index in cfg.models[model_id]["hashed_indexes"]:
             row[columns_names[index]] = "*************"
         output.append(row)
@@ -44,7 +47,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     columns = {
         column_name: {
             "len": columns_data[column_name]["len"],
-            "type": get_type_name(columns_data[column_name])
+            "type": get_type_name(columns_data[column_name]),
         }
         for column_name in model_data["columns_names"]
     }
@@ -155,7 +158,8 @@ async def create_or_update(row: Dict, model_id: Text) -> Tuple:
     except asyncpg.exceptions.UniqueViolationError as e:
         if cfg.csv_update_existed:
             obj_id = prepare_request_params(
-                get_obj_id_from_row(model_data, row), model_id, model_data)
+                get_obj_id_from_row(model_data, row), model_id, model_data
+            )
             obj = await get_by_params(obj_id, model_data["model"])
             await obj.update(**row).apply()
             return None, obj_id, None
@@ -176,7 +180,7 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
     # todo: refactor this huge code
     table_num = 0
     previous_table_name = None
-    id_added = [] 
+    id_added = []
     id_updated = []
     for table_name, indexes in tables_indexes.items():
         # {'start': None, 'end': None}
@@ -240,7 +244,7 @@ async def upload_composite_csv_row(row, header, tables_indexes, stack, unique_ke
             if id_added or id_updated:
                 id_ = id_added if id_added else id_updated
                 new_obj = (await get_by_params(id_, model_data["model"])).to_dict()
-                
+
                 if indexes["start"] == 0:
                     unique_keys = {}
                 unique_keys[model_id] = new_obj
@@ -261,13 +265,19 @@ async def insert_data_from_csv_file(file_path: Text, model_id: Text, request: Re
         return await insert_data_from_csv_rows(read_obj, model_id, request)
 
 
-async def upload_from_csv_data(upload_file: File, file_name: Text, request: Request, model_id: Text):
+async def upload_from_csv_data(
+    upload_file: File, file_name: Text, request: Request, model_id: Text
+):
     with TextIOWrapper(BytesIO(upload_file.body)) as read_obj:
-        request, is_success = await insert_data_from_csv_rows(read_obj, model_id, request)
+        request, is_success = await insert_data_from_csv_rows(
+            read_obj, model_id, request
+        )
         if is_success:
-            log_history_event(request, 
-                              f"Upload data from CSV from file {file_name} to model {model_id}",
-                              "system: upload_csv")
+            log_history_event(
+                request,
+                f"Upload data from CSV from file {file_name} to model {model_id}",
+                "system: upload_csv",
+            )
         return request, is_success
 
 
@@ -335,11 +345,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
                 )
             )
 
-        base_msg = (
-            "Objects"
-            if composite
-            else f"Objects"
-        )
+        base_msg = "Objects" if composite else f"Objects"
         if ids_added:
             request["flash_messages"].append(
                 (f"{base_msg}{ids_added} was added", "success")
@@ -355,9 +361,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
         request["flash_messages"].append((e.args, "error"))
     except asyncpg.exceptions.NotNullViolationError as e:
         column = e.args[0].split("column")[1].split("violates")[0]
-        request["flash_messages"].append(
-            (f"Field {column} cannot be null", "error")
-        )
+        request["flash_messages"].append((f"Field {column} cannot be null", "error"))
     return request, True
 
 
@@ -374,44 +378,47 @@ async def drop_and_recreate_all_tables():
 
 async def update_all_by_params(update_params: Dict, where_params: Dict, model):
     q = model.update.values(**update_params)
-    operand_types = {'==': '__eq__', 'in': 'contains'}
+    operand_types = {"==": "__eq__", "in": "contains"}
     for attr, value in where_params.items():
         field = getattr(model, attr)
         if isinstance(value, list):
+            in_query = ":|"
             if in_query in value[0]:
                 final_ = []
-                operand_name = operand_types['in']
+                operand_name = operand_types["in"]
                 value = value[0].split(in_query)[0]
                 final_.append(value)
                 value = final_
-            else: 
-                operand_name = operand_types['==']
+            else:
+                operand_name = operand_types["=="]
         else:
-            operand_name = operand_types['==']
+            operand_name = operand_types["=="]
         operand = getattr(field, operand_name)
-        if value != '':
+        if value != "":
             q = q.where(operand(value))
     items = await q.gino.status()
     return items
 
+
 async def delete_all_by_params(query_params: Dict, model):
     q = model.delete
-    operand_types = {'==': '__eq__', 'in': 'contains'}
+    operand_types = {"==": "__eq__", "in": "contains"}
     for attr, value in query_params.items():
         field = getattr(model, attr)
         if isinstance(value, list):
+            in_query = ":|"
             if in_query in value[0]:
                 final_ = []
-                operand_name = operand_types['in']
+                operand_name = operand_types["in"]
                 value = value[0].split(in_query)[0]
                 final_.append(value)
                 value = final_
-            else: 
-                operand_name = operand_types['==']
+            else:
+                operand_name = operand_types["=="]
         else:
-            operand_name = operand_types['==']
+            operand_name = operand_types["=="]
         operand = getattr(field, operand_name)
-        if value != '':
+        if value != "":
             q = q.where(operand(value))
     items = await q.gino.status()
     return items
@@ -419,33 +426,30 @@ async def delete_all_by_params(query_params: Dict, model):
 
 async def get_by_params(query_params: Dict, model):
     q = model.query
-    operand_types = {'==': '__eq__', 'in': 'contains'}
+    operand_types = {"==": "__eq__", "in": "contains"}
     for attr, value in query_params.items():
         field = getattr(model, attr)
         if isinstance(value, list):
+            in_query = ":|"
             if in_query in value[0]:
                 final_ = []
-                operand_name = operand_types['in']
+                operand_name = operand_types["in"]
                 value = value[0].split(in_query)[0]
                 final_.append(value)
                 value = final_
-            else: 
-                operand_name = operand_types['==']
+            else:
+                operand_name = operand_types["=="]
         else:
-            operand_name = operand_types['==']
+            operand_name = operand_types["=="]
         operand = getattr(field, operand_name)
-        if value != '':
+        if value != "":
             q = q.where(operand(value))
     items = await q.gino.first()
     return items
 
 
-
-
 async def render_add_or_edit_form(
-    request: Request, 
-    model_id: Text, 
-    obj_id: Dict = None
+    request: Request, model_id: Text, obj_id: Dict = None
 ) -> HTTPResponse:
     model_data = cfg.models[model_id]
     model = cfg.models[model_id]["model"]
@@ -456,7 +460,9 @@ async def render_add_or_edit_form(
         if obj:
             obj = serialize_dict(obj.to_dict())
         else:
-            request["flash_messages"].append((f"obj with id {obj_id} was not found", "error"))
+            request["flash_messages"].append(
+                (f"obj with id {obj_id} was not found", "error")
+            )
         add = False
     else:
         obj = {}
@@ -464,12 +470,17 @@ async def render_add_or_edit_form(
     columns = {
         column_name: {
             "len": columns_data[column_name]["len"],
-            "type": get_type_name(columns_data[column_name])
-            }
+            "type": get_type_name(columns_data[column_name]),
+        }
         for column_name in model_data["columns_names"]
     }
     return cfg.jinja.render(
-        "add_form.html", request, model=model_id, add=add, obj=obj, columns=columns,
+        "add_form.html",
+        request,
+        model=model_id,
+        add=add,
+        obj=obj,
+        columns=columns,
     )
 
 
@@ -479,7 +490,9 @@ async def count_elements_in_db():
         try:
             table_name = get_table_name(model_id)
             sql_query = f"SELECT COUNT(*) FROM {table_name}"
-            data[model_id] = (await cfg.app.db.status(cfg.app.db.text(sql_query)))[1][0][0]
+            data[model_id] = (await cfg.app.db.status(cfg.app.db.text(sql_query)))[1][
+                0
+            ][0]
         except asyncpg.exceptions.UndefinedTableError:
             data[model_id] = "Table does not exist"
     return data
@@ -527,12 +540,12 @@ async def deepcopy_recursive(
     if len(identity(model)) == 0:
         primary_key_col = object_id
         return (
-                f"Deepcopy does not available for tables without primary keys right now",
-                "error",
-            )
+            f"Deepcopy does not available for tables without primary keys right now",
+            "error",
+        )
     else:
         primary_key_col = identity(model)[0]
-    
+
     dependent_models = {}
     # TODO(ehborisov): check how it works in the case of composite key
     for m_id, data in cfg.models.items():
@@ -549,7 +562,9 @@ async def deepcopy_recursive(
         )
         # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
         for inst_id in all_referencing_instance_ids:
-            result = await deepcopy_recursive(dep_model, inst_id[0], new_obj_key, fk_column)
+            result = await deepcopy_recursive(
+                dep_model, inst_id[0], new_obj_key, fk_column
+            )
             if isinstance(result, tuple):
                 return result
     logger.debug(f"Finished copying, returning newly created object's id {new_obj_key}")

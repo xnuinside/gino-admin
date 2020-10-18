@@ -141,5 +141,4 @@ class Config(BaseModel):
 cfg = Config()
 cfg.sessions = ExpiringDict(ttl=3600)
 cfg.jinja = jinja
-UIConfig.colors = ColorSchema
-cfg.ui = UIConfig
+cfg.ui = UIConfig(colors=ColorSchema())

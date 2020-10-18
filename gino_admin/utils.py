@@ -224,7 +224,9 @@ def prepare_request_params(
 
 def get_type_name(column_data: Dict) -> Text:
     """ get type name for ui """
-    if not isinstance(column_data["type"], tuple):
+    if "text" in str(column_data["db_type"]).lower():
+        return "text"
+    elif not isinstance(column_data["type"], tuple):
         type_ = column_data["type"].__name__
     else:
         type_ = f'array of {column_data["type"][1]}'
@@ -374,7 +376,6 @@ def get_table_name(model_id: Text) -> Text:
 
 def parse_db_uri(db_uri: Text) -> None:
     """ parse line of """
-    print(db_uri)
     db = dsnparse.parse(db_uri)
     os.environ["SANIC_DB_HOST"] = db.host
     os.environ["SANIC_DB_DATABASE"] = db.database
