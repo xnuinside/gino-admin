@@ -12,6 +12,7 @@ else:
     db = Gino(
         dsn=f"postgresql://gino:gino@{os.environ.get('DB_HOST','localhost')}:5432/gino"
     )
+    print(db.__dict__, "starlette")
 
 
 class GiftCard(db.Model):

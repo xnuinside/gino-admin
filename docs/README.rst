@@ -259,8 +259,8 @@ Example:
 
 .. code-block:: bash
 
-
        gino-admin run examples/base_example/src/db.py --db postgresql://gino:gino@localhost:5432/gino -u admin:1234
+
 
 Add Admin Panel to existed Sanic application as '/admin' route
 --------------------------------------------------------------

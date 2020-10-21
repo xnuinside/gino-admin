@@ -1,4 +1,4 @@
-from gino.ext.sanic import Gino
+from gino import Gino
 
 db = Gino()
 
@@ -35,19 +35,6 @@ class Place(db.Model):
     id = db.Column(db.String(), unique=True, primary_key=True)
     title = db.Column(db.String())
     description = db.Column(db.String())
-    owner = db.Column(db.String(24), db.ForeignKey("users.id"))
-
-
-class Item(db.Model):
-
-    __tablename__ = "items"
-
-    id = db.Column(db.String(24), unique=True, primary_key=True)
-    name = db.Column(db.String)
-    description = db.Column(db.String())
-    place = db.Column(db.String(24), db.ForeignKey("places.id"))
-    time = db.Column(db.Time(), nullable=False)
-    additional_data = db.Column(db.JSONB, nullable=False, server_default="{}")
 
 
 class Country(db.Model):
@@ -63,7 +50,6 @@ class Country(db.Model):
 class City(db.Model):
 
     __tablename__ = "cities"
-
     # does not contain 'unique' column - so this Model will not showed in UI in Admin Panel
     id = db.Column(db.String())
     country = db.Column(db.String())

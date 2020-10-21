@@ -44,7 +44,6 @@ _windows_device_files = (
 types_map = {
     "INTEGER": int,
     "BIGINT": int,
-    "VARCHAR[]": (list, str),
     "SMALLINT": int,
     "VARCHAR": str,
     "FLOAT": float,
@@ -56,7 +55,10 @@ types_map = {
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
+    "JSONB": (str, "json"),
+    "TIME": datetime.time,
     "SMALLINT[]": (list, int),
+    "VARCHAR[]": (list, str),
 }
 
 

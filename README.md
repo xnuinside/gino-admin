@@ -31,6 +31,22 @@ You can find several code examples in [examples/](examples/) folder.
 
 ### Updates in version 0.2.1 (current master):
 
+
+=======
+### Updates in version 0.2.2  (current master):
+
+1. Added support for types: JSONB and Time. 
+Examples added as part of base_example - /Users/iuliia_volkova2/work/gino-admin/examples/base_example
+For JSONB fields exist auto correction - all brackets ' auto changed to "
+
+
+2. Added option to upload and create Presets from UI. Also added option to choose where will be stored Presets - in DB (turn off by default) or in yml files only. Way to add and store presets in yml files supported in both variants. 
+
+Config option: 'pressets_in_db' (default: True) - set to False to turn off storing presets in DB.
+
+
+### Updates in version 0.2.1
+
 1. Fixes:
 
 1.1 Dependencies - removed unnecessary packages and added one lost for cli. Cli now works correct. 
@@ -204,7 +220,7 @@ Example:
 
 ```bash
 
-    gino-admin run examples/base_example/src/db.py --db postgresql://gino:gino@localhost:5432/gino -u admin:1234
+    gino-admin run examples/run_from_cli/src/db.py --db postgresql://gino:gino@localhost:5432/gino -u admin:1234
 
 ```
 
