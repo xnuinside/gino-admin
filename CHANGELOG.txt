@@ -56,7 +56,7 @@ To change colors pass config as:
 create_admin_app(
         host="0.0.0.0",
         port=os.getenv("PORT", 5000),
-        db=kkr_metadata.models.db,
+        db=example.models.db,
         db_models=db_models,
         config={
             "ui" : {
@@ -119,7 +119,7 @@ for example, no need to setup SANIC variables:
 create_admin_app(
         host="0.0.0.0",
         port=os.getenv("PORT", 5000),
-        db=kkr_metadata.models.db,
+        db=example.models.db,
         db_models=db_models,
         config={
             "presets_folder": os.path.join(current_path, "csv_to_upload"),
