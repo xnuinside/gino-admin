@@ -56,8 +56,8 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
     history_row = {
         "user": user,
         "route": route,
-        "log_message": request["history_action"].get("log_message", ""),
-        "object_id": str(request["history_action"].get("object_id", "none")),
+        "log_message": request.ctx.history_action.get("log_message", ""),
+        "object_id": str(request.ctx.history_action.get("object_id", "none")),
         "datetime": datetime.datetime.now(),
     }
     try:
@@ -68,6 +68,6 @@ async def write_history_after_response(request: sanic.request.Request) -> None:
 
 
 def log_history_event(request: request.Request, message: Text, object_id: Text) -> None:
-    request["history_action"]["log_message"] = message
-    request["history_action"]["object_id"] = object_id
+    request.ctx.history_action["log_message"] = message
+    request.ctx.history_action["object_id"] = object_id
     return request

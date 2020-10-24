@@ -5,6 +5,7 @@ from typing import Text
 import asyncpg
 from sanic import response
 from sanic.request import Request
+from sqlalchemy.engine.url import URL
 
 from gino_admin import auth, config, utils
 from gino_admin.core import admin
@@ -20,10 +21,42 @@ cfg = config.cfg
 jinja = cfg.jinja
 
 
+@admin.listener("after_server_start")
+async def before_server_start(_, loop):
+    if cfg.app.config.get("DB_DSN"):
+        dsn = cfg.app.config.DB_DSN
+    else:
+        dsn = URL(
+            drivername=cfg.app.config.setdefault("DB_DRIVER", "asyncpg"),
+            host=cfg.app.config.setdefault("DB_HOST", "localhost"),
+            port=cfg.app.config.setdefault("DB_PORT", 5432),
+            username=cfg.app.config.setdefault("DB_USER", "postgres"),
+            password=cfg.app.config.setdefault("DB_PASSWORD", ""),
+            database=cfg.app.config.setdefault("DB_DATABASE", "postgres"),
+        )
+
+    await cfg.app.db.set_bind(
+        dsn,
+        echo=cfg.app.config.setdefault("DB_ECHO", False),
+        min_size=cfg.app.config.setdefault("DB_POOL_MIN_SIZE", 5),
+        max_size=cfg.app.config.setdefault("DB_POOL_MAX_SIZE", 10),
+        ssl=cfg.app.config.setdefault("DB_SSL"),
+        loop=loop,
+        **cfg.app.config.setdefault("DB_KWARGS", dict()),
+    )
+
+
+@admin.listener("before_server_stop")
+async def after_server_stop(_, loop):
+    await cfg.app.db.pop_bind().close()
+
+
 @admin.middleware("request")
 async def middleware_request(request):
-    request["flash_messages"] = []
-    request["history_action"] = {}
+    request.ctx.flash_messages = []
+    request.ctx.history_action = {}
+    conn = await cfg.app.db.acquire(lazy=True)
+    request.ctx.connection = conn
 
 
 @admin.middleware("response")
@@ -33,6 +66,12 @@ async def middleware_response(request, response):
         and request.method == "POST"
     ):
         await write_history_after_response(request)
+    conn = getattr(request.ctx, "connection", None)
+    if conn is not None:
+        try:
+            await conn.release()
+        except ValueError:
+            pass
 
 
 @admin.route(f"/")
@@ -62,11 +101,11 @@ async def login(request):
             "user": _login,
         }
         request.cookies["auth-token"] = _token
-        request["session"] = {"_auth": True}
+        request.ctx.session = {"_auth": True}
         _response = jinja.render("index.html", request)
         _response.cookies["auth-token"] = _token
         return _response
-    request["session"] = {"_flashes": request["flash_messages"]}
+    request.ctx.session = {"_flashes": request.ctx.flash_messages}
     return jinja.render("login.html", request)
 
 
@@ -90,7 +129,7 @@ async def model_deepcopy(request, model_id):
         new_id = utils.extract_obj_id_from_query(request_params["new_id"])
         new_id = utils.correct_types(new_id, columns_data)
     except ValueError as e:
-        request["flash"](e, "error")
+        request.ctx.flash(e, "error")
         return await render_model_view(request, model_id)
     try:
         async with cfg.app.db.acquire() as conn:
@@ -101,13 +140,13 @@ async def model_deepcopy(request, model_id):
                     new_id=new_id,
                 )
                 if isinstance(new_base_obj_id, tuple):
-                    request["flash"](new_base_obj_id, "error")
+                    request.ctx.flash(new_base_obj_id, "error")
                 else:
                     message = f"Object with {request_params['_id']} was deepcopied with new id {new_base_obj_id}"
-                    request["flash"](message, "success")
+                    request.ctx.flash(message, "success")
                     log_history_event(request, message, new_base_obj_id)
     except asyncpg.exceptions.PostgresError as e:
-        request["flash"](e.args, "error")
+        request.ctx.flash(e.args, "error")
     return await render_model_view(request, model_id)
 
 
@@ -150,7 +189,7 @@ async def init_db_run(request: Request):
             count += value
     await drop_and_recreate_all_tables()
     message = f"{count} object was deleted. DB was Init from Scratch"
-    request["flash"](message, "success")
+    request.ctx.flash(message, "success")
     log_history_event(request, message, "system: init_db")
     return jinja.render("init_db.html", request, data=await count_elements_in_db())
 
@@ -179,20 +218,20 @@ async def presets_use(request: Request):
     with_drop = "with_db" in request.form
     if with_drop:
         await drop_and_recreate_all_tables()
-        request["flash"](f"DB was successful Dropped", "success")
+        request.ctx.flash(f"DB was successful Dropped", "success")
     try:
         for model_id, file_path in preset["files"].items():
             request, is_success = await insert_data_from_csv_file(
                 os.path.join(cfg.presets_folder, file_path), model_id.lower(), request
             )
-        for message in request["flash_messages"]:
-            request["flash"](*message)
+        for message in request.ctx.flash_messages:
+            request.ctx.flash(*message)
         history_message = (
             f"Loaded preset {preset['id']} {' with DB drop' if with_drop else ''}"
         )
         log_history_event(request, history_message, "system: load_preset")
     except FileNotFoundError:
-        request["flash"](f"Wrong file path in Preset {preset['name']}.", "error")
+        request.ctx.flash(f"Wrong file path in Preset {preset['name']}.", "error")
     return jinja.render("presets.html", request, presets=utils.get_presets()["presets"])
 
 
@@ -210,7 +249,7 @@ async def file_upload(request: Request, model_id: Text):
         request, is_success = await upload_from_csv_data(
             upload_file, file_name, request, model_id
         )
-        return await model_view_table(request, model_id, request["flash_messages"])
+        return await model_view_table(request, model_id, request.ctx.flash_messages)
 
 
 @admin.route("/sql_run", methods=["GET"])
@@ -224,16 +263,16 @@ async def sql_query_run_view(request):
 async def sql_query_run(request):
     result = []
     if not request.form.get("sql_query"):
-        request["flash"](f"SQL query cannot be empty", "error")
+        request.ctx.flash(f"SQL query cannot be empty", "error")
     else:
         sql_query = request.form["sql_query"][0]
         try:
             result = await cfg.app.db.status(cfg.app.db.text(sql_query))
             log_history_event(request, f"Query run '{sql_query}'", "system: sql_run")
         except asyncpg.exceptions.PostgresSyntaxError as e:
-            request["flash"](f"{e.args}", "error")
+            request.ctx.flash(f"{e.args}", "error")
         except asyncpg.exceptions.UndefinedTableError as e:
-            request["flash"](f"{e.args}", "error")
+            request.ctx.flash(f"{e.args}", "error")
     if result:
         return jinja.render(
             "sql_runner.html", request, columns=result[1], result=result[1]

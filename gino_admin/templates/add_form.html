@@ -2,7 +2,7 @@
 {% block title %}{{model}}{% endblock %}
 
 {% block body %}
-
+<div style="max-width: 500px;">
 <div class="ui breadcrumb">
   <a class="section" href="{{url_prefix}}">Admin</a>
   <i class="right angle icon divider"></i>
@@ -32,10 +32,8 @@
         <div class="ui input left icon">
           <i class="calendar icon"></i>
 
-          <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
+          <input type="text" id="input_datetime" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
                  {% else %}
-
-                 placeholder="Date/Time"
                  {% endif %}>
 
         </div>
@@ -45,16 +43,30 @@
     <div class="ui calendar data_calendar">
       <div class="ui input left icon">
         <i class="calendar icon calendar"></i>
-        <input type="text" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
+        <input type="text" id="input_date" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
                  {% else %}
-
+                
                  placeholder="Date"
                  {% endif %}>
       </div>
     </div>
-    {% elif data['type'] == 'text' %}
-    <div class="field">
-      <textarea rows="4" placeholder="Text" name="{{column}}">{% if obj.get(column)%}{{obj.get(column)}}{% else %}{% endif %}  </textarea>
+    {% elif data['type'] == 'time' %}
+    <div class="timepicker">
+        <i class="calendar icon calendar"></i>
+        <input class="timepicker" type="text" 
+          name="{{column}}" 
+          {% if obj.get(column)%}  value="{{obj.get(column)}}"
+                 {% else %}
+
+                 placeholder="Time"
+                 {% endif %}>
+    </div>
+
+    {% elif data['type'] == 'text' or  data['type'] == 'json' %}
+   <div class="field">
+      <textarea rows="4"
+        placeholder="Text" 
+        name="{{column}}">{% if obj.get(column)%}{{obj.get(column)}}{% else %}{% endif %}  </textarea>
     </div>
     {% else %}
     {% if obj.get(column) is number | float %}
@@ -71,6 +83,7 @@
   <button class="ui button {{cfg.ui.colors.buttons}}" type="submit">Submit</button>
 </form>
 
+</div>
 
 <script>
 
@@ -87,5 +100,11 @@ $('.data_calendar').calendar({
     }
   }
 });
+$('.timepicker').timepicker(
+  { timeFormat: 'H:mm:ss', 
+  defaultTime: 'now' }
+  );
+  $('#input_datetime').val(new Date().toISOString().slice(0, 19));
+  $('#input_date').val(new Date().toISOString().slice(0, 10));
 </script>
 {% endblock %}

@@ -22,30 +22,26 @@ to install git hooks in your .git/ directory.
 #### How to run integration tests
 
 
-Run integrations test from  tests/integration_tests/
+Run integrations test from  tests/integration_tests/tests:
 
 ```
+    cd test/integration_tests/docker
+```
+
+1. Prepare docker-compose for tests:
+
+```bash
+
+    ./run.sh docker-compose up --build
+
+```
+Command will build all necessary images & run docker compose cluster.
+
+2. Run tests
+
+```bash
+
     cd test/integration_tests
-```
+    pytest ../tests --docker-compose=docker-compose.yml --docker-compose-no-build --use-running-containers -vv
 
-When 2 possible ways.
-
-First way.
-
-```
-    pytest . --docker-compose=test-docker-compose.yml -v
-
-    # will build and run docker compose & execute the tests
-```
-
-Second way (reduce time in process of tests creating/debuggind)
-
-```
-    docker-compose -f test-docker-compose.yml up --build
-
-    # build & run test cluster
-
-    # when in new terminal window:
-
-    pytest . --docker-compose=test-docker-compose.yml --docker-compose-no-build --use-running-containers -v
 ```

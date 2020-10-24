@@ -1,5 +1,7 @@
 from gino.ext.sanic import Gino
 
+# because main app is using Sanic as framework
+
 db = Gino()
 
 

@@ -1,18 +1,11 @@
 import os
 
-# when gino admin runs it set 'GINO_ADMIN' = '1' to get possible check that application used DB Model
-# pay attention, that in this case you need to run admin panel and main app in different venvs
-if os.environ.get("GINO_ADMIN"):
-    from gino.ext.sanic import Gino
+# because main app used fast api
+from gino.ext.starlette import Gino
 
-    db = Gino()
-else:
-    from gino.ext.starlette import Gino
-
-    db = Gino(
-        dsn=f"postgresql://gino:gino@{os.environ.get('DB_HOST','localhost')}:5432/gino"
-    )
-    print(db.__dict__, "starlette")
+db = Gino(
+    dsn=f"postgresql://gino:gino@{os.environ.get('DB_HOST','localhost')}:5432/gino"
+)
 
 
 class GiftCard(db.Model):

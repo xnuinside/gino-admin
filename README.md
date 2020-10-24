@@ -4,7 +4,7 @@
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
-Play with Demo (current master 0.2.1) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login) (login: admin, pass: 1234)
+Play with Demo (current master 0.2.2) [>>>> Gino-Admin demo <<<<](http://www.xnu-im.space/gino_admin_demo/login) (login: admin, pass: 1234)
 
 
 ![badge1](https://img.shields.io/pypi/v/gino_admin) ![badge2](https://img.shields.io/pypi/l/gino_admin) ![badge3](https://img.shields.io/pypi/pyversions/gino_admin) 
@@ -21,7 +21,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ```bash
 
-    pip install gino-admin==0.2.1
+    pip install gino-admin==0.2.2
 
 ```
 
@@ -29,20 +29,24 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 You can find several code examples in [examples/](examples/) folder.
 
-### Updates in version 0.2.1 (current master):
 
-
-=======
 ### Updates in version 0.2.2  (current master):
 
-1. Added support for types: JSONB and Time. 
+1. Added support for types: JSONB, JSON and Time. 
 Examples added as part of base_example - /Users/iuliia_volkova2/work/gino-admin/examples/base_example
-For JSONB fields exist auto correction - all brackets ' auto changed to "
 
+2. **Main update**: Not needed to use *gino.ext.sanic* in models as it was previos. 
 
-2. Added option to upload and create Presets from UI. Also added option to choose where will be stored Presets - in DB (turn off by default) or in yml files only. Way to add and store presets in yml files supported in both variants. 
+Now you can use any ext if you need (for Fast Api for example) or pure Gino() and you not need to add to your models, any 'ifs' to have additional gino.ext.sanic to get possible work with gino admin. 
 
-Config option: 'pressets_in_db' (default: True) - set to False to turn off storing presets in DB.
+All examples was changed according to the update. 
+
+4. Sanic was updated to 20.* version. Switched to use 'request.ctx.' in code
+
+5. Minor things: all date, datetime and timepickers now have default value == to current time/date/datetime.
+
+6. Tests: was updated structure of integraion tests
+
 
 
 ### Updates in version 0.2.1
@@ -192,7 +196,10 @@ create_admin_app(
 - Other staff on [Gino Project Dashboard](https://github.com/xnuinside/gino-admin/projects/1)
 
 
-#### Run Admin Panel with Cli
+
+### How to run Gino-Admin
+
+#### Run with Cli
 
 ```bash
 
@@ -223,6 +230,59 @@ Example:
     gino-admin run examples/run_from_cli/src/db.py --db postgresql://gino:gino@localhost:5432/gino -u admin:1234
 
 ```
+
+#### Run Admin Panel as Standalone App (no matter that framework you use in main app)
+
+You can use Gino Admin as stand alone web app. 
+Does not matter what Framework used for your main App and that Gino Ext used to init Gino().
+
+Code example in:  examples/fastapi_as_main_app
+How to run example in: examples/fastapi_as_main_app/how_to_run_example.txt
+
+You need to create **admin.py** (for example, you can use any name) to run admin panel:
+
+```python
+import os
+
+from gino_admin import create_admin_app
+# import module with your models
+import models 
+
+# gino admin uses Sanic as a framework, so you can define most params as environment variables with 'SANIC_' prefix
+# in example used this way to define DB credentials & login-password to admin panel
+
+# but you can use 'db_uri' in config to define creds for Database
+# check examples/colored_ui/src/app.py as example 
+
+os.environ["SANIC_DB_HOST"] = os.getenv("DB_HOST", "localhost")
+os.environ["SANIC_DB_DATABASE"] = "gino"
+os.environ["SANIC_DB_USER"] = "gino"
+os.environ["SANIC_DB_PASSWORD"] = "gino"
+
+
+os.environ["SANIC_ADMIN_USER"] = "admin"
+os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
+
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+
+if __name__ == "__main__":
+    # host & port - will be used to up on them admin app
+    # config - Gino Admin configuration - check docs to see all possible properties,
+    # that allow set path to presets folder or custom_hash_method, optional parameter
+    # db_models - list of db.Models classes (tables) that you want to see in Admin Panel
+    create_admin_app(
+        host="0.0.0.0",
+        port=os.getenv("PORT", 5000),
+        db=models.db,
+        db_models=[models.User, models.City, models.GiftCard, models.Country],
+        config={
+            "presets_folder": os.path.join(current_path, "csv_to_upload")},
+    )
+```
+
+All environment variables you can move to define in docker or .env files as you wish, they not needed to be define in '.py', this is just for example shortness.
+
 
 #### Add Admin Panel to existed Sanic application as '/admin' route
 
@@ -256,77 +316,6 @@ Where:
 
 In admin panel _hash fields will be displayed without '_hash' prefix and fields values will be  hidden like '******'
 
-#### Run Admin Panel as Standalone Sanic App
-
-Note: this method is a good approach if you use different frameworks as Main App
-
-You can use Gino Admin as stand alone web app. Does not matter what Framework used for your main App.
-
-Code example in:  examples/use_with_any_framework_in_main_app/
-How to run example in: examples/use_with_any_framework_in_main_app/how_to_run_example.txt
-
-1. In module where you define DB add 'if block'.
-We will use Fast API as main App in our example.
-
-We have db.py where we import Gino as
-```
-    from gino.ext.starlette import Gino
-
-    db = Gino(
-        dsn='postgresql://gino:gino@localhost:5432/gino'
-    )
-```
-But if we use this module in Admin Panel we need to have initialisation like this:
-```
-    from gino.ext.sanic import Gino
-    db = Gino()
-```
-
-To get this, we will add some flag and based on this flag module will init db in needed to as way:
-```
-
-    if os.environ.get('GINO_ADMIN'):
-        from gino.ext.sanic import Gino
-        db = Gino()
-    else:
-        from gino.ext.starlette import Gino
-        db = Gino(dsn='postgresql://gino:gino@localhost:5432/gino')
-```
-So, if now 'db' used by Gino Admin - we use init for Sanic apps, if not - we use for our Main application Framework
-
-Now, we need to create **admin.py** to run admin panel:
-```
-    import os
-
-    from gino_admin import create_admin_app
-
-    os.environ["GINO_ADMIN"] = "1"
-
-    # gino admin uses Sanic as a framework, so you can define most params as environment variables with 'SANIC_' prefix
-    # in example used this way to define DB credentials & login-password to admin panel
-
-    os.environ["SANIC_DB_HOST"] = "localhost"
-    os.environ["SANIC_DB_DATABASE"] = "gino"
-    os.environ["SANIC_DB_USER"] = "gino"
-    os.environ["SANIC_DB_PASSWORD"] = "gino"
-
-
-    os.environ["SANIC_ADMIN_USER"] = "admin"
-    os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
-
-
-    if __name__ == "__main__":
-        # variable GINO_ADMIN must be set up before import db module, this is why we do import under if __name__
-        import db # noqa E402
-
-        # host & port - will be used to up on them admin app
-        # config - Gino Admin configuration,
-        # that allow set path to presets folder or custom_hash_method, optional parameter
-        # db_models - list of db.Models classes (tables) that you want to see in Admin Panel
-        create_admin_app(host="0.0.0.0", port=5000, db=db.db, db_models=[db.User, db.City, db.GiftCard])
-```
-
-All environment variables you can move to define in docker or .env files as you wish, they not needed to be define in '.py', this is just for example shortness.
 
 
 ### Presets

@@ -1,28 +1,12 @@
 import os
 
 import db
-from sanic import Sanic, response
-from sanic_jinja2 import SanicJinja2
 
-from gino_admin import add_admin_panel
+from gino_admin import create_admin_app
 
-app = Sanic(name=__name__)
-app.config["ADMIN_USER"] = "admin"
-app.config["ADMIN_PASSWORD"] = "1234"
+os.environ["SANIC_ADMIN_USER"] = "admin"
+os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
 # set os.environ["ADMIN_AUTH_DISABLE"] = "1" to disable auth
-
-
-db.db.init_app(app)
-
-jinja = SanicJinja2(app)
-
-
-@app.route("/")
-async def index(request):
-    return response.redirect("/admin")
-
-
-current_path = os.path.dirname(os.path.abspath(__file__))
 
 
 def create_models_list(models) -> list:
@@ -35,16 +19,14 @@ def create_models_list(models) -> list:
     return models_list
 
 
-add_admin_panel(
-    app,
-    db.db,
-    create_models_list(db),
-    name="Colored UI",
-    config={
-        "ui": {"colors": {"buttons": "orange", "buttons_alert": "pink"}},
-        "db_uri": "postgresql://gino:gino@localhost:5432/gino",
-    },
-)
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=os.getenv("PORT", 5000), debug=True)
+    create_admin_app(
+        db.db,
+        create_models_list(db),
+        port=os.environ.get("PORT", "5000"),
+        config={
+            "name": "Colored UI",
+            "ui": {"colors": {"buttons": "orange", "buttons_alert": "pink"}},
+            "db_uri": f"postgresql://gino:gino@{os.environ.get('DB_HOST', 'localhost')}:5432/gino",
+        },
+    )
