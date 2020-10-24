@@ -1,4 +1,23 @@
-### Updates in version 0.2.1 (current master):
+
+Updates in version 0.2.2  (current master):
+
+1. Added support for types: JSONB, JSON and Time. 
+Examples added as part of base_example - /Users/iuliia_volkova2/work/gino-admin/examples/base_example
+
+2. **Main update**: Not needed to use *gino.ext.sanic* in models as it was previos. 
+
+Now you can use any ext if you need (for Fast Api for example) or pure Gino() and you not need to add to your models, any 'ifs' to have additional gino.ext.sanic to get possible work with gino admin. 
+
+All examples was changed according to the update. 
+
+4. Sanic was updated to 20.* version. Switched to use 'request.ctx.' in code
+
+5. Minor things: all date, datetime and timepickers now have default value == to current time/date/datetime.
+
+6. Tests: was updated structure of integraion tests
+
+
+Updates in version 0.2.1:
 
 1. Fixes:
 
