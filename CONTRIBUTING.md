@@ -41,7 +41,6 @@ Command will build all necessary images & run docker compose cluster.
 
 ```bash
 
-    cd test/integration_tests
     pytest ../tests --docker-compose=docker-compose.yml --docker-compose-no-build --use-running-containers -vv
 
 ```
