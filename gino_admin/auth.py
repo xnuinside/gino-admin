@@ -33,10 +33,10 @@ def token_validation():
                 ):
                     return r.redirect(f"{cfg.route}/login")
                 else:
-                    request["session"] = {"_auth": True}
+                    request.ctx.session = {"_auth": True}
                     return await route(request, *args, **kwargs)
             else:
-                request["session"] = {"_auth": True}
+                request.ctx.session = {"_auth": True}
                 return await route(request, *args, **kwargs)
 
         return validate
@@ -49,7 +49,7 @@ async def validate_login(request, _config):
         username = request.form.get("username")
         if not username:
             message = "failed attempt to auth. no username provided"
-            request["flash_messages"].append(("error", message))
+            request.ctx.flash_messages.append(("error", message))
             request = log_history_event(request, message, "system: login")
             return False, request
         username = str(username)
@@ -61,13 +61,13 @@ async def validate_login(request, _config):
                 return username, request
             else:
                 message = f"failed attempt to auth. wrong user: {username}"
-                request["flash_messages"].append(("error", message))
+                request.ctx.flash_messages.append(("error", message))
                 request = log_history_event(request, message, "system: login")
                 return False, request
         try:
             user_in_base = await cfg.users_model.get(username)
             if not user_in_base:
-                request["flash_messages"].append(
+                request.ctx.flash_messages.append(
                     (
                         "error",
                         f"There is no User with login <b>{username}</b>",
@@ -88,7 +88,7 @@ async def validate_login(request, _config):
             )
         except asyncpg.exceptions.UndefinedTableError:
             # mean table with users was not created yet
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (
                     "error",
                     f"<b>{username}</b> is not root user and table with gino admin users not exists yet",

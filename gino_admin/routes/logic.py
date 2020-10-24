@@ -76,7 +76,7 @@ def process_csv_header(model_id, row, request):
             if name in hashed_columns_names:
                 validate_header[_num] = name + "_hash"
             if name not in columns_names:
-                request["flash_messages"].append(
+                request.ctx.flash_messages.append(
                     (
                         f"Wrong columns in CSV file. Header did not much model's columns. "
                         f"For {model_id.capitalize()} possible columns {columns_names}",
@@ -94,7 +94,7 @@ def extract_tables_from_header(header: List, request: Request):
         column = {"table": None, "column": None}
         splitted_name = column_name.split(":")
         if ":" not in column_name or len(splitted_name) == 1:
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (
                     f"Errors: Wrong Header in Composite CSV File. "
                     f"Column names in Composite CSV must be like 'table_name:column_name'. "
@@ -125,7 +125,7 @@ def extract_tables_from_header(header: List, request: Request):
             ):
                 column["column"] = CompositeType()
         else:
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (
                     f"Errors: Not exists table defined in Header of Composite CSV File. "
                     f"Column names in Composite CSV must be like 'table_name:column_name'. "
@@ -338,7 +338,7 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
                 if id_updated:
                     ids_updated.append(id_updated)
         if errors:
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (
                     f"Errors: : {errors}",
                     "error",
@@ -347,21 +347,21 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
 
         base_msg = "Objects" if composite else f"Objects"
         if ids_added:
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (f"{base_msg}{ids_added} was added", "success")
             )
         if ids_updated:
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (f" {base_msg}{ids_updated} was updated", "success")
             )
     except ValueError as e:
-        request["flash_messages"].append((e.args, "error"))
+        request.ctx.flash_messages.append((e.args, "error"))
         raise e
     except asyncpg.exceptions.ForeignKeyViolationError as e:
-        request["flash_messages"].append((e.args, "error"))
+        request.ctx.flash_messages.append((e.args, "error"))
     except asyncpg.exceptions.NotNullViolationError as e:
         column = e.args[0].split("column")[1].split("violates")[0]
-        request["flash_messages"].append((f"Field {column} cannot be null", "error"))
+        request.ctx.flash_messages.append((f"Field {column} cannot be null", "error"))
     return request, True
 
 
@@ -460,7 +460,7 @@ async def render_add_or_edit_form(
         if obj:
             obj = serialize_dict(obj.to_dict())
         else:
-            request["flash_messages"].append(
+            request.ctx.flash_messages.append(
                 (f"obj with id {obj_id} was not found", "error")
             )
         add = False

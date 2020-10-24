@@ -3,7 +3,7 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Text
 
-from gino.ext.sanic import Gino
+from gino import Gino
 from sanic import Blueprint, Sanic, response, router
 from sanic_jwt import Initialize
 
@@ -192,8 +192,6 @@ def create_admin_app(
 def init_admin_app(host, port, db, db_models, config):
     """ init admin panel app """
     app = Sanic(name="gino_admin")
-
-    db.init_app(app)
 
     @app.route("/")
     async def index(request):

@@ -1,4 +1,5 @@
 from gino.ext.sanic import Gino
+from sqlalchemy.dialects.postgresql import JSON, JSONB
 
 db = Gino()
 
@@ -46,6 +47,9 @@ class Item(db.Model):
     name = db.Column(db.String)
     description = db.Column(db.String())
     place = db.Column(db.String(24), db.ForeignKey("places.id"))
+    time = db.Column(db.Time(), nullable=False)
+    additional_data_jsob_b = db.Column(JSONB, nullable=False, server_default="{}")
+    additional_data = db.Column(JSON, nullable=False, server_default="{}")
 
 
 class Country(db.Model):
@@ -67,12 +71,3 @@ class City(db.Model):
     country = db.Column(db.String())
     population = db.Column(db.BigInteger())
     location = db.Column(db.String())
-
-
-if __name__ == "__main__":
-    # to init db
-    import sqlalchemy as sa
-
-    db_engine = sa.create_engine("postgresql://gino:gino@localhost:5432/gino")
-    db.create_all(bind=db_engine)
-    db_engine.dispose()

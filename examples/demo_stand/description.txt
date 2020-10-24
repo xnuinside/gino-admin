@@ -1,2 +1,2 @@
 This is a sources of the demo stand, that you can check at
-'xnu-in.space/gino_admin_demo'
+'http://www.xnu-in.space/gino_admin_demo'

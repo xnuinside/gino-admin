@@ -44,7 +44,6 @@ _windows_device_files = (
 types_map = {
     "INTEGER": int,
     "BIGINT": int,
-    "VARCHAR[]": (list, str),
     "SMALLINT": int,
     "VARCHAR": str,
     "FLOAT": float,
@@ -56,11 +55,19 @@ types_map = {
     "DATETIME": datetime.datetime,
     "DATE": datetime.date,
     "BOOLEAN": bool,
+    "JSONB": (str, "json"),
+    "JSON": (str, "json"),
+    "TIME": datetime.time,
     "SMALLINT[]": (list, int),
+    "VARCHAR[]": (list, str),
 }
 
 
 class GinoAdminError(Exception):
+    pass
+
+
+class CompositeType:
     pass
 
 
@@ -136,10 +143,6 @@ async def write_file(path, body):
         f.close()
 
 
-class CompositeType:
-    pass
-
-
 def correct_types(params: Dict, columns_data: Dict, no_default=False):
     to_del = []
     for param in params:
@@ -158,7 +161,7 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
             if "_hash" not in param and not isinstance(params[param], param_type):
                 if param_type == list:
                     params[param] = params[param].split(",")
-                elif param_type in [datetime.datetime, datetime.date]:
+                elif param_type in [datetime.datetime, datetime.date, datetime.time]:
                     params[param] = extract_datetime(params[param], param_type)
                 elif param_type == HashColumn:
                     continue
@@ -185,6 +188,7 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
 
 
 def parse_datetime(datetime_str: Text) -> datetime.datetime:
+    """ form string parse datetime """
     for str_format in cfg.datetime_str_formats:
         try:
             datetime_object = datetime.datetime.strptime(datetime_str, str_format)
@@ -202,6 +206,15 @@ def parse_date(date_str: Text) -> datetime.date:
             continue
 
 
+def parse_time(date_str: Text) -> datetime.time:
+    for str_format in cfg.time_str_formats:
+        try:
+            date_object = datetime.datetime.strptime(date_str, str_format).time()
+            return date_object
+        except ValueError:
+            continue
+
+
 def extract_datetime(
     datetime_str: Text, type_: Union[datetime.datetime, datetime.date]
 ):
@@ -210,6 +223,8 @@ def extract_datetime(
         return parse_datetime(datetime_str)
     elif type_ == datetime.date:
         return parse_date(datetime_str)
+    elif type_ == datetime.time:
+        return parse_time(datetime_str)
 
 
 def prepare_request_params(
@@ -224,8 +239,11 @@ def prepare_request_params(
 
 def get_type_name(column_data: Dict) -> Text:
     """ get type name for ui """
-    if "text" in str(column_data["db_type"]).lower():
+    column_type = str(column_data["db_type"]).lower()
+    if "text" in column_type:
         return "text"
+    elif "json" in column_type:
+        return "json"
     elif not isinstance(column_data["type"], tuple):
         type_ = column_data["type"].__name__
     else:

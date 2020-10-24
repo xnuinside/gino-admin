@@ -16,8 +16,8 @@ services:
     environment:
       - DB_HOST=postgres
     build:
-      context: ../../
-      dockerfile: $PWD/docker/fastapi_as_main_app/Dockerfile
+      context: ../../../
+      dockerfile: $PWD/images/fastapi_as_main_app/Dockerfile
     ports:
       - "5050:5050"
     depends_on:
@@ -27,8 +27,8 @@ services:
     environment:
       - DB_HOST=postgres
     build:
-      context: ../../
-      dockerfile: $PWD/docker/fastapi_as_main_app/Dockerfile-admin
+      context: ../../../
+      dockerfile: $PWD/images/fastapi_as_main_app/Dockerfile-admin
     ports:
       - "5000:5000"
     depends_on:
@@ -39,8 +39,8 @@ services:
       - DB_HOST=postgres
       - PORT=5010
     build:
-      context: ../../
-      dockerfile: $PWD/docker/base_example/Dockerfile
+      context: ../../../
+      dockerfile: $PWD/images/base_example/Dockerfile
     ports:
       - "5010:5010"
     depends_on:
@@ -51,9 +51,32 @@ services:
       - DB_HOST=postgres
       - PORT=5020
     build:
-      context: ../../
-      dockerfile: $PWD/docker/composite_csv_example/Dockerfile
+      context: ../../../
+      dockerfile: $PWD/images/composite_csv_example/Dockerfile
     ports:
       - "5020:5020"
+    depends_on:
+      - postgres
+
+  colored_ui:
+    environment:
+      - DB_HOST=postgres
+      - PORT=5040
+    build:
+      context: ../../../
+      dockerfile: $PWD/images/colored_ui/Dockerfile
+    ports:
+      - "5040:5040"
+    depends_on:
+      - postgres
+
+  run_from_cli:
+    environment:
+      - DB_HOST=postgres
+    build:
+      context: ../../../
+      dockerfile: $PWD/images/run_from_cli/Dockerfile
+    ports:
+      - "5060:5060"
     depends_on:
       - postgres

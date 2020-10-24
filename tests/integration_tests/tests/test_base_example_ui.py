@@ -25,13 +25,10 @@ def test_login_form(base_app_url):
     response = result.text
     assert result.status_code == 200
     assert "<html>" in response
-    assert """Please sign in""" in response
+    assert """Please Log in:""" in response
     assert 'placeholder="password" type="password"' in response
     assert '<input class="field username" id="name" name="username"' in response
-    assert (
-        '<button id="submit"  class="ui fluid large green submit button" name="submit" type="submit">Login</button>'
-        in response
-    )
+    assert 'submit button" name="submit" type="submit">Login</button>' in response
 
 
 def test_presets_page(base_app_url, ui_session):
@@ -42,12 +39,10 @@ def test_presets_page(base_app_url, ui_session):
     assert '<div class="header">First Preset</div>' in response
     assert '<div class="header">Second preset</div>' in response
     assert (
-        """<button id="with_db" class="ui red inverted button"
-                  name="with_db" value="with_db" type="submit">Load with DB Drop</button>"""
+        """name="with_db" value="with_db" type="submit">Load with DB Drop</button>"""
         in response
     )
-    assert (
-        '<button id="simple" class="ui green button" type="submit">Load Preset</button>'
-        in response
-    )
+    assert """<button id="with_db" class="ui """ in response
+    assert '<button id="simple" class="ui ' in response
+    assert 'button" type="submit">Load Preset</button>' in response
     assert '<form action="/admin/presets" method="post">' in response

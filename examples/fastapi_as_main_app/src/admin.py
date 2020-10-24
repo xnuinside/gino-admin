@@ -1,11 +1,15 @@
 import os
 
-from gino_admin import create_admin_app
+# import module with your models
+import models
 
-os.environ["GINO_ADMIN"] = "1"
+from gino_admin import create_admin_app
 
 # gino admin uses Sanic as a framework, so you can define most params as environment variables with 'SANIC_' prefix
 # in example used this way to define DB credentials & login-password to admin panel
+
+# but you can use 'db_uri' in config to define creds for Database
+# check examples/colored_ui/src/app.py as example
 
 os.environ["SANIC_DB_HOST"] = os.getenv("DB_HOST", "localhost")
 os.environ["SANIC_DB_DATABASE"] = "gino"
@@ -20,17 +24,14 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 
 
 if __name__ == "__main__":
-    # variable GINO_ADMIN must be set up before import db module, this is why we do import under if __name__
-    import db  # noqa E402
-
     # host & port - will be used to up on them admin app
-    # config - Gino Admin configuration,
+    # config - Gino Admin configuration - check docs to see all possible properties,
     # that allow set path to presets folder or custom_hash_method, optional parameter
     # db_models - list of db.Models classes (tables) that you want to see in Admin Panel
     create_admin_app(
         host="0.0.0.0",
         port=os.getenv("PORT", 5000),
-        db=db.db,
-        db_models=[db.User, db.City, db.GiftCard, db.Country],
+        db=models.db,
+        db_models=[models.User, models.City, models.GiftCard, models.Country],
         config={"presets_folder": os.path.join(current_path, "csv_to_upload")},
     )

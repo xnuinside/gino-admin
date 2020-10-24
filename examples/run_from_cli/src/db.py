@@ -1,4 +1,5 @@
 from gino import Gino
+from sqlalchemy.dialects.postgresql import JSON, JSONB
 
 db = Gino()
 
@@ -28,14 +29,6 @@ class User(db.Model):
     address = db.Column(db.String())
 
 
-class Text(db.Model):
-
-    __tablename__ = "texts"
-
-    id = db.Column(db.String(), primary_key=True)
-    text = db.Column(db.Text(), nullable=False)
-
-
 class Place(db.Model):
 
     __tablename__ = "places"
@@ -54,6 +47,9 @@ class Item(db.Model):
     name = db.Column(db.String)
     description = db.Column(db.String())
     place = db.Column(db.String(24), db.ForeignKey("places.id"))
+    time = db.Column(db.Time(), nullable=False)
+    additional_data_b = db.Column(JSONB, nullable=False, server_default="{}")
+    additional_data = db.Column(JSON, nullable=False, server_default="{}")
 
 
 class Country(db.Model):

@@ -9,7 +9,7 @@ from sanic import request
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 
 loader = FileSystemLoader(
@@ -84,6 +84,14 @@ class Config(BaseModel):
     max_file_size: int = 10485760
     allowed_file_types: List[str] = ["csv"]
     date_str_formats: List[str] = ["%Y-%m-%d", "%d-%m-%Y", "%Y-%d-%m", "%m-%d-%Y"]
+    time_str_formats: List[str] = [
+        "%H:%M:%S.%f",
+        "%H:%M:%S",
+        "%I:%M %p",
+        "%I:%M:%S %p",
+        "%I:%M:%S.%f %p",
+        "%I:%M:%S",
+    ]
     datetime_str_formats: List[str] = [
         "%B %d, %Y %I:%M %p",
         "%Y-%m-%dT%H:%M:%S.%f",
