@@ -38,6 +38,7 @@ You can find several code examples in [examples/](examples/) folder.
 
 ![Incremental IDs Support](docs/img/incremental_ids_support.png)
 
+4. Checkboxes are fixed and now work correct in the "False" state.
 
 ### Updates in version 0.2.2 
 

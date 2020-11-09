@@ -10,6 +10,7 @@ Version 0.2.3  (current master)
 1. Fix for the issue https://github.com/xnuinside/gino-admin/issues/35
 2. 'gino' support tables removed from menu
 3. Incremental Ids (fields) supported now in UI - they showed as disable inputs in Adding and Edit forms and not cause issue anymore.
+4. Checkboxes are fixed and now work correct in the "False" state.
 
 
 Version 0.2.2
