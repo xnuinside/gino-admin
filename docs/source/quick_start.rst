@@ -8,7 +8,7 @@ First of all you need to install Gino-Admin to your project environment
 
 .. code-block:: console
 
-    $ pip install gino-admin==0.2.2
+    $ pip install gino-admin==0.2.3
 
 
 How to use
@@ -56,7 +56,7 @@ Run Admin Panel as Standalone App (no matter that framework you use in main app)
 --------------------------------------------------------------------------------
 
 You can use Gino Admin as stand alone web app. 
-Does not matter what Framework used for your main App and that Gino Ext used to init Gino().
+Does not matter what Framework used for your main App and that Gino Ext is used to init Gino().
 
 Code example in:  examples/fastapi_as_main_app
 How to run example in: examples/fastapi_as_main_app/how_to_run_example.txt

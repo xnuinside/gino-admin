@@ -4,9 +4,9 @@ import db
 
 from gino_admin import create_admin_app
 
-os.environ["SANIC_ADMIN_USER"] = "admin"
-os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
-# set os.environ["ADMIN_AUTH_DISABLE"] = "1" to disable auth
+# os.environ["SANIC_ADMIN_USER"] = "admin"
+# os.environ["SANIC_ADMIN_PASSWORD"] = "1234"
+os.environ["ADMIN_AUTH_DISABLE"] = "1"  # to disable auth
 
 
 def create_models_list(models) -> list:

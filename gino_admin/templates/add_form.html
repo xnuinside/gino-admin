@@ -19,8 +19,20 @@
       {% if data['len'] %}
         <span style="font-weight: normal;">(max length: {{ data['len'] }})</span>
       {% endif %}
+      {% if data['disabled'] %}
+      <span style="font-weight: normal;">(incremental)</span>
+    {% endif %}
     </label>
-    {% if data['type'] == 'bool' %}
+    {% if data['disabled'] %}
+    <div class="field">
+       <input name="{{column}}" style="background-color: #c7c7c7" 
+        {% if obj.get(column)%}  value="{{obj.get(column)}}"
+        {% else %} 
+        "--"
+        {% endif %} 
+       disabled> </input>
+     </div>
+    {% elif data['type'] == 'bool' %}
       <div class="field">
         <div class="ui checkbox">
         <input type="checkbox" name="{{column}}" tabindex="0" {{ "checked" if obj.get(column) }}>

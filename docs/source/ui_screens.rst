@@ -5,6 +5,13 @@ New colors & possible change UI (since 0.2.1)
 .. image:: ../img/new_colors.png
   :alt: Table view
 
+
+Incremental Fields
+`````````````````````
+.. image:: ../img/incremental_ids_support.png
+  :alt: Incremental Fields
+
+
 Table view
 `````````````````````
 .. image:: ../img/table_view_new.png

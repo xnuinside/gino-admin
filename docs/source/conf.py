@@ -22,7 +22,7 @@ copyright = "2020, Iuliia Volkova [xnuinside@gmail.com]"
 author = "Iuliia Volkova [xnuinside@gmail.com]"
 
 # The full version, including alpha/beta/rc tags
-release = "0.0.10"
+release = "0.2.3"
 
 
 # -- General configuration ---------------------------------------------------

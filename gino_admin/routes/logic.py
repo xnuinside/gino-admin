@@ -23,6 +23,17 @@ from gino_admin.utils import (CompositeType, correct_types,
 cfg = config.cfg
 
 
+def columns_data_for_ui(columns_data: Dict, model_data: Dict) -> Dict:
+    return {
+        column_name: {
+            "len": columns_data[column_name]["len"],
+            "type": get_type_name(columns_data[column_name]),
+            "disabled": columns_data[column_name]["sequence"],
+        }
+        for column_name in model_data["columns_names"]
+    }
+
+
 async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
     """ render model data view """
     model_data = cfg.models[model_id]
@@ -44,18 +55,12 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
             row[columns_names[index]] = "*************"
         output.append(row)
     output = output[::-1]
-    columns = {
-        column_name: {
-            "len": columns_data[column_name]["len"],
-            "type": get_type_name(columns_data[column_name]),
-        }
-        for column_name in model_data["columns_names"]
-    }
+
     _response = cfg.jinja.render(
         "model_view.html",
         request,
         model=model_id,
-        columns=columns,
+        columns=columns_data_for_ui(columns_data, model_data),
         model_data=output,
         unique=cfg.models[model_id]["identity"],
     )
@@ -467,20 +472,13 @@ async def render_add_or_edit_form(
     else:
         obj = {}
         add = True
-    columns = {
-        column_name: {
-            "len": columns_data[column_name]["len"],
-            "type": get_type_name(columns_data[column_name]),
-        }
-        for column_name in model_data["columns_names"]
-    }
     return cfg.jinja.render(
         "add_form.html",
         request,
         model=model_id,
         add=add,
         obj=obj,
-        columns=columns,
+        columns=columns_data_for_ui(columns_data, model_data),
     )
 
 

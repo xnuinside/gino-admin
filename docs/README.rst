@@ -10,7 +10,7 @@ Gino-Admin
 
 Docs (state: in process): `Gino-Admin docs <https://gino-admin.readthedocs.io/en/latest/ui_screens.html>`_
 
-Play with Demo (current master 0.2.2) `>>>> Gino-Admin demo <<<< <http://www.xnu-im.space/gino_admin_demo/login>`_ (login: admin, pass: 1234)
+Play with Demo (current master 0.2.3) `>>>> Gino-Admin demo <<<< <http://www.xnu-im.space/gino_admin_demo/login>`_ (login: admin, pass: 1234)
 
 
 .. image:: https://img.shields.io/pypi/v/gino_admin
@@ -45,15 +45,29 @@ How to install
 .. code-block:: bash
 
 
-       pip install gino-admin==0.2.2
+       pip install gino-admin==0.2.3
 
 How to use
 ^^^^^^^^^^
 
 You can find several code examples in `examples/ <examples/>`_ folder.
 
-Updates in version 0.2.2  (current master):
+Updates in version 0.2.3  (current master):
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+#. Fix for the issue https://github.com/xnuinside/gino-admin/issues/35
+#. 'gino' support tables removed from menu
+#. Incremental Ids (fields) supported now in UI - they showed as disable inputs in Adding and Edit forms and not cause issue anymore.
+
+
+.. image:: img/incremental_ids_support.png
+   :target: img/incremental_ids_support.png
+   :alt: Incremental IDs Support
+
+
+Updates in version 0.2.2
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 #. 
@@ -76,153 +90,6 @@ All examples was changed according to the update.
 
 #. 
    Tests: was updated structure of integraion tests
-
-Updates in version 0.2.1
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-#. Fixes:
-
-1.1 Dependencies - removed unnecessary packages and added one lost for cli. Cli now works correct. 
-1.2 Login form now provide errors if you enter wrong user or passoword
-1.3 Wrong attepts to login in Admin panel are adding to History now
-
-
-#. Added possibility to customize UI colors with config. 
-
-Default colors schema also changed:
-
-
-.. image:: img/new_colors.png
-   :target: img/new_colors.png
-   :alt: Table view
-
-
-Config object now has section 'ui'. In UI section now exist 'colors' where you can set up colors that will be used for:
-
-
-* Primary buttons. Property: buttons
-* Second buttons. Property: buttons_second
-* Alert buttons (actions that something remove/reset - deleted, drop db and etc). Property: buttons_alert
-* Tables headers. Property: table
-* Tables with Alert headers (like in Init DB). Property: table_alerts
-* Footer background. Property: footer
-* Header background. Property: header
-
-Admin panel used SemanticUI as CSS Framework so all names of possible colors is described and showed here:
-https://semantic-ui.com/usage/theming.html 
-
-(red: #B03060; orange #FE9A76; yellow: #FFD700; olive:  #32CD32 green:  #016936; teal :  #008080; blue :  #0E6EB8; violet: #EE82EE; purple: #B413EC; pink:  #FF1493; brown:  #A52A2A; grey :  #A0A0A0; black:  #000000;)
-
-To change colors pass config as:
-
-.. code-block:: python
-
-
-   create_admin_app(
-           host="0.0.0.0",
-           port=os.getenv("PORT", 5000),
-           db=example.models.db,
-           db_models=db_models,
-           config={
-               "ui" : {
-                   "colors": 
-                   {"buttons": "orange",
-                   "buttons_alert": "pink"}
-                   },
-               "db_uri": "postgresql://gino:gino@localhost:5432/gino"
-           },
-       )
-
-Example here: examples/colored_ui/
-
-
-#. 
-   Added example how to add all models from file with one method (to avoid import each model separate) - palced in *examples/colored_ui/src/app.py* method - **create_models_list**
-
-#. 
-   Added valid input for Text columns as Text Area
-
-   .. image:: img/text_area.png
-      :target: img/text_area.png
-      :alt: Text Area Inouts
-
-
-Updates in version 0.2.0:
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-#. **UI fixes**\ : 
-
-
-* Data Picker was fixed, required fields now dispalayed with '* required' in UI.
-* Menu in header became scrollable, now you can see 20+ models without pain
-* Tables became scrollable horisontal - you can keep dozen columns and see them (hooray!)
-* in Add/edit forms now displayd the field type
-
-
-#. **Major changes**\ : 
-
-
-* **Limitation to have 'unique' rows was removed**. Now you not need any unique keys to make possible work with table in Admin panel. Just keep in mind that if you edit row - you will also edit all full 'dublicated' rows. So we try identify row by all fields. 
-  But if you have several full duplicates in rows - edit action will edit all of them. 
-
-Limits:
-
-Deepcopy does not available for tables without primary keys right now.
-
-
-* 
-  **Primary keys** now also used to identify unique rows. Now Admin Panel don't expect only 'unique' key in model. Now it firstly works with Primary Keys and only if primary key not exist in model - use 'unique' fields to identify unique rows. Also it supports Composite Primary keys (2 and more fields) in all type of operations: delete/update/insert/deepcopy/copy.
-
-* 
-  **Schemas support**
-
-Now if you work using the custom "schema" name - it's okay and supported by Admin Panel.  
-
-
-#. **Fixed in types support**\ :
-
-
-* passing data as a string - now supported both Date & DateTime format (before correct work only DataTime format)
-* parsing lists (for fields with ARRAY type), also parsed type inside array
-
-
-#. **Types support improvement**\ : 
-
-
-* Added support for ARRAYS, TEXT, SmallInt, CHAR, Time
-
-
-#. **New features**\ : 
-
-
-* 
-  Added Users to Admin Panel - now you can add multiple users for the panel to track history of changes correct and separate accesses
-
-* 
-  URI to DB now can be passed as config parameter 'db_uri' or with env variable 'DB_URI',
-  for example, no need to setup SANIC variables:
-
-.. code-block:: python
-
-
-   create_admin_app(
-           host="0.0.0.0",
-           port=os.getenv("PORT", 5000),
-           db=example.models.db,
-           db_models=db_models,
-           config={
-               "presets_folder": os.path.join(current_path, "csv_to_upload"),
-               "db_uri": "postgresql://local:local@localhost:5432/gino_admin"
-           },
-       )
-
-
-#. **More fixes**\ :
-
-
-* History works again
 
 Supported features
 ^^^^^^^^^^^^^^^^^^
@@ -255,6 +122,19 @@ TODO:
 * Roles for Admin Panel users (split accessess)
 * Filters in Table's columns
 * Other staff on `Gino Project Dashboard <https://github.com/xnuinside/gino-admin/projects/1>`_
+
+Supported Data Types
+^^^^^^^^^^^^^^^^^^^^
+
+
+* JSONB, JSON
+* Time, DateTime, Date
+* Boolean, String, Decimal, Numeric, Float and etc. 
+
+To see the full list of supported types take a look here: 
+`gino_admin/types.py <gino_admin/types.py>`_ 
+
+If you don't see type that you need - open the github issue with request and I will add it https://github.com/xnuinside/gino-admin/issues. Or you can open PR by yourself and I will be glad to review it :) 
 
 How to run Gino-Admin
 ^^^^^^^^^^^^^^^^^^^^^

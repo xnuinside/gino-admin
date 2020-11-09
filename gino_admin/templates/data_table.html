@@ -20,7 +20,7 @@
             {% for key, field in row.items() %}
                 {% if key != '_id' %}
                 <td class="three wide">
-                    {% if field is boolean %}
+                    {% if field is sameas true or field is sameas false  %}
                         {{ field }}
                     {% elif field is number | float %}
                     {{field|round(round_number)}}
