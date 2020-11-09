@@ -9,7 +9,7 @@ from sanic import request
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 
 loader = FileSystemLoader(
@@ -26,7 +26,7 @@ def render_with_updated_context(
     **context: Dict
 ):
     context["admin_panel_title"] = cfg.name
-    context["objects"] = cfg.models
+    context["objects"] = cfg.user_models
     context["url_prefix"] = cfg.route
     context["admin_panel_version"] = __version__
     context["round_number"] = cfg.round_number
@@ -78,6 +78,7 @@ class Config(BaseModel):
     app: App = App
     hash_method: Callable = pbkdf2_sha256.encrypt
     models: Dict = {}
+    user_models: Dict = {}
     sessions: Dict = {}
     # upload from csv config
     upload_dir: str = "files/"

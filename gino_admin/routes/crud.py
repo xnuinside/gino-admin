@@ -38,7 +38,7 @@ async def model_edit_post(request, model_id):
     model = model_data["model"]
     columns_data = model_data["columns_data"]
     previous_id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
-    previous_id = utils.correct_types(previous_id, columns_data)
+    previous_id = utils.correct_types(previous_id, columns_data, no_default=True)
     request_params = {
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
@@ -89,16 +89,14 @@ async def model_add_view(request, model_id):
 async def model_add(request, model_id):
     model_data = cfg.models[model_id]
     request_params = {key: request.form[key][0] for key in request.form}
+    request_params = utils.prepare_request_params(request_params, model_id, model_data)
     not_filled = [x for x in model_data["required_columns"] if x not in request_params]
     if not_filled:
         request.ctx.flash(f"Fields {not_filled} required. Please fill it", "error")
     else:
         try:
-            request_params = utils.prepare_request_params(
-                request_params, model_id, model_data
-            )
-            await model_data["model"].create(**request_params)
-            obj_id = utils.get_obj_id_from_row(model_data, request_params)
+            obj = await model_data["model"].create(**request_params)
+            obj_id = utils.get_obj_id_from_row(model_data, obj.to_dict())
             message = f"Object with {obj_id} was added."
             request.ctx.flash(message, "success")
             log_history_event(request, message, obj_id)
@@ -115,6 +113,10 @@ async def model_add(request, model_id):
         except asyncpg.exceptions.NotNullViolationError as e:
             column = e.args[0].split("column")[1].split("violates")[0]
             request.ctx.flash(f"Field {column} cannot be null", "error")
+        except asyncpg.exceptions.UndefinedTableError:
+            request.ctx.flash(
+                f"Somebody stole the table. Table {model_id} does not exist", "error"
+            )
 
     return await render_add_or_edit_form(request, model_id)
 

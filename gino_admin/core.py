@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Text
 
+import sqlalchemy
 from gino import Gino
 from sanic import Blueprint, Sanic, response, router
 from sanic_jwt import Initialize
@@ -11,9 +12,10 @@ from gino_admin import config
 from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
 from gino_admin.routes import rest
+from gino_admin.types import types_map
 from gino_admin.users import add_users_model
 from gino_admin.utils import (GinoAdminError, HashColumn, get_table_name,
-                              logger, parse_db_uri, types_map)
+                              logger, parse_db_uri)
 
 cfg = config.cfg
 
@@ -54,6 +56,7 @@ def extract_column_data(model_id: Text) -> Dict:
             "primary": column.primary_key,
             "foreign_keys": column.foreign_keys,
             "db_type": column.type,
+            "sequence": isinstance(column.default, sqlalchemy.sql.schema.Sequence),
         }
     required = [
         key
@@ -82,7 +85,7 @@ def extract_column_data(model_id: Text) -> Dict:
         "columns_names": list(columns_data.keys()),
         "hashed_indexes": hashed_indexes,
         "foreign_keys": foreign_keys,
-        "identity": primary_keys if primary_keys else unique_keys,
+        "identity": primary_keys,
     }
     return table_details
 
@@ -123,6 +126,8 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     if "db_uri" in config_settings:
         del config_settings["db_uri"]
 
+    cfg.user_models = {model.__tablename__: {"model": model} for model in db_models}
+
     setup_config_from_args(config_settings)
 
     add_history_model(db)
@@ -132,6 +137,7 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     loop.run_until_complete(add_users_model(db, app.config))
 
     extract_models_metadata(db, db_models)
+
     if config_settings.get("route"):
         old_prefix = admin.url_prefix
         admin.url_prefix = config_settings["route"]

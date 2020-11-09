@@ -4,6 +4,7 @@
    cli.rst
    examples.rst
    config.rst
+   customization.rst
    features.rst
    rest_api.rst
    presets.rst

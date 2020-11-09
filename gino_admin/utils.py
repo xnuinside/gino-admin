@@ -41,27 +41,6 @@ _windows_device_files = (
     "NUL",
 )
 
-types_map = {
-    "INTEGER": int,
-    "BIGINT": int,
-    "SMALLINT": int,
-    "VARCHAR": str,
-    "FLOAT": float,
-    "DECIMAL": float,
-    "NUMERIC": float,
-    "CHAR": str,
-    "TEXT": str,
-    "TIMESTAMP": datetime.datetime,
-    "DATETIME": datetime.datetime,
-    "DATE": datetime.date,
-    "BOOLEAN": bool,
-    "JSONB": (str, "json"),
-    "JSON": (str, "json"),
-    "TIME": datetime.time,
-    "SMALLINT[]": (list, int),
-    "VARCHAR[]": (list, str),
-}
-
 
 class GinoAdminError(Exception):
     pass
@@ -170,8 +149,12 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
 
         else:
             if param_type[0] == list:
-                if isinstance(params[param], str):
+                if "[" in params[param] and isinstance(params[param], str):
                     params[param] = literal_eval(params[param])
+                else:
+                    real_param = []
+                    real_param.append(params[param])
+                    params[param] = real_param
                 elements_type = param_type[1]
                 formatted_list = []
                 for elem in params[param]:
@@ -179,7 +162,6 @@ def correct_types(params: Dict, columns_data: Dict, no_default=False):
                 params[param] = formatted_list
     for param in to_del:
         del params[param]
-
     if not no_default:
         for column in columns_data:
             if columns_data[column]["type"] == bool and column not in params:
