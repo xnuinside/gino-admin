@@ -3,6 +3,7 @@ from ast import literal_eval
 from typing import Text
 
 import asyncpg
+from amodula import pages as p
 from sanic import response
 from sanic.request import Request
 from sqlalchemy.engine.url import URL
@@ -77,13 +78,13 @@ async def middleware_response(request, response):
 @admin.route(f"/")
 @auth.token_validation()
 async def bp_root(request):
-    return jinja.render("index.html", request)
+    return jinja.render(p.index, request)
 
 
 @admin.route("/logout", methods=["GET"])
 async def logout(request: Request):
     request = auth.logout_user(request)
-    return jinja.render("login.html", request)
+    return jinja.render(p.login, request)
 
 
 @admin.route("/logout", methods=["POST"])
@@ -102,11 +103,11 @@ async def login(request):
         }
         request.cookies["auth-token"] = _token
         request.ctx.session = {"_auth": True}
-        _response = jinja.render("index.html", request)
+        _response = jinja.render(p.index, request)
         _response.cookies["auth-token"] = _token
         return _response
     request.ctx.session = {"_flashes": request.ctx.flash_messages}
-    return jinja.render("login.html", request)
+    return jinja.render(p.login, request)
 
 
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
@@ -175,7 +176,7 @@ async def model_copy(request, model_id):
 @admin.route("/init_db", methods=["GET"])
 @auth.token_validation()
 async def init_db_view(request: Request):
-    return jinja.render("init_db.html", request, data=await count_elements_in_db())
+    return jinja.render(p.init_db, request, data=await count_elements_in_db())
 
 
 @admin.route("/init_db", methods=["POST"])

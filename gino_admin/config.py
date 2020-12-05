@@ -1,6 +1,6 @@
-import os
 from typing import Callable, Dict, List, Optional, Text
 
+from amodula import templates_path
 from expiring_dict import ExpiringDict
 from jinja2 import FileSystemLoader
 from passlib.hash import pbkdf2_sha256
@@ -12,9 +12,7 @@ from sanic_jinja2 import SanicJinja2
 __version__ = "0.2.3"
 
 
-loader = FileSystemLoader(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-)
+loader = FileSystemLoader(templates_path)
 
 
 def render_with_updated_context(
