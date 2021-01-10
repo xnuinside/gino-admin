@@ -1,6 +1,8 @@
 ## Gino-Admin
 
-![Gino-Admin Logo](docs/img/logo/g_logo.svg) 
+![Gino-Admin Logo](docs/img/logo/g_logo.svg)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z237B0Q)
 
 Docs (state: in process): [Gino-Admin docs](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
