@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}History{% endblock %}
+{% block body %}
+
+<script>
+$(document).ready( function () {
+    $('#history_table').DataTable({
+    dom: 'lfrtip',
+    "order": [[ 0, "desc" ]],
+initComplete: function () {
+    $('.buttons-csv').attr('id', 'buttons-csv')
+    $('#history_table_length').attr('class', 'dataTables_length twelve wide column')
+    $('#history_table_filter').attr('class','dataTables_filter ui form right aligned content four wide column')
+     $("#grid").appendTo("#history_tablewrapper");
+     $('#grid').insertBefore('#history_table');
+
+    $('#buttons-csv').insertBefore('#add');
+    $("#history_table_length").appendTo("#row_filters");
+    $("#history_table_filter").appendTo("#row_filters");
+    $('#grid_footer').insertAfter('#history_table');
+
+    $('#history_table_info').appendTo("#grid_footer_row");
+    $('<br>').appendTo("#grid_footer_row");
+    $('#history_table_paginate').appendTo("#grid_footer_row");
+    $('<br>').insertBefore("#history_table")
+}
+} );
+} );
+
+</script>
+<div id="header_grid" class="ui grid">
+<h1>History</h1><br> (Admin Panel Actions History)
+<!-- table for model view -->
+
+    <div class="ui sixteen wide column">
+        <div id="grid" class="ui grid">
+    <div class="sixteen column row" id="row_filters">
+    </div>
+</div>
+<table id="history_table" class="ui {{cfg.ui.colors.table}} padded compact sortable celled table">
+    <!-- header row -->
+    <thead class="full-width">
+        <tr>{% for column_name  in history_data_columns %}
+            <th class="two wide">{{column_name}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <!-- body with data rows -->
+    <tbody>
+    {% for row in history_data %}
+        <tr class="full-width">
+            <!-- columns with data -->
+
+            {% set loop_index=loop.index-1 %}
+            {% for key, field in row.items() %}
+                <td class="three wide">{{field}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+    </div>
+    </div>
+
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+{% endblock %}

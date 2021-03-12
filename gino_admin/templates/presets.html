@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}DB Presets{% endblock %}
+{% block body %}
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+
+<div id="header_grid" class="ui grid">
+    <div class="ui sixteen wide column">
+<h1>DB Presets</h1><br>
+    </div>
+</div>
+
+{% if not presets %}
+
+Presets folder <b>'/{{ presets_folder }}'</b> is empty.
+<br>
+To create Presets you need to define '.yml' configs and put them in Presets Folder.
+<br><br>
+Check <a href="https://github.com/xnuinside/gino-admin">documentation</a>  and examples to get more info .
+
+{% endif %}
+<div class="ui three cards">{% for preset in presets %}
+
+
+<div class="{{cfg.ui.colors.table}} card">
+  <div class="content">
+    <div class="header">{{preset['name']}}</div>
+  </div>
+  <div class="content">
+
+    <div class="ui small feed">
+      <div class="event">
+        <div class="content">
+           {{preset['description']}}
+        </div>
+      </div>
+         <h4 class="ui sub header">Table: File name</h4>
+      <div class="event">
+        <div class="content"><ul>
+              {% for key, value in preset['files'].items() %}
+            <li><b>{{key}}</b> : {{value}}</li>
+              {% endfor %}</ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="extra content">
+      <form action="{{url_prefix}}/presets" method="post">
+         <input type="hidden" name="preset" value="{{preset['id']}}"/>
+          <button id="with_db" class="ui {{cfg.ui.colors.buttons_alert}} button"
+                  name="with_db" value="with_db" type="submit">Load with DB Drop</button>
+        <button id="simple" class="ui {{cfg.ui.colors.buttons}} button" type="submit">Load Preset</button>
+      </form>
+  </div>
+</div>
+
+{% endfor %}  </div>
+{% endblock %}

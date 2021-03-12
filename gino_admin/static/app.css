@@ -1,0 +1,27 @@
+.index_cards {
+    color: black !important;
+}
+
+.index_cards:hover {
+    color: black !important;
+    text-decoration: underline !important;
+}
+
+.button.item:hover {
+    background: rgba(0,0,0,.05);
+    color: rgba(0,0,0,.95);
+    z-index: 13
+}
+
+.icon {
+top: 7pt !important;
+}
+
+.ui.icon.input>i.icon:before {
+    left: 0;
+    position: absolute;
+    text-align: center;
+    top: 50%;
+    width: 100%;
+    margin-top: -1em;
+}

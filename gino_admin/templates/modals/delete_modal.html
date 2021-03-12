@@ -1,0 +1,34 @@
+
+
+<div class="ui basic modal">
+  <div class="ui icon header">
+    <i class="trash icon"></i> Delete all {{model}}
+  </div>
+  <div class="content">
+    <p>Are you sure, that you want to delete all {{model}}?</p>
+  </div>
+  <div class="actions">
+    <div class="ui {{cfg.ui.colors.buttons}} inverted button">
+      <i class="remove icon"></i>No
+    </div><br>
+        <form action="{{url_prefix}}/{{modal_url}}" method="post">
+            {% if data %}
+             <input type="hidden" name="data" value="{{data}}">
+            {% endif %}
+        <button id='delete' class="ui {{cfg.ui.colors.buttons_alert}} button" type='submit'>
+            <i class="checkmark icon"></i> Yes</button>
+        </form>
+  </div>
+</div>
+
+<script>
+
+$(function(){
+	$("#delete_all").click(function(){
+		$(".ui.basic.modal").modal('show');
+	});
+	$(".ui.basic.modal").modal({
+		closable: true
+	});
+});
+</script>

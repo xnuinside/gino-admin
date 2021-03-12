@@ -1,0 +1,29 @@
+<div class="ui tiny modal deepcopy" style="width: 400px; margin: 0 0 0 -250px;">
+    <div class="header">
+        Deepcopy {{model.lower()}} '<span id="obj_id"></span>' as
+    </div>
+
+    <div class="content">
+        <div class="ui grid  center aligned">
+     <form id="deepcopy" class="ui form" action="{{url_prefix}}/{{model.lower()}}/deepcopy/" method="post" >
+         <div class="two wide column"></div>
+  <br><br>
+         <div class="six wide column">
+             <input hidden class="field" type="text" id="_id" name="_id"></div>
+             <input class="field" type="text" id="new_id" name="new_id"></div>
+<br><br>
+    <div class="actions">
+
+      <button type="submit" class="ui {{cfg.ui.colors.buttons}} right floated labeled icon button">
+        Deepcopy
+        <i class="checkmark icon"></i>
+      </button>
+      <button type="button"  id="deepcopy_cancel" class="ui right floated {{cfg.ui.colors.buttons_alert}} labeled icon button">
+        <i class="close icon"></i> Cancel
+      </button>
+    </div>
+
+<br><br>
+     </form></div>
+</div>
+

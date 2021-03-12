@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}SQL-runner{% endblock %}
+{% block body %}
+
+<div id="header_grid" class="ui grid">
+    <div class="ui ten wide column">
+<h1>SQL-runner</h1><br>
+        <form class="ui form" action="{{url_prefix}}/sql_run" method="post">
+            <label class="ui {{cfg.ui.colors.table}} ribbon label">Write SQL Query</label>
+            <textarea rows="8" name="sql_query"></textarea><br><br>
+            <button type="submit" class="ui right floated labeled icon small button {{cfg.ui.colors.buttons}}">
+                <i class="play icon"></i>Run SQL</button>
+        </form>
+    </div>
+    <div class="ui divider"></div>
+</div>
+
+<div id="grid" class="ui grid">
+    <div class="sixteen column row" id="row_filters">
+    </div>
+</div>
+
+{% if result %}
+<table id="sql_answer" class="ui green padded compact sortable celled table">
+
+    <!-- body with data rows -->
+    <thead>
+    {% for field in result[0] %}
+    <th></th>
+    {% endfor %}
+    </thead>
+    <tbody>
+    {% for row in result %}
+        <tr class="full-width">
+            <!-- columns with data -->
+            {% for field in row %}
+                <td class="two wide">{{field}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+<br>
+<div id="grid_footer" class="ui grid right aligned content">
+    <div class="three column" id="grid_footer_row">
+    </div>
+</div>
+<script>
+$(document).ready( function () {
+    $('#sql_answer').DataTable({
+    dom: 'B',
+
+    buttons: [
+        {
+            extend: 'csvHtml5',
+            text: 'Export to csv',
+            filename: 'query',
+            exportOptions: {
+                modifier: {
+                    search: 'none'
+                }
+            }
+        }
+    ],
+initComplete: function () {
+    $('.buttons-csv').attr('id', 'buttons-csv')
+    $('#models_table_length').attr('class', 'dataTables_length twelve wide column')
+    $('#models_table_filter').attr('class','dataTables_filter ui form right aligned content four wide column')
+     $("#grid").appendTo("#models_table_wrapper");
+     $('#grid').insertBefore('#models_table');
+    $('#buttons-csv').attr('class','ui right floated five wide small green labeled icon button')
+    $('#buttons-csv').html('<i class="download icon"></i>Export to CSV')
+
+    $("#models_table_length").appendTo("#row_filters");
+    $("#models_table_filter").appendTo("#row_filters");
+    $('#grid_footer').insertAfter('#models_table');
+
+    $('#models_table_info').appendTo("#grid_footer_row");
+    $('<br>').appendTo("#grid_footer_row");
+    $('#models_table_paginate').appendTo("#grid_footer_row");
+    $('<br>').insertBefore("#models_table")
+
+    $('#buttons-csv').insertAfter('#models_table');
+    $('<br>').insertBefore("#buttons-csv")
+}
+} );
+} );
+</script>
+
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+{% endblock %}

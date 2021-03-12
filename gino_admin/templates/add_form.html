@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}{{model}}{% endblock %}
+
+{% block body %}
+<div style="max-width: 500px;">
+<div class="ui breadcrumb">
+  <a class="section" href="{{url_prefix}}">Admin</a>
+  <i class="right angle icon divider"></i>
+  <a class="section" href="{{url_prefix}}/{{model}}">{{model.capitalize()}}</a>
+  <i class="right angle icon divider"></i>
+  <div class="active section">{% if add %} Add {{model.capitalize()}} {% else %}
+    Edit {{model.capitalize()}} {% endif %}</div>
+</div>
+<br><br>
+<form class="ui form" action="{{url}}" method="post">
+{% for column, data in columns.items() %}
+  <div class="field">
+    <label>{{column}} ( {{data['type']}})
+      {% if data['len'] %}
+        <span style="font-weight: normal;">(max length: {{ data['len'] }})</span>
+      {% endif %}
+      {% if data['disabled'] %}
+      <span style="font-weight: normal;">(incremental)</span>
+    {% endif %}
+    </label>
+    {% if data['disabled'] %}
+    <div class="field">
+       <input name="{{column}}" style="background-color: #c7c7c7" 
+        {% if obj.get(column)%}  value="{{obj.get(column)}}"
+        {% else %} 
+        "--"
+        {% endif %} 
+       disabled> </input>
+     </div>
+    {% elif data['type'] == 'bool' %}
+      <div class="field">
+        <div class="ui checkbox">
+        <input type="checkbox" name="{{column}}" tabindex="0" {{ "checked" if obj.get(column) }}>
+        <label>{{column}}</label>
+      </div>
+    </div>
+    {% elif data['type'] == 'datetime' %}
+    <div class="ui calendar datetime_calendar">
+        <div class="ui input left icon">
+          <i class="calendar icon"></i>
+
+          <input type="text" id="input_datetime" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
+                 {% else %}
+                 {% endif %}>
+
+        </div>
+      </div>
+    
+    {% elif data['type'] == 'date' %}
+    <div class="ui calendar data_calendar">
+      <div class="ui input left icon">
+        <i class="calendar icon calendar"></i>
+        <input type="text" id="input_date" name="{{column}}" {% if obj.get(column)%}  value="{{obj.get(column)}}"
+                 {% else %}
+                
+                 placeholder="Date"
+                 {% endif %}>
+      </div>
+    </div>
+    {% elif data['type'] == 'time' %}
+    <div class="timepicker">
+        <i class="calendar icon calendar"></i>
+        <input class="timepicker" type="text" 
+          name="{{column}}" 
+          {% if obj.get(column)%}  value="{{obj.get(column)}}"
+                 {% else %}
+
+                 placeholder="Time"
+                 {% endif %}>
+    </div>
+
+    {% elif data['type'] == 'text' or  data['type'] == 'json' %}
+   <div class="field">
+      <textarea rows="4"
+        placeholder="Text" 
+        name="{{column}}">{% if obj.get(column)%}{{obj.get(column)}}{% else %}{% endif %}  </textarea>
+    </div>
+    {% else %}
+    {% if obj.get(column) is number | float %}
+      {% set value=obj.get(column)|round(round_number) %}
+    {% else %}
+      {% set value=obj.get(column) %}
+    {% endif %}
+    <input type="text" name="{{column}}" placeholder="{{column if add else value}}"
+           value="{{'' if add else '' if column == 'password' else value}}">
+
+    {% endif %}
+  </div>
+  {% endfor %}
+  <button class="ui button {{cfg.ui.colors.buttons}}" type="submit">Submit</button>
+</form>
+
+</div>
+
+<script>
+
+$('.datetime_calendar').calendar();
+$('.data_calendar').calendar({
+  type: 'date',
+  formatter: {
+    date: function (date, settings) {
+      if (!date) return '';
+      var day = date.getDate();
+      var month = date.getMonth() + 1;
+      var year = date.getFullYear();
+      return year + '-' + month + '-' + day;
+    }
+  }
+});
+$('.timepicker').timepicker(
+  { timeFormat: 'H:mm:ss', 
+  defaultTime: 'now' }
+  );
+  $('#input_datetime').val(new Date().toISOString().slice(0, 19));
+  $('#input_date').val(new Date().toISOString().slice(0, 10));
+</script>
+{% endblock %}

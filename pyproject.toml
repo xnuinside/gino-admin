@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gino-admin"
-version = "0.2.4-alpha0"
+version = "0.2.4"
 description = "Admin Panel for PostgreSQL DB with Gino ORM"
 authors = ["xnuinside <xnuinside@gmail.com>"]
 license = "MIT"
@@ -10,18 +10,17 @@ repository = "https://github.com/xnuinside/gino-admin"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-Sanic-Jinja2 = "0.8.0"
+Sanic-Jinja2 = "^0.9.0"
 passlib = "^1.7.4"
 aiofiles = "^0.5.0"
 PyYAML = "^5.3.1"
 gino = "^1.0.1"
 click = "^7.1.2"
-sanic-jwt = "^1.4.1"
+sanic-jwt = "^1.6.0"
 pydantic = "^1.5.1"
 dsnparse = "^0.1.15"
 expiring-dict = "^1.1.0"
 sqlalchemy_utils = "^0.36.8"
-amodula = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.3.0"
@@ -31,6 +30,7 @@ pytest = "^5.4.2"
 sphinx = "^3.0.3"
 m2r = "^0.2.1"
 twine = "^3.2.0"
+black = "^20.8b1"
 
 [tool.poetry.scripts]
 gino-admin = 'gino_admin.cli:cli'

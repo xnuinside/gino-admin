@@ -3,7 +3,6 @@ from ast import literal_eval
 from typing import Text
 
 import asyncpg
-from amodula import pages as p
 from sanic import response
 from sanic.request import Request
 from sqlalchemy.engine.url import URL
@@ -17,6 +16,7 @@ from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      drop_and_recreate_all_tables,
                                      insert_data_from_csv_file,
                                      render_model_view, upload_from_csv_data)
+from gino_admin.users import add_users_model
 
 cfg = config.cfg
 jinja = cfg.jinja
@@ -75,16 +75,16 @@ async def middleware_response(request, response):
             pass
 
 
-@admin.route(f"/")
+@admin.route("/")
 @auth.token_validation()
 async def bp_root(request):
-    return jinja.render(p.index, request)
+    return jinja.render("index.html", request)
 
 
 @admin.route("/logout", methods=["GET"])
 async def logout(request: Request):
     request = auth.logout_user(request)
-    return jinja.render(p.login, request)
+    return jinja.render("login.html", request)
 
 
 @admin.route("/logout", methods=["POST"])
@@ -94,6 +94,8 @@ async def logout_post(request: Request):
 
 @admin.route("/login", methods=["GET", "POST"])
 async def login(request):
+    if not cfg.admin_user_model:
+        await add_users_model(cfg.app.db)
     _login, request = await auth.validate_login(request, cfg.app.config)
     if _login:
         _token = utils.generate_token(request.ip)
@@ -103,11 +105,11 @@ async def login(request):
         }
         request.cookies["auth-token"] = _token
         request.ctx.session = {"_auth": True}
-        _response = jinja.render(p.index, request)
+        _response = jinja.render("index.html", request)
         _response.cookies["auth-token"] = _token
         return _response
     request.ctx.session = {"_flashes": request.ctx.flash_messages}
-    return jinja.render(p.login, request)
+    return jinja.render("login.html", request)
 
 
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
@@ -176,7 +178,7 @@ async def model_copy(request, model_id):
 @admin.route("/init_db", methods=["GET"])
 @auth.token_validation()
 async def init_db_view(request: Request):
-    return jinja.render(p.init_db, request, data=await count_elements_in_db())
+    return jinja.render("init_db.html", request, data=await count_elements_in_db())
 
 
 @admin.route("/init_db", methods=["POST"])
@@ -219,7 +221,7 @@ async def presets_use(request: Request):
     with_drop = "with_db" in request.form
     if with_drop:
         await drop_and_recreate_all_tables()
-        request.ctx.flash(f"DB was successful Dropped", "success")
+        request.ctx.flash("DB was successful Dropped", "success")
     try:
         for model_id, file_path in preset["files"].items():
             request, is_success = await insert_data_from_csv_file(
@@ -264,7 +266,7 @@ async def sql_query_run_view(request):
 async def sql_query_run(request):
     result = []
     if not request.form.get("sql_query"):
-        request.ctx.flash(f"SQL query cannot be empty", "error")
+        request.ctx.flash("SQL query cannot be empty", "error")
     else:
         sql_query = request.form["sql_query"][0]
         try:

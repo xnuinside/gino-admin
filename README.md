@@ -21,41 +21,13 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ```bash
 
-    pip install gino-admin==0.2.3
+    pip install gino-admin==0.2.4
 
 ```
 
 ### How to use
 
 You can find several code examples in [examples/](examples/) folder.
-
-
-### Updates in version 0.2.3  (current master):
-
-1. Fix for the issue https://github.com/xnuinside/gino-admin/issues/35
-2. 'gino' support tables removed from menu
-3. Incremental Ids (fields) supported now in UI - they showed as disable inputs in Adding and Edit forms and not cause issue anymore.
-
-![Incremental IDs Support](docs/img/incremental_ids_support.png)
-
-4. Checkboxes are fixed and now work correct in the "False" state.
-
-### Updates in version 0.2.2 
-
-1. Added support for types: JSONB, JSON and Time. 
-Examples added as part of base_example - /Users/iuliia_volkova2/work/gino-admin/examples/base_example
-
-2. **Main update**: Not needed to use *gino.ext.sanic* in models as it was previos. 
-
-Now you can use any ext if you need (for Fast Api for example) or pure Gino() and you not need to add to your models, any 'ifs' to have additional gino.ext.sanic to get possible work with gino admin. 
-
-All examples was changed according to the update. 
-
-4. Sanic was updated to 20.* version. Switched to use 'request.ctx.' in code
-
-5. Minor things: all date, datetime and timepickers now have default value == to current time/date/datetime.
-
-6. Tests: was updated structure of integraion tests
 
 
 ### Supported features
@@ -270,3 +242,8 @@ In current version, for correct work of Deepcopy feature in Admin Panel model MU
 
 Check in docs: [UI Screens](https://gino-admin.readthedocs.io/en/latest/ui_screens.html)
 
+
+## Changelog
+
+**v0.2.4**
+1. Fixed issue with loop from https://github.com/xnuinside/gino-admin/issues/37

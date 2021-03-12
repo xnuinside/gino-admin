@@ -98,11 +98,11 @@ async def upload_csv(request: Request):
     model_id = dict(request.query_args).get("model_id")
     if not upload_file or not file_name:
         return response.json(
-            {"error": f"No file is found in the request payload."}, status=422
+            {"error": "No file is found in the request payload."}, status=422
         )
     if not file_name.endswith(".csv") or upload_file.type != "text/csv":
         return response.json(
-            {"error": f"CSV file of text/csv type is expected."}, status=422
+            {"error": "CSV file of text/csv type is expected."}, status=422
         )
     request, is_success = await upload_from_csv_data(
         upload_file, file_name, request, model_id.lower()

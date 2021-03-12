@@ -1,6 +1,6 @@
+import os
 from typing import Callable, Dict, List, Optional, Text
 
-from amodula import templates_path
 from expiring_dict import ExpiringDict
 from jinja2 import FileSystemLoader
 from passlib.hash import pbkdf2_sha256
@@ -9,10 +9,13 @@ from sanic import request
 from sanic.response import html
 from sanic_jinja2 import SanicJinja2
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
+STATIC_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
-loader = FileSystemLoader(templates_path)
+TEMPLATES_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+
+loader = FileSystemLoader(TEMPLATES_FOLDER)
 
 
 def render_with_updated_context(
@@ -119,7 +122,8 @@ class Config(BaseModel):
     ]
     round_number: float = 3
     history_model: object = None
-    users_model: object = None
+    admin_user_model: object = None
+    users_model: Dict[str, object] = {}
     history_data_columns: List[str] = []
     admin_users_data_columns: List[str] = []
     ui: UIConfig = None

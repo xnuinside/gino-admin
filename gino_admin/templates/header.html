@@ -1,0 +1,61 @@
+
+<div class="ui fixed {{cfg.ui.colors.header}} inverted menu">
+      <div class="ui container">
+        <a href="{{url_prefix}}" class="header item">
+          {{admin_panel_title}}
+        </a>
+          {% if '_auth' in session %}
+        {% for key in objects %}
+          {% if loop.index <= 4 %}
+      <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
+          {% else %}
+
+          {% endif %}
+   {% endfor %}
+          {% if objects.items() | length > 4 %}
+          <div class="ui simple dropdown item">
+          More Models <i class="dropdown icon"></i>
+            {% if objects.items() | length > 12 %}
+            <div class="menu" style="max-height: 500px; overflow-y: scroll;">
+            {% else %}
+            <div class="menu">
+            {% endif %}
+                {% for key in objects %}
+                {% if loop.index > 4 %}
+              <a href="{{url_prefix}}/{{key.lower()}}" class="item">{{key}}</a>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+          </div>
+        {% endif %}
+
+      </div>
+    <div class="ui {{cfg.ui.colors.buttons_second}} inverted menu">
+          <a href="{{url_prefix}}/sql_run" class="item"><i class="play icon"></i> SQL-runner</a>
+    </div>
+    <div class="ui inverted menu">
+
+    </div>
+     <div class="ui simple dropdown item">
+          <i class="cogs icon"></i><i class="angle down icon"></i>
+          <div class="menu">
+               <a href="{{url_prefix}}/presets" class="item">DB Presets</a>
+               <a href="{{url_prefix}}/init_db" class="item">Init DB</a>
+               <a href="{{url_prefix}}/settings" class="item">Settings</a>
+               <a href="{{url_prefix}}/history" class="item">History</a>
+               <a href="{{url_prefix}}/{{admin_users_route}}" class="item">Admin Users</a>
+          </div>
+
+     </div>
+
+          {% endif %}
+    <div class="right menu">
+          {% if '_auth' in session %}
+            <a href="{{url_prefix}}/logout" class="header item">Logout</a>
+          {% else %}
+             <a href="{{url_prefix}}/login" class="header item">Log in</a>
+          {% endif %}
+    </div>
+      </div>
+    </div>

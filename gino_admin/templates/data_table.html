@@ -1,0 +1,41 @@
+<!-- table for model view -->
+<div class="sixteen wide column">
+<table id="models_table" class="ui {{cfg.ui.colors.table}} padded compact sortable celled table">
+    <!-- header row -->
+    <thead class="full-width">
+        <tr>{% for column_name  in columns %}
+            <th class="two wide">{{column_name}}</th>
+            {% endfor %}
+            <th class="one wide"></th>
+        </tr>
+    </thead>
+
+    <!-- body with data rows -->
+    <tbody>
+    {% for row in model_data %}
+        <tr class="full-width">
+            <!-- columns with data -->
+
+            {% set loop_index=loop.index-1 %}
+            {% for key, field in row.items() %}
+                {% if key != '_id' %}
+                <td class="three wide">
+                    {% if field is sameas true or field is sameas false  %}
+                        {{ field }}
+                    {% elif field is number | float %}
+                    {{field|round(round_number)}}
+                    {% else %} {{field}} {% endif %}</td>
+                {% endif %}
+            {% endfor %}
+
+            <!-- column controls(edit, delete and etc.) -->
+            <td class="one wide">
+                {% include 'table_control_items.html' %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<br>
+</div>

@@ -34,8 +34,7 @@ def add_history_model(db) -> None:
         cfg.history_table_name = schema + cfg.history_table_name
         cfg.history_model = GinoAdminHistory
         cfg.history_data_columns = [
-            column.name
-            for num, column in enumerate(db.tables[cfg.history_table_name].columns)
+            column.name for column in db.tables[cfg.history_table_name].columns
         ]
 
 

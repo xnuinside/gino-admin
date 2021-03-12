@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block body %}
+    <div class="ui sixteen wide column">
+
+<div class="ui grid">
+        <div class="ui five wide column"></div>
+    <div class="ui six wide column">
+      {% for cat, msg in get_flashed_messages(with_categories=true) %}
+<div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+    <h2 class="ui image header">
+      <div class="content">
+        Please Log in:
+      </div>
+    </h2>
+    <form action="" class="ui form" method="POST">
+      <div class="ui stacked segment">
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="user icon"></i>
+               <input class="field username" id="name" name="username"
+    placeholder="username" type="text" value="">
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="lock icon"></i>
+
+  <input class="password field" id="password" name="password"
+    placeholder="password" type="password" value="">
+          </div>
+        </div>
+
+        <button id="submit"  class="ui fluid large {{cfg.ui.colors.buttons}} submit button" name="submit" type="submit">Login</button>
+      </div>
+
+    </form>
+
+    </div>
+    </div>
+    <div class="five wide column"></div></div>
+
+{% endblock %}

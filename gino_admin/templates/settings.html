@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block body %}
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+    <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+{% endfor %}
+<div id="header_grid" class="ui grid">
+    <div class="ui sixteen wide column">
+<h1>Settings</h1><br>
+    </div>
+</div>
+
+{% for setting, value in settings.items() %}
+
+<b>{{setting}}:</b> {{value}} <br>
+
+{% endfor %}
+{% endblock %}

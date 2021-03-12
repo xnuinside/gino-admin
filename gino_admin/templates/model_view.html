@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}{{model}}{% endblock %}
+{% block body %}
+<div id="header_grid" class="ui grid">
+    <div class="sixteen column row">
+        <div class="ten wide column">
+<h1>{{model}}</h1></div>
+        <div class="six wide column right aligned content">
+{% include 'file_upload.html' %}
+        </div>
+    </div>
+    <div class="ui divider"></div>
+</div>
+
+<div id="grid_footer" class="ui grid">
+
+    <div class="eight wide column left aligned content" id="grid_footer_left"><br>
+    </div>
+    <div class="eight wide column right aligned content " id="grid_footer_row">
+    </div>
+</div>
+
+<div class="ui grid" id="row_filters">
+
+        <div class="ten wide column  left aligned content">
+        </div>
+        <div class="six wide column right aligned content" id="search">
+        </div>
+
+</div>
+{% include 'data_table.html' %}
+
+<!-- delete modal -->
+{% set modal_url = model.lower() + '/delete_all/' %}
+
+{% include 'modals/delete_modal.html' %}
+
+<div id="grid_footer" class="ui grid">
+
+    <div class="eight wide column left aligned content" id="grid_footer_left"><br>
+    </div>
+    <div class="eight wide column right aligned content " id="grid_footer_row">
+    </div>
+</div>
+<!-- end of modal -->
+{% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="ui {{ cat }} message"><p>{{ msg }}</p></div>
+      {% endfor %}
+    <button id="add" class="ui right floated small {{cfg.ui.colors.buttons}} labeled icon button" type="button">
+        <i class="user icon"></i>
+        <a style="color:#fff;" href="{{url_prefix}}/{{model.lower()}}/add">Add {{model}}</a>
+    </button>
+
+    <button id="delete_all" class="ui left floated small {{cfg.ui.colors.buttons_alert}} labeled icon button" type="button">
+    <i class="trash icon"></i>Delete all {{model}}</button>
+
+
+{% include 'modals/deepcopy_modal.html' %}
+
+<script>
+$(document).ready( function () {
+    $('#models_table').DataTable({
+    dom: 'rtiplfB',
+    orderCellsTop: true,
+    fixedHeader: true,
+    "scrollX": true,
+    buttons: [
+        {
+            extend: 'csvHtml5',
+            text: 'Export to csv',
+            filename: '{{model}}',
+            exportOptions: {
+                modifier: {
+                    search: 'none'
+                },
+
+                 columns: 'th:not(:last-child)'
+            }
+        }
+    ],
+initComplete: function () {
+    $('.buttons-csv').attr('id', 'buttons-csv')
+    $("#models_table_filter").attr('style', "margin-right: 45px; margin-bottom: 10px;")
+    $('#models_table_length').attr('class', 'dataTables_length ui form left aligned content four wide column')
+    $('#models_table_filter').attr('class','dataTables_filter ui form inline field three wide column' )
+    $("#grid").appendTo("#models_table_wrapper");
+    $('#grid').insertBefore('#models_table');
+    $('#buttons-csv').attr('class','ui right floated five wide small {{cfg.ui.colors.buttons_second}} labeled icon button')
+    $('#buttons-csv').html('<i class="download icon"></i>Export to CSV')
+
+    $('#buttons-csv').insertBefore('#add');
+
+    $('#row_filters').insertAfter('#header_grid');
+    $('#models_table').attr('style', 'width: 100%')
+    $('.dataTables_scrollHead').attr('style', 'overflow: hidden; position: relative; border: 0px; width: 100%;')
+    $('.dataTables_scrollHeadInner').attr('style', 'box-sizing: content-box; width: 100%; padding-right: 0px;')
+    $('.dataTable').attr('style', 'margin-left: 0px; width: 100%;')
+    $("#models_table_length").appendTo("#grid_footer_left");
+    $("#models_table_filter").appendTo("#search");
+    $('#grid_footer').insertAfter('#models_table');
+
+    $('#models_table_info').appendTo("#grid_footer_row");
+    $('<br>').appendTo("#grid_footer_row");
+    $('#models_table_paginate').appendTo("#grid_footer_row");
+    $('<br>').insertBefore("#models_table")
+}
+} );
+} );
+$(function(){
+	$("#delete_all").click(function(){
+		$(".ui.basic.modal").modal('show');
+	});
+	$(".ui.basic.modal").modal({
+		closable: true
+	});
+});
+
+
+$(function() {
+	$(".deepcopy_href").click(function(){
+        $("#obj_id").html(this.dataset.id);
+        var type = this.dataset.type;
+        console.log(type)
+        if (type == 'int' || type == 'float') {
+            var prefix = Math.floor(Math.random() * 100);
+            $("#new_id").val(this.dataset.id + prefix);
+        }
+        else {
+            var prefix = Math.random().toString(36).slice(2)
+            $("#new_id").val(this.dataset.id + '_' + prefix);
+        };
+        $("#_id").val(this.dataset.id);
+		$(".deepcopy").modal('show');
+	});
+	$(".deepcopy").modal({
+		closable: true
+	});
+	$("#deepcopy_cancel").click(function(){
+		$(".deepcopy").modal('hide');
+	});
+});
+
+</script>
+
+{% endblock %}
