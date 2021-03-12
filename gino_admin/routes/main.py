@@ -16,6 +16,7 @@ from gino_admin.routes.logic import (count_elements_in_db, create_object_copy,
                                      drop_and_recreate_all_tables,
                                      insert_data_from_csv_file,
                                      render_model_view, upload_from_csv_data)
+from gino_admin.users import add_users_model
 
 cfg = config.cfg
 jinja = cfg.jinja
@@ -74,7 +75,7 @@ async def middleware_response(request, response):
             pass
 
 
-@admin.route(f"/")
+@admin.route("/")
 @auth.token_validation()
 async def bp_root(request):
     return jinja.render("index.html", request)
@@ -93,6 +94,8 @@ async def logout_post(request: Request):
 
 @admin.route("/login", methods=["GET", "POST"])
 async def login(request):
+    if not cfg.admin_user_model:
+        await add_users_model(cfg.app.db)
     _login, request = await auth.validate_login(request, cfg.app.config)
     if _login:
         _token = utils.generate_token(request.ip)
@@ -218,7 +221,7 @@ async def presets_use(request: Request):
     with_drop = "with_db" in request.form
     if with_drop:
         await drop_and_recreate_all_tables()
-        request.ctx.flash(f"DB was successful Dropped", "success")
+        request.ctx.flash("DB was successful Dropped", "success")
     try:
         for model_id, file_path in preset["files"].items():
             request, is_success = await insert_data_from_csv_file(
@@ -263,7 +266,7 @@ async def sql_query_run_view(request):
 async def sql_query_run(request):
     result = []
     if not request.form.get("sql_query"):
-        request.ctx.flash(f"SQL query cannot be empty", "error")
+        request.ctx.flash("SQL query cannot be empty", "error")
     else:
         sql_query = request.form["sql_query"][0]
         try:

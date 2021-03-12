@@ -1,4 +1,3 @@
-import asyncio
 import os
 from copy import deepcopy
 from typing import Dict, List, Text
@@ -13,7 +12,6 @@ from gino_admin.auth import authenticate
 from gino_admin.history import add_history_model
 from gino_admin.routes import rest
 from gino_admin.types import types_map
-from gino_admin.users import add_users_model
 from gino_admin.utils import (GinoAdminError, HashColumn, get_table_name,
                               logger, parse_db_uri)
 
@@ -22,10 +20,9 @@ cfg = config.cfg
 
 admin = Blueprint("admin", url_prefix=cfg.route)
 
-STATIC_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
-admin.static("/static", STATIC_FOLDER)
-admin.static("/favicon.ico", os.path.join(STATIC_FOLDER, "favicon.ico"))
+admin.static("/static", config.STATIC_FOLDER)
+admin.static("/favicon.ico", os.path.join(config.STATIC_FOLDER, "favicon.ico"))
 
 
 def extract_column_data(model_id: Text) -> Dict:
@@ -92,8 +89,8 @@ def extract_column_data(model_id: Text) -> Dict:
 
 def extract_models_metadata(db: Gino, db_models: List) -> None:
     """ extract required data about DB Models """
-    db_models.append(cfg.users_model)
-    cfg.models = {model.__tablename__: {"model": model} for model in db_models}
+    cfg.user_models = {model.__tablename__: {"model": model} for model in db_models}
+    cfg.models.update(cfg.user_models)
     cfg.app.db = db
 
     for model_id in cfg.models:
@@ -108,8 +105,8 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
         del config_settings["config"]
     if "custom_hash_method" in config_settings:
         logger.warning(
-            f"'custom_hash_method' will be depricated in version 0.1.0. "
-            f" Please use 'hash_method' instead"
+            "'custom_hash_method' will be depricated in version 0.1.0. "
+            " Please use 'hash_method' instead"
         )
         config_settings["hash_method"] = deepcopy(config_settings["custom_hash_method"])
         del config_settings["custom_hash_method"]
@@ -126,16 +123,9 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     if "db_uri" in config_settings:
         del config_settings["db_uri"]
 
-    cfg.user_models = {model.__tablename__: {"model": model} for model in db_models}
-
     setup_config_from_args(config_settings)
 
     add_history_model(db)
-
-    loop = asyncio.get_event_loop()
-
-    loop.run_until_complete(add_users_model(db, app.config))
-
     extract_models_metadata(db, db_models)
 
     if config_settings.get("route"):

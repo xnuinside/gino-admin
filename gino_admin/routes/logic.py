@@ -345,19 +345,19 @@ async def insert_data_from_csv_rows(read_obj: Any, model_id: Text, request: Requ
         if errors:
             request.ctx.flash_messages.append(
                 (
-                    f"Errors: : {errors}",
+                    f"Errors: {errors}",
                     "error",
                 )
             )
 
-        base_msg = "Objects" if composite else f"Objects"
+        base_msg = "Objects" if composite else "Objects"
         if ids_added:
             request.ctx.flash_messages.append(
                 (f"{base_msg}{ids_added} was added", "success")
             )
         if ids_updated:
             request.ctx.flash_messages.append(
-                (f" {base_msg}{ids_updated} was updated", "success")
+                (f"{base_msg}{ids_updated} was updated", "success")
             )
     except ValueError as e:
         request.ctx.flash_messages.append((e.args, "error"))
@@ -538,7 +538,7 @@ async def deepcopy_recursive(
     if len(identity(model)) == 0:
         primary_key_col = object_id
         return (
-            f"Deepcopy does not available for tables without primary keys right now",
+            "Deepcopy does not available for tables without primary keys right now",
             "error",
         )
     else:

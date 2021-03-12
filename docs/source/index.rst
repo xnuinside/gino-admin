@@ -53,51 +53,12 @@ How to install
 .. code-block:: bash
 
 
-       pip install gino-admin==0.2.3
+       pip install gino-admin==0.2.4
 
 How to use
 ^^^^^^^^^^
 
 You can find several code examples in `examples/ <examples/>`_ folder.
-
-Updates in version 0.2.3  (current master):
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-#. Fix for the issue https://github.com/xnuinside/gino-admin/issues/35
-#. 'gino' support tables removed from menu
-#. Incremental Ids (fields) supported now in UI - they showed as disable inputs in Adding and Edit forms and not cause issue anymore.
-
-
-.. image:: ../img/incremental_ids_support.png
-   :target: ../img/incremental_ids_support.png
-   :alt: Incremental IDs Support
-
-
-Updates in version 0.2.2
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-#. 
-   Added support for types: JSONB, JSON and Time. 
-   Examples added as part of base_example - /Users/iuliia_volkova2/work/gino-admin/examples/base_example
-
-#. 
-   **Main update**\ : Not needed to use *gino.ext.sanic* in models as it was previos. 
-
-Now you can use any ext if you need (for Fast Api for example) or pure Gino() and you not need to add to your models, any 'ifs' to have additional gino.ext.sanic to get possible work with gino admin. 
-
-All examples was changed according to the update. 
-
-
-#. 
-   Sanic was updated to 20.* version. Switched to use 'request.ctx.' in code
-
-#. 
-   Minor things: all date, datetime and timepickers now have default value == to current time/date/datetime.
-
-#. 
-   Tests: was updated structure of integraion tests
 
 Supported features
 ^^^^^^^^^^^^^^^^^^
@@ -308,6 +269,14 @@ Screens:
 ^^^^^^^^
 
 Check in docs: `UI Screens <https://gino-admin.readthedocs.io/en/latest/ui_screens.html>`_
+
+Changelog
+---------
+
+**v0.2.4**
+
+
+#. Fixed issue with loop from https://github.com/xnuinside/gino-admin/issues/37
 
 
 

@@ -65,7 +65,7 @@ async def validate_login(request, _config):
                 request = log_history_event(request, message, "system: login")
                 return False, request
         try:
-            user_in_base = await cfg.users_model.get(username)
+            user_in_base = await cfg.admin_user_model.get(username)
             if not user_in_base:
                 request.ctx.flash_messages.append(
                     (

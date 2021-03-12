@@ -16,6 +16,8 @@ from gino_admin.routes.logic import (delete_all_by_params, get_by_params,
 async def model_view_table(
     request: Request, model_id: Text, flash_messages: Union[List[Tuple], Tuple] = None
 ):
+    if "model_id" == "favicon.ico":
+        return None
     if flash_messages and not isinstance(flash_messages[0], tuple):
         request.ctx.flash(*flash_messages)
     elif flash_messages:

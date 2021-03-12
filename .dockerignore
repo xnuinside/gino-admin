@@ -3,3 +3,5 @@ docs
 files
 gino_admin.egg-info
 examples/data
+tests/integration_tests/.pytest_cache
+tests/integration_tests/.__pycache__

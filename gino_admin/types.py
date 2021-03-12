@@ -1,6 +1,6 @@
 import datetime
 
-types_map = {
+sqlalchemy_types_map = {
     "INTEGER": int,
     "BIGINT": int,
     "SMALLINT": int,
@@ -21,3 +21,6 @@ types_map = {
     "VARCHAR[]": (list, str),
     "INTEGER[]": (list, int),
 }
+
+
+types_map = sqlalchemy_types_map
