@@ -126,7 +126,6 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     setup_config_from_args(config_settings)
 
     add_history_model(db)
-    print(cfg.user_models)
     extract_models_metadata(db, db_models)
 
     if config_settings.get("route"):

@@ -27,6 +27,5 @@ def init_db(app_url, auth_headers, preset_name):
         json={"preset_id": preset_name, "drop": True},
         headers=auth_headers,
     )
-    print(result)
     assert result.status_code == 200
     return True
