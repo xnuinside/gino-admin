@@ -15,7 +15,8 @@ app.config["DB_HOST"] = os.environ.get("DB_HOST", "localhost")
 app.config["DB_DATABASE"] = "gino"
 app.config["DB_USER"] = "gino"
 app.config["DB_PASSWORD"] = "gino"
-
+# set os.environ["ADMIN_AUTH_DISABLE"] = "1" to disable auth
+os.environ["ADMIN_AUTH_DISABLE"] = "1"
 db.init_app(app)
 
 jinja = SanicJinja2(app)
@@ -49,6 +50,5 @@ add_admin_panel(
     presets_folder=os.path.join(current_path, "csv_to_upload"),
     name="Base Example",
 )
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=os.getenv("PORT", 5000), debug=True)

@@ -265,6 +265,14 @@ Check in docs: `UI Screens <https://gino-admin.readthedocs.io/en/latest/ui_scree
 Changelog
 ---------
 
+**v0.2.5**
+
+
+#. Added favicon.ico
+#. Updated Sanic version (by the way, I plan to move admin panel to FastAPI in next major release)
+#. Other dependencies also updated
+#. Fixed issue with stop admin panel server
+
 **v0.2.4**
 
 
