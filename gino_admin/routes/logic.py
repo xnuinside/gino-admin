@@ -499,6 +499,8 @@ async def count_elements_in_db():
 async def create_object_copy(
     model_id: Text,
     base_obj_id: Text,
+    model_data: Dict,
+    *,
     fk_column: Column = None,
     new_fk_link_id: Text = None,
     new_id: Optional[Text] = None,
@@ -509,6 +511,10 @@ async def create_object_copy(
     if not new_id:
         new_obj_key = generate_new_id(base_obj_id, columns_data)
     else:
+        for key in new_id:
+            _len = columns_data[key]["len"]
+            if _len:
+                new_id[key] = new_id[key][:_len]
         new_obj_key = new_id
     base_obj_id = correct_types(base_obj_id, columns_data, no_default=True)
     bas_obj = await get_by_params(base_obj_id, model)
@@ -524,6 +530,8 @@ async def create_object_copy(
 async def deepcopy_recursive(
     model: Model,
     object_id: str,
+    model_data: Dict,
+    *,
     new_fk_link_id: Optional[str] = None,
     fk_column: Optional[Column] = None,
     new_id: Optional[str] = None,
@@ -533,7 +541,12 @@ async def deepcopy_recursive(
         f" {fk_column} with id {new_fk_link_id}"
     )
     new_obj_key = await create_object_copy(
-        model.__tablename__, object_id, fk_column, new_fk_link_id, new_id=new_id
+        model.__tablename__,
+        object_id,
+        model_data,
+        fk_column=fk_column,
+        new_fk_link_id=new_fk_link_id,
+        new_id=new_id,
     )
     if len(identity(model)) == 0:
         primary_key_col = object_id
@@ -555,13 +568,17 @@ async def deepcopy_recursive(
         fk_column = dependent_models[dep_model]
         all_referencing_instance_ids = (
             await dep_model.select(identity(dep_model)[0].name)
-            .where(fk_column == object_id)
+            .where(fk_column == object_id[primary_key_col.name])
             .gino.all()
         )
         # TODO(ehborisov): can gather be used there? Only if we have a connection pool?
         for inst_id in all_referencing_instance_ids:
             result = await deepcopy_recursive(
-                dep_model, inst_id[0], new_obj_key, fk_column
+                dep_model,
+                {identity(dep_model)[0].name: inst_id[0]},
+                model_data,
+                new_fk_link_id=new_obj_key[identity(model)[0].name],
+                fk_column=fk_column,
             )
             if isinstance(result, tuple):
                 return result

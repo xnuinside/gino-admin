@@ -47,11 +47,6 @@ async def before_server_start(_, loop):
     )
 
 
-@admin.listener("before_server_stop")
-async def after_server_stop(_, loop):
-    await cfg.app.db.pop_bind().close()
-
-
 @admin.middleware("request")
 async def middleware_request(request):
     request.ctx.flash_messages = []
@@ -112,6 +107,13 @@ async def login(request):
     return jinja.render("login.html", request)
 
 
+@admin.listener("before_server_stop")
+async def before_server_stop(_, loop):
+    conn = cfg.app.db.bind.pop("connection", None)
+    if conn is not None:
+        await conn.release()
+
+
 @admin.route("/<model_id>/deepcopy", methods=["POST"])
 @auth.token_validation()
 async def model_deepcopy(request, model_id):
@@ -126,7 +128,6 @@ async def model_deepcopy(request, model_id):
 
     columns_data = cfg.models[model_id]["columns_data"]
     base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
-    base_obj_id = utils.correct_types(base_obj_id, columns_data)
     try:
         # todo: fix deepcopy
         new_id = utils.extract_obj_id_from_query(request_params["new_id"])
@@ -141,6 +142,7 @@ async def model_deepcopy(request, model_id):
                     cfg.models[model_id]["model"],
                     base_obj_id,
                     new_id=new_id,
+                    model_data=cfg.models[model_id],
                 )
                 if isinstance(new_base_obj_id, tuple):
                     request.ctx.flash(new_base_obj_id, "error")
@@ -160,7 +162,9 @@ async def model_copy(request, model_id):
     request_params = {elem: request.form[elem][0] for elem in request.form}
     base_obj_id = utils.extract_obj_id_from_query(request_params["_id"])
     try:
-        new_obj_key = await create_object_copy(model_id, base_obj_id)
+        new_obj_key = await create_object_copy(
+            model_id, base_obj_id, cfg.models[model_id]
+        )
         message = f"Object with {base_obj_id} key was copied as {new_obj_key}"
         flash_message = (message, "success")
         log_history_event(request, message, new_obj_key)

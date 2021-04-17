@@ -14,30 +14,35 @@ Project use pre-commit hooks, so you need setup them
 
 Just run:
 
-```
+```bash
+
     pre-commit install
+
 ```
+
 to install git hooks in your .git/ directory.
 
 #### How to run integration tests
 
-
 Run integrations test from  tests/integration_tests/tests:
 
-```
-    cd test/integration_tests/docker
+```bash
+    
+    cd tests/integration_tests/docker
+
 ```
 
-1. Prepare docker-compose for tests:
+1.Prepare docker-compose for tests:
 
 ```bash
 
     ./run.sh docker-compose up --build
 
 ```
+
 Command will build all necessary images & run docker compose cluster.
 
-2. Run tests
+2.Run tests
 
 ```bash
 
