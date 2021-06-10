@@ -1,6 +1,6 @@
 psycopg2-binary==2.8.5
 gino==1.0.0
 gino-starlette==0.1.1
-fastapi==0.54.1
+fastapi==0.65.2
 uvicorn>=0.11.7
 gino-admin==0.0.9
