@@ -1,4 +1,4 @@
-## Gino-Admin
+## Gino-Admin (Unsupported, I don't work on this library anymore right now - feel free to use & do anything if you want)
 
 ![Gino-Admin Logo](docs/img/logo/g_logo.svg)
 
