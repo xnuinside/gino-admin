@@ -287,7 +287,7 @@ def get_settings():
     return settings
 
 
-def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
+def get_obj_id_from_row(model_data: Dict, row: Dict, old_id: Any = None) -> Dict:
     """ create _id dict for row based on several fields """
     result = {}
     if not model_data.get("identity"):
@@ -305,7 +305,11 @@ def get_obj_id_from_row(model_data: Dict, row: Dict) -> Dict:
             else:
                 result[x] = row[x]
         else:
-            result[x] = model_data["columns_data"][x]["type"](row[x])
+            if x in row:
+                result[x] = model_data["columns_data"][x]["type"](row[x])
+            else:
+                result[x] = old_id[x]
+
     result = correct_types(result, model_data["columns_data"], no_default=True)
     return result
 

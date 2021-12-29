@@ -1,5 +1,5 @@
 import os
-from typing import Callable, Dict, List, Optional, Text
+from typing import Any, Callable, Dict, List, Optional, Text
 
 from expiring_dict import ExpiringDict
 from jinja2 import FileSystemLoader
@@ -113,7 +113,7 @@ class Config(BaseModel):
     name: str = "Sanic-Gino Admin Panel"
     csv_update_existed: bool = True
     debug: bool = True
-    displayable_setting: list = [
+    displayable_setting: List[str] = [
         "debug",
         "presets_folder",
         "composite_csv_settings",
@@ -139,6 +139,7 @@ class Config(BaseModel):
         "login",
         "logout_post",
     ]
+    hide_columns: List[Any] = []
 
     @validator("displayable_setting")
     def displayable_setting_cannot_be_changed(cls, value):

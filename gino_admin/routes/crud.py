@@ -1,4 +1,4 @@
-from typing import List, Text, Tuple, Union
+from typing import Dict, List, Text, Tuple, Union
 
 import asyncpg
 from sanic.request import Request
@@ -39,8 +39,9 @@ async def model_edit_post(request, model_id):
     model_data = cfg.models[model_id]
     model = model_data["model"]
     columns_data = model_data["columns_data"]
-    previous_id = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
-    previous_id = utils.correct_types(previous_id, columns_data, no_default=True)
+    previous_id: Dict = utils.extract_obj_id_from_query(dict(request.query_args)["_id"])
+    previous_id: Dict = utils.correct_types(previous_id, columns_data, no_default=True)
+
     request_params = {
         key: request.form[key][0] if request.form[key][0] != "None" else None
         for key in request.form
@@ -57,7 +58,7 @@ async def model_edit_post(request, model_id):
             await obj.update(**request_params).apply()
             obj = obj.to_dict()
         changes = utils.get_changes(old_obj, obj)
-        new_obj_id = utils.get_obj_id_from_row(model_data, request_params)
+        new_obj_id = utils.get_obj_id_from_row(model_data, request_params, previous_id)
         message = f"Object with id {previous_id} was updated."
         if changes:
             message += f'Changes: from {changes["from"]} to {changes["to"]}'
