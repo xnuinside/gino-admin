@@ -49,6 +49,7 @@ add_admin_panel(
     hash_method=custom_hash_method,
     presets_folder=os.path.join(current_path, "csv_to_upload"),
     name="Base Example",
+    hide_columns=["id", Place.hide_column_sample],
 )
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=os.getenv("PORT", 5000), debug=True)

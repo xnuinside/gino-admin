@@ -10,14 +10,19 @@ First of all run instance of PostgreSQL - use for this docker-compose.yml:
 
 Do:
 
-    pip install -r examples/requirements.txt
+    pip install -r requirements.txt
 
 After in new window run example/src/app.py:
 
     python example/base_example/src/db.py  # to init DB
 
 And finally:
-    python example/base_example/src/app.py
+    python src/app.py
+
+    or if you see a error "ValueError: __main__.__spec__ is None"
+
+    python -m app 
+
 
 
 Use password and login to enter admin panel:

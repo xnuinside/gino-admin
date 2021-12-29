@@ -2,9 +2,10 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Text
 
+import sanic_routing
 import sqlalchemy
 from gino import Gino
-from sanic import Blueprint, Sanic, response, router
+from sanic import Blueprint, Sanic, response
 from sanic_jwt import Initialize
 
 from gino_admin import config
@@ -140,7 +141,7 @@ def add_admin_panel(app: Sanic, db: Gino, db_models: List, **config_settings):
     try:
         Initialize(app, authenticate=authenticate, url_prefix=f"{cfg.route}/api/auth")
         Initialize(rest.api, app=app, authenticate=authenticate, auth_mode=True)
-    except router.RouteExists:
+    except sanic_routing.exceptions.RouteExists:
         pass
     # to avoid re-write app Jinja2
     if getattr(app, "extensions", None):

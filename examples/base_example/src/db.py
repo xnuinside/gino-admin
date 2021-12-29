@@ -37,6 +37,7 @@ class Place(db.Model):
     title = db.Column(db.String())
     description = db.Column(db.String())
     owner = db.Column(db.String(24), db.ForeignKey("users.id"))
+    hide_column_sample = db.Column(db.String())
 
 
 class Item(db.Model):

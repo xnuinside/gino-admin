@@ -1,4 +1,5 @@
-## Gino-Admin (Unsupported, I don't work on this library anymore right now - feel free to use & do anything if you want)
+## Gino-Admin 
+(Unsupported, I don't work on this library anymore right now - feel free to use & do anything if you want)
 
 ![Gino-Admin Logo](docs/img/logo/g_logo.svg)
 
@@ -23,7 +24,7 @@ Admin Panel for PostgreSQL DB with Gino ORM and Sanic
 
 ```bash
 
-    pip install gino-admin==0.2.4
+    pip install gino-admin==0.3.0
 
 ```
 
@@ -72,8 +73,8 @@ You can find several code examples in [examples/](examples/) folder.
 To see the full list of supported types take a look here: 
 [gino_admin/types.py](gino_admin/types.py) 
 
-If you don't see type that you need - open the github issue with request and I will add it https://github.com/xnuinside/gino-admin/issues. Or you can open PR by yourself and I will be glad to review it :) 
-
+If you don't see type that you need - open the github issue with request and I will add it https://github.com/xnuinside/gino-admin/issues. 
+Or you can open PR by yourself and I will be glad to review it.
 
 
 ### How to run Gino-Admin
@@ -246,6 +247,25 @@ Check in docs: [UI Screens](https://gino-admin.readthedocs.io/en/latest/ui_scree
 
 
 ## Changelog
+**v0.3.0**
+
+### New Features:
+
+1. Added support for 'hide_columns' argument in admin panel configuration, example: examples/base_example/src/app.py
+
+Argument removes those columns from admin panel 'edit' section. 
+You can pass column directly for one model, or global hide by name, for example:  
+
+hide_columns = [ModelName.id, 'pk']
+
+This mean that for the model ModelName on 'edit' page column 'id' will be hided. 
+And globally for all models will be hided columns with name 'pk'.
+
+### Improvements
+
+1. Dependencies was updated
+
+
 **v0.2.5**
 1. Added favicon.ico
 2. Updated Sanic version (by the way, I plan to move admin panel to FastAPI in next major release)

@@ -23,14 +23,14 @@ from gino_admin.utils import (CompositeType, correct_types,
 cfg = config.cfg
 
 
-def columns_data_for_ui(columns_data: Dict, model_data: Dict) -> Dict:
+def columns_data_for_ui(columns_data: Dict) -> Dict:
     return {
         column_name: {
             "len": columns_data[column_name]["len"],
             "type": get_type_name(columns_data[column_name]),
             "disabled": columns_data[column_name]["sequence"],
         }
-        for column_name in model_data["columns_names"]
+        for column_name in columns_data
     }
 
 
@@ -60,7 +60,7 @@ async def render_model_view(request: Request, model_id: Text) -> HTTPResponse:
         "model_view.html",
         request,
         model=model_id,
-        columns=columns_data_for_ui(columns_data, model_data),
+        columns=columns_data_for_ui(columns_data),
         model_data=output,
         unique=cfg.models[model_id]["identity"],
     )
@@ -453,14 +453,38 @@ async def get_by_params(query_params: Dict, model):
     return items
 
 
+def filter_columns_data_on_hide_columns(
+    model, columns_data: Dict[str, Dict]
+) -> Dict[str, Dict]:
+    """ remove from display on edit & add form columns """
+    filtered_columns = {}
+    for column_name, column in columns_data.items():
+        try:
+            column_in_model = getattr(model, column_name)
+        except AttributeError:
+            column_in_model = getattr(model, f"{column_name}_hash")
+        if (
+            column_name not in cfg.hide_columns
+            and column_in_model not in cfg.hide_columns
+        ):
+            filtered_columns[column_name] = column
+    return filtered_columns
+
+
 async def render_add_or_edit_form(
     request: Request, model_id: Text, obj_id: Dict = None
 ) -> HTTPResponse:
+    """ main logic to render Add or Edit form """
     model_data = cfg.models[model_id]
+
     model = cfg.models[model_id]["model"]
-    columns_data = model_data["columns_data"]
+
+    columns_data: Dict[str, Dict] = filter_columns_data_on_hide_columns(
+        model, model_data["columns_data"]
+    )
+
     if obj_id:
-        obj_id = correct_types(obj_id, columns_data, no_default=True)
+        obj_id = correct_types(obj_id, model_data["columns_data"], no_default=True)
         obj = await get_by_params(obj_id, model)
         if obj:
             obj = serialize_dict(obj.to_dict())
@@ -478,7 +502,7 @@ async def render_add_or_edit_form(
         model=model_id,
         add=add,
         obj=obj,
-        columns=columns_data_for_ui(columns_data, model_data),
+        columns=columns_data_for_ui(columns_data),
     )
 
 

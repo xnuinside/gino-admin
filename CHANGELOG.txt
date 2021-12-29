@@ -1,3 +1,22 @@
+**v0.3.0**
+
+### New Features:
+
+1. Added support for 'hide_columns' argument in admin panel configuration, example: examples/base_example/src/app.py
+
+Argument removes those columns from admin panel 'edit' section. 
+You can pass column directly for one model, or global hide by name, for example:  
+
+hide_columns = [ModelName.id, 'pk']
+
+This mean that for the model ModelName on 'edit' page column 'id' will be hided. 
+And globally for all models will be hided columns with name 'pk'.
+
+### Improvements
+
+1. Dependencies was updated
+
+
 **v0.2.5**
 1. Added favicon.ico
 2. Updated Sanic version (by the way, I plan to move admin panel to FastAPI in next major release)
