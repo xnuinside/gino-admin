@@ -267,8 +267,8 @@ def load_presets():
     presets = []
     if not os.path.isdir(cfg.presets_folder):
         if os.path.isfile(cfg.presets_folder):
-            logger.error(f"Presets folder is file. Must be a path to folder")
-        logger.info(f"Presets folder not found. Create new folder.")
+            logger.error("Presets folder is file. Must be a path to folder")
+        logger.info("Presets folder not found. Create new folder.")
         os.makedirs(cfg.presets_folder)
     else:
         for file_name in os.listdir(cfg.presets_folder):
