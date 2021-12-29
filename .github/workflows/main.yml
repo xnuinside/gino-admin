@@ -49,4 +49,4 @@ jobs:
         POETRY_VIRTUALENVS_CREATE: false
     - name: Test with pytest
       run: |
-        pytest ../tests/unit/
+        pytest tests/unit
